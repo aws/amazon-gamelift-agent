@@ -1,3 +1,7 @@
+/*
+ * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ */
+
 package com.amazon.gamelift.agent;
 
 import static com.amazon.gamelift.agent.Application.JAVA_PROP_FORKJOINPOOL_PARALLELISM_KEY;

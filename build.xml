@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 
+<!--
+  ~ Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+  -->
+
 <project name="GameLiftAgent-1.0" basedir="." default="release" xmlns:ht="happytrails">
   <import file="${happytrails.root}/happytrails.xml"/>
 

@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+#
+
 # This script generates a bunch of random numbers
 # Usage: sh random_number_printer.sh -c 10000
 while getopts c: flag

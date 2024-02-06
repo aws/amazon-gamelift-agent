@@ -1,3 +1,7 @@
+#
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+#
+
 if type -p java; then
     echo found java executable in PATH
     _java=java

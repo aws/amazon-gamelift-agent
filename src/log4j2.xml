@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+  ~ Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+  -->
+
+<!--
     This is a default configuration intended as a fallback. Normal log configuration will be done programmatically
     when the LogConfigurationManager is called to configure log files.
 -->
