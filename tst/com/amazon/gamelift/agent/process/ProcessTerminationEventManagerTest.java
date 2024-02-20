@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 
 import com.amazon.gamelift.agent.model.ProcessTerminationReason;
 import com.amazon.gamelift.agent.model.exception.AgentException;
-import com.amazon.gamelift.agent.model.websocket.NotifyProcessTerminationRequest;
+import com.amazon.gamelift.agent.model.websocket.NotifyServerProcessTerminationRequest;
 import com.amazon.gamelift.agent.model.websocket.base.WebsocketRequest;
 import com.amazon.gamelift.agent.websocket.AgentWebSocket;
 import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
@@ -39,7 +39,7 @@ public class ProcessTerminationEventManagerTest {
     @Mock private WebSocketConnectionProvider mockWebSocketConnectionProvider;
     @Mock private AgentWebSocket mockAgentWebSocket;
 
-    @Captor private ArgumentCaptor<NotifyProcessTerminationRequest> requestCaptor;
+    @Captor private ArgumentCaptor<NotifyServerProcessTerminationRequest> requestCaptor;
 
     @InjectMocks private ProcessTerminationEventManager manager;
 
@@ -49,13 +49,13 @@ public class ProcessTerminationEventManagerTest {
     }
 
     @Test
-    public void GIVEN_normalExitCodeNoReason_WHEN_notifyProcessTermination_THEN_usesCorrectEventCode() throws AgentException {
+    public void GIVEN_normalExitCodeNoReason_WHEN_notifyServerProcessTermination_THEN_usesCorrectEventCode() throws AgentException {
         // GIVEN/WHEN
-        manager.notifyProcessTermination(TEST_PROCESS_UUID, 0, null);
+        manager.notifyServerProcessTermination(TEST_PROCESS_UUID, 0, null);
 
         // THEN
         verify(mockAgentWebSocket).sendRequest(requestCaptor.capture(), any(), any(Duration.class));
-        final NotifyProcessTerminationRequest capturedRequest = requestCaptor.getValue();
+        final NotifyServerProcessTerminationRequest capturedRequest = requestCaptor.getValue();
         assertNotNull(capturedRequest.getAction());
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
@@ -63,13 +63,13 @@ public class ProcessTerminationEventManagerTest {
     }
 
     @Test
-    public void GIVEN_normalExitCodeWithReason_WHEN_notifyProcessTermination_THEN_usesGivenReason() throws AgentException {
+    public void GIVEN_normalExitCodeWithReason_WHEN_notifyServerProcessTermination_THEN_usesGivenReason() throws AgentException {
         // GIVEN/WHEN
-        manager.notifyProcessTermination(TEST_PROCESS_UUID, 0, ProcessTerminationReason.SERVER_PROCESS_INVALID_PATH);
+        manager.notifyServerProcessTermination(TEST_PROCESS_UUID, 0, ProcessTerminationReason.SERVER_PROCESS_INVALID_PATH);
 
         // THEN
         verify(mockAgentWebSocket).sendRequest(requestCaptor.capture(), any(), any(Duration.class));
-        final NotifyProcessTerminationRequest capturedRequest = requestCaptor.getValue();
+        final NotifyServerProcessTerminationRequest capturedRequest = requestCaptor.getValue();
         assertNotNull(capturedRequest.getAction());
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
@@ -77,13 +77,13 @@ public class ProcessTerminationEventManagerTest {
     }
 
     @Test
-    public void GIVEN_abnormalExitCodeNoReason_WHEN_notifyProcessTermination_THEN_usesCrashedReason() throws AgentException {
+    public void GIVEN_abnormalExitCodeNoReason_WHEN_notifyServerProcessTermination_THEN_usesCrashedReason() throws AgentException {
         // GIVEN/WHEN
-        manager.notifyProcessTermination(TEST_PROCESS_UUID, -12345, null);
+        manager.notifyServerProcessTermination(TEST_PROCESS_UUID, -12345, null);
 
         // THEN
         verify(mockAgentWebSocket).sendRequest(requestCaptor.capture(), any(), any(Duration.class));
-        final NotifyProcessTerminationRequest capturedRequest = requestCaptor.getValue();
+        final NotifyServerProcessTerminationRequest capturedRequest = requestCaptor.getValue();
         assertNotNull(capturedRequest.getAction());
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
@@ -91,13 +91,13 @@ public class ProcessTerminationEventManagerTest {
     }
 
     @Test
-    public void GIVEN_abnormalExitCodeWithReason_WHEN_notifyProcessTermination_THEN_usesGivenReason() throws AgentException {
+    public void GIVEN_abnormalExitCodeWithReason_WHEN_notifyServerProcessTermination_THEN_usesGivenReason() throws AgentException {
         // GIVEN/WHEN
-        manager.notifyProcessTermination(TEST_PROCESS_UUID, -12345, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN);
+        manager.notifyServerProcessTermination(TEST_PROCESS_UUID, -12345, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN);
 
         // THEN
         verify(mockAgentWebSocket).sendRequest(requestCaptor.capture(), any(), any(Duration.class));
-        final NotifyProcessTerminationRequest capturedRequest = requestCaptor.getValue();
+        final NotifyServerProcessTerminationRequest capturedRequest = requestCaptor.getValue();
         assertNotNull(capturedRequest.getAction());
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
@@ -105,13 +105,13 @@ public class ProcessTerminationEventManagerTest {
     }
 
     @Test
-    public void GIVEN_failureToSendRequest_WHEN_notifyProcessTermination_THEN_attemptsRetries() throws AgentException {
+    public void GIVEN_failureToSendRequest_WHEN_notifyServerProcessTermination_THEN_attemptsRetries() throws AgentException {
         // GIVEN
         doThrow(RuntimeException.class).when(mockAgentWebSocket).sendRequest(any(WebsocketRequest.class), any(), any());
 
         // WHEN
         assertThrows(RuntimeException.class, () ->
-                manager.notifyProcessTermination(TEST_PROCESS_UUID, -12345, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN));
+                manager.notifyServerProcessTermination(TEST_PROCESS_UUID, -12345, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN));
 
         // THEN
         verify(mockAgentWebSocket, times(3)).sendRequest(any(WebsocketRequest.class), any(), any(Duration.class));

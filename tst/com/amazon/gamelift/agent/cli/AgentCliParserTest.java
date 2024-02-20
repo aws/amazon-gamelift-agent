@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -469,8 +470,7 @@ public class AgentCliParserTest {
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
-        when(mockCommandLine.getOptionValue(any()))
-                .thenReturn(null);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
                 .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
@@ -503,8 +503,7 @@ public class AgentCliParserTest {
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
-        when(mockCommandLine.getOptionValue(any()))
-                .thenReturn(null);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
                 .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
@@ -537,8 +536,7 @@ public class AgentCliParserTest {
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
-        when(mockCommandLine.getOptionValue(any()))
-                .thenReturn(null);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
                 .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
@@ -602,8 +600,7 @@ public class AgentCliParserTest {
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
-        when(mockCommandLine.getOptionValue(any()))
-                .thenReturn(null);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
                 .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))

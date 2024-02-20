@@ -174,7 +174,7 @@ public class GameProcessManagerTest {
             Thread.sleep(200);
 
             // THEN
-            verify(mockTerminationEventManager, times(1)).notifyProcessTermination(processId, 0, null);
+            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(processId, 0, null);
             assertEquals(0, processManager.getAllProcessUUIDs().size());
         }
     }
@@ -201,7 +201,7 @@ public class GameProcessManagerTest {
                     .thenReturn(mockUploadGameSessionLogsCallable);
 
             doThrow(new RuntimeException()).when(mockTerminationEventManager)
-                    .notifyProcessTermination(anyString(), anyInt(), any());
+                    .notifyServerProcessTermination(anyString(), anyInt(), any());
 
             // WHEN
             processManager.startProcessFromConfiguration(processConfig);
@@ -211,7 +211,7 @@ public class GameProcessManagerTest {
 
             // THEN
             verify(mockTerminationEventManager, times(1))
-                    .notifyProcessTermination(processId, 0, null);
+                    .notifyServerProcessTermination(processId, 0, null);
             verify(executorService).submit(eq(mockUploadGameSessionLogsCallable));
             assertEquals(0, processManager.getAllProcessUUIDs().size());
         }
@@ -246,7 +246,7 @@ public class GameProcessManagerTest {
 
             // THEN
             assertEquals(0, processManager.getAllProcessUUIDs().size());
-            verify(mockTerminationEventManager, times(1)).notifyProcessTermination(
+            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
                     eq(processId), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_TERMINATED_UNHEALTHY));
         }
     }
@@ -292,7 +292,7 @@ public class GameProcessManagerTest {
             processManager.terminateAllProcessesForShutdown(totalWaitMillis, pollWaitMillis);
 
             // THEN
-            verify(mockTerminationEventManager, times(3)).notifyProcessTermination(
+            verify(mockTerminationEventManager, times(3)).notifyServerProcessTermination(
                     anyString(), anyInt(), eq(ProcessTerminationReason.COMPUTE_SHUTTING_DOWN));
             assertEquals(0, processManager.getAllProcessUUIDs().size());
         }
@@ -415,7 +415,7 @@ public class GameProcessManagerTest {
             assertThrows(BadExecutablePathException.class,
                          () -> processManager.startProcessFromConfiguration(processConfig));
 
-            verify(mockTerminationEventManager, times(1)).notifyProcessTermination(
+            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
                     anyString(), eq(ProcessConstants.INVALID_LAUNCH_PATH_PROCESS_EXIT_CODE),
                     eq(ProcessTerminationReason.SERVER_PROCESS_INVALID_PATH));
         }
@@ -478,7 +478,7 @@ public class GameProcessManagerTest {
 
             // THEN
             assertEquals(0, ProcessHandle.current().children().count());
-            verify(mockTerminationEventManager, times(1)).notifyProcessTermination(
+            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
                     anyString(), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_CRASHED));
 
             // Transiently tests that we generated the callable using the correct list of log paths
@@ -529,7 +529,7 @@ public class GameProcessManagerTest {
 
             // THEN
             assertEquals(0, ProcessHandle.current().children().count());
-            verify(mockTerminationEventManager, times(1)).notifyProcessTermination(
+            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
                     anyString(), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_CRASHED));
 
             // Transiently tests that we generated the callable using the correct list of log paths

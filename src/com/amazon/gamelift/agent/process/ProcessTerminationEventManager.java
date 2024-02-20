@@ -5,7 +5,7 @@ package com.amazon.gamelift.agent.process;
 
 import com.amazon.gamelift.agent.model.ProcessTerminationReason;
 import com.amazon.gamelift.agent.model.exception.AgentException;
-import com.amazon.gamelift.agent.model.websocket.NotifyProcessTerminationRequest;
+import com.amazon.gamelift.agent.model.websocket.NotifyServerProcessTerminationRequest;
 import com.amazon.gamelift.agent.model.websocket.base.WebsocketResponse;
 import com.amazon.gamelift.agent.utils.RetryHelper;
 import com.amazon.gamelift.agent.websocket.AgentWebSocket;
@@ -27,24 +27,24 @@ public class ProcessTerminationEventManager {
     private final WebSocketConnectionProvider webSocketConnectionProvider;
 
     /**
-     * Reports a process has terminated on the compute by calling the NotifyProcessTermination API.
+     * Reports a process has terminated on the compute by calling the NotifyServerProcessTermination API.
      * This is required primarily for scenarios where processes crash or are terminated forcefully, in which case
      * the GameLift Server SDK may not send a message that the process has terminated.
      *
      * @param processUuid the process UUID used to register through the GameLift Server SDK
      * @param processExitCode the numeric process exit code for the server process
      * @param unvalidatedTerminationReason the reason for the termination, which may be null
-     * @throws AgentException if the call to NotifyProcessTermination fails
+     * @throws AgentException if the call to NotifyServerProcessTermination fails
      */
-    public void notifyProcessTermination(final String processUuid,
-                                         final int processExitCode,
-                                         final ProcessTerminationReason unvalidatedTerminationReason)
+    public void notifyServerProcessTermination(final String processUuid,
+                                               final int processExitCode,
+                                               final ProcessTerminationReason unvalidatedTerminationReason)
             throws AgentException {
 
         final ProcessTerminationReason validatedReason =
                 validateTerminationReason(processExitCode, unvalidatedTerminationReason);
         log.info("Reporting process termination for process ID {} with reason: {}", processUuid, validatedReason);
-        final NotifyProcessTerminationRequest notifyRequest = NotifyProcessTerminationRequest.builder()
+        final NotifyServerProcessTerminationRequest notifyRequest = NotifyServerProcessTerminationRequest.builder()
                 .processId(processUuid)
                 .eventCode(validatedReason.getEventCode())
                 .build();

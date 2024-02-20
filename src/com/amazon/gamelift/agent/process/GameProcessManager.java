@@ -88,7 +88,7 @@ public class GameProcessManager {
         } catch (BadExecutablePathException e) {
             // Note: Since the process was not started, the process UUID will not be registered with GameLift.
             // The notify call is still made to report the launch failure here as a Fleet event.
-            processTerminationEventManager.notifyProcessTermination(
+            processTerminationEventManager.notifyServerProcessTermination(
                     gameProcess.getProcessUUID(),
                     ProcessConstants.INVALID_LAUNCH_PATH_PROCESS_EXIT_CODE,
                     ProcessTerminationReason.SERVER_PROCESS_INVALID_PATH);
@@ -112,7 +112,7 @@ public class GameProcessManager {
     private void handleProcessExit(final Process internalProcess, final GameProcess gameProcess) {
         try {
             try {
-                processTerminationEventManager.notifyProcessTermination(
+                processTerminationEventManager.notifyServerProcessTermination(
                         gameProcess.getProcessUUID(),
                         internalProcess.exitValue(),
                         gameProcess.getTerminationReason());

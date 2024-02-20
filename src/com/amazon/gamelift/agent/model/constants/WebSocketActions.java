@@ -10,7 +10,7 @@ public enum WebSocketActions {
     GetFleetRoleCredentials,
     NotifyGameSessionActivated,
     NotifyProcessRegistered,
-    NotifyProcessTermination,
+    NotifyServerProcessTermination,
     RefreshConnection,
     SendHeartbeat,
     StartComputeTermination
