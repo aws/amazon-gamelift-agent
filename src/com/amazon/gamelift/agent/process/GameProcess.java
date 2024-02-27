@@ -11,6 +11,8 @@ import com.amazon.gamelift.agent.model.exception.BadExecutablePathException;
 import com.amazon.gamelift.agent.process.builder.ProcessBuilderFactory;
 import com.amazon.gamelift.agent.process.builder.ProcessBuilderWrapper;
 import com.amazon.gamelift.agent.manager.ProcessEnvironmentManager;
+import com.amazon.gamelift.agent.process.destroyer.ProcessDestroyer;
+import com.amazon.gamelift.agent.process.destroyer.ProcessDestroyerFactory;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.Getter;
 import lombok.NonNull;
@@ -42,6 +44,7 @@ public class GameProcess {
     @Getter private final String processUUID;
     @Getter private final GameProcessConfiguration processConfiguration;
     private final ProcessBuilderWrapper processBuilderWrapper;
+    private final ProcessDestroyer processDestroyer;
     private final ProcessEnvironmentManager processEnvironmentManager;
     private final Instant initializationTimeoutDeadline;
 
@@ -71,6 +74,7 @@ public class GameProcess {
                        final OperatingSystem operatingSystem) {
         this(processConfiguration,
              ProcessBuilderFactory.getProcessBuilder(processConfiguration, operatingSystem),
+             ProcessDestroyerFactory.getProcessDestroyer(operatingSystem),
              processEnvironmentManager,
              operatingSystem,
              DEFAULT_INITIALIZATION_TIMEOUT);
@@ -78,13 +82,14 @@ public class GameProcess {
 
     @VisibleForTesting GameProcess(final GameProcessConfiguration processConfiguration,
                                    final ProcessBuilderWrapper processBuilderWrapper,
+                                   final ProcessDestroyer processDestroyer,
                                    final ProcessEnvironmentManager processEnvironmentManager,
                                    final OperatingSystem operatingSystem,
                                    final Duration initializationTimeout) {
         this.processConfiguration = processConfiguration;
-        this.processEnvironmentManager = processEnvironmentManager;
-
         this.processBuilderWrapper = processBuilderWrapper;
+        this.processDestroyer = processDestroyer;
+        this.processEnvironmentManager = processEnvironmentManager;
         this.processUUID = UUID.randomUUID().toString();
         this.logPaths = new HashSet<String>();
         this.processStatus = ProcessStatus.Initializing;
@@ -121,10 +126,7 @@ public class GameProcess {
     public void terminate() {
         if (internalProcess != null) {
             log.info("Terminating process with ID {}", internalProcess.pid());
-            internalProcess.destroyForcibly();
-            // Also destroy all sub-processes, but be sure to use .descendents() not .children() because .descendants() includes all processes created by
-            // the root or by children of the root. children() only includes direct children of the root process.
-            internalProcess.descendants().forEach(ProcessHandle::destroyForcibly);
+            processDestroyer.destroyProcess(internalProcess);
         } else {
             log.warn("Attempted to terminate a process that hasn't been initialized");
         }

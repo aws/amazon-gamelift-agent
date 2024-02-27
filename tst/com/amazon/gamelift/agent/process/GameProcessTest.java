@@ -9,6 +9,7 @@ import com.amazon.gamelift.agent.model.ProcessStatus;
 import com.amazon.gamelift.agent.model.exception.BadExecutablePathException;
 import com.amazon.gamelift.agent.process.builder.ProcessBuilderWrapper;
 import com.amazon.gamelift.agent.manager.ProcessEnvironmentManager;
+import com.amazon.gamelift.agent.process.destroyer.ProcessDestroyer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -49,6 +51,7 @@ public class GameProcessTest {
     @Mock private Map<String, String> mockEnvironmentVariableMap;
     @Mock private BiConsumer<Process, GameProcess> mockExitHandleFunction;
     @Mock private ProcessEnvironmentManager mockProcessEnvironmentManager;
+    @Mock private ProcessDestroyer mockProcessDestroyer;
     @Mock private CompletableFuture<Process> mockCompletableFuture;
 
     private GameProcess processUnderTest;
@@ -60,8 +63,8 @@ public class GameProcessTest {
 
     @BeforeEach
     public void setup() {
-        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessEnvironmentManager,
-                OPERATING_SYSTEM, Duration.ofSeconds(0));
+        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessDestroyer,
+                mockProcessEnvironmentManager, OPERATING_SYSTEM, Duration.ofSeconds(0));
     }
 
     @Test
@@ -96,12 +99,11 @@ public class GameProcessTest {
     }
 
     @Test
-    public void GIVEN_processStarted_WHEN_terminate_THEN_childProcessTerminated() throws BadExecutablePathException {
+    public void GIVEN_processStarted_WHEN_terminate_THEN_delegateToProcessDestroyer() throws BadExecutablePathException {
         // GIVEN
         when(mockProcessEnvironmentManager.getProcessEnvironmentVariables(any()))
                 .thenReturn(mockEnvironmentVariableMap);
         when(mockProcessBuilder.buildProcess(any())).thenReturn(mockProcess);
-        when(mockProcess.descendants()).thenReturn(Stream.of(mockChildProcessHandle));
 
         // WHEN
         processUnderTest.start();
@@ -110,8 +112,7 @@ public class GameProcessTest {
         // THEN
         verify(mockProcessEnvironmentManager).getProcessEnvironmentVariables(any());
         verify(mockProcessBuilder).buildProcess(mockEnvironmentVariableMap);
-        verify(mockChildProcessHandle).destroyForcibly();
-        verify(mockProcess).destroyForcibly();
+        verify(mockProcessDestroyer).destroyProcess(mockProcess);
     }
 
     @Test
@@ -161,7 +162,7 @@ public class GameProcessTest {
     @Test
     public void GIVEN_initializationDeadlinePassedForNewProcess_WHEN_hasTimedOutForInitialization_THEN_returnsTrue() {
         // GIVEN
-        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessEnvironmentManager,
+        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessDestroyer, mockProcessEnvironmentManager,
                 OPERATING_SYSTEM, Duration.ofSeconds(-1));
 
         // WHEN / THEN
@@ -171,7 +172,7 @@ public class GameProcessTest {
     @Test
     public void GIVEN_initializationDeadlinePassedForActiveProcess_WHEN_hasTimedOutForInitialization_THEN_returnsFalse() {
         // GIVEN
-        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessEnvironmentManager,
+        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessDestroyer, mockProcessEnvironmentManager,
                 OPERATING_SYSTEM, Duration.ofSeconds(-1));
         processUnderTest.setProcessStatus(ProcessStatus.Active);
 
@@ -182,7 +183,7 @@ public class GameProcessTest {
     @Test
     public void GIVEN_initializationDeadlineNotPassedForNewProcess_WHEN_hasTimedOutForInitialization_THEN_returnsFalse() {
         // GIVEN
-        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessEnvironmentManager,
+        processUnderTest = new GameProcess(PROCESS_CONFIG, mockProcessBuilder, mockProcessDestroyer, mockProcessEnvironmentManager,
                 OPERATING_SYSTEM, Duration.ofSeconds(10));
 
         // WHEN / THEN

@@ -23,6 +23,7 @@ public class ProcessBuilderFactory {
             case WIN_2012:
             case WINDOWS_2016:
             case WINDOWS_2019:
+            case WINDOWS_2022:
                 return new WindowsProcessBuilderWrapper(processConfiguration, operatingSystem);
             case INVALID:
             default:
