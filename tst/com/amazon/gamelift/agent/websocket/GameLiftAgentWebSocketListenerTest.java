@@ -5,6 +5,7 @@ package com.amazon.gamelift.agent.websocket;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +37,7 @@ public class GameLiftAgentWebSocketListenerTest {
     private static final String TEST_PROCESS_ID = "testProcessId";
 
     @Mock private WebSocket mockWebSocket;
+    @Mock private WebSocketConnectionManager mockWebSocketConnectionManager;
     @Mock private MessageHandler<WebsocketResponse> mockHandler;
     @Mock private MessageHandler<WebsocketResponse> mockDefaultHandler;
     @Mock private CompletableFuture<String> mockResponseFuture;
@@ -48,7 +49,7 @@ public class GameLiftAgentWebSocketListenerTest {
         Map<String, MessageHandler<?>> mockHandlers = ImmutableMap.of(
                 WebSocketActions.ForceExitServerProcess.name(), mockHandler,
                 WebSocketActions.Default.name(), mockDefaultHandler);
-        testListener = new GameLiftAgentWebSocketListener(mockHandlers, OBJECT_MAPPER);
+        testListener = new GameLiftAgentWebSocketListener(mockWebSocketConnectionManager, mockHandlers, OBJECT_MAPPER);
     }
 
     @Test
@@ -72,7 +73,7 @@ public class GameLiftAgentWebSocketListenerTest {
     }
 
     @Test
-    public void GIVEN_openRequests_WHEN_onClose_THEN_cancelsAllFutures() {
+    public void GIVEN_openRequests_WHEN_onClose_THEN_cancelsAllFutures() throws Exception {
         // GIVEN
         testListener.addExpectedResponse(TEST_REQUEST_ID, mockResponseFuture);
 
@@ -81,6 +82,21 @@ public class GameLiftAgentWebSocketListenerTest {
 
         // THEN
         verify(mockResponseFuture).cancel(true);
+        verify(mockWebSocketConnectionManager).handleWebSocketDisconnect(testListener.getWebSocketIdentifier());
+    }
+
+    @Test
+    public void GIVEN_exceptionWhenHandlingDisconnect_WHEN_onClose_THEN_stillCancelsFutures() throws Exception {
+        // GIVEN
+        testListener.addExpectedResponse(TEST_REQUEST_ID, mockResponseFuture);
+        doThrow(new RuntimeException()).when(mockWebSocketConnectionManager).handleWebSocketDisconnect(anyString());
+
+        // WHEN
+        testListener.onClose(mockWebSocket, 200, "Test onClose");
+
+        // THEN
+        verify(mockResponseFuture).cancel(true);
+        verify(mockWebSocketConnectionManager).handleWebSocketDisconnect(testListener.getWebSocketIdentifier());
     }
 
     @Test
@@ -174,7 +190,7 @@ public class GameLiftAgentWebSocketListenerTest {
                 "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() +
                 "\",\"RequestId\":\"" + TEST_REQUEST_ID +
                 "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
-        Mockito.doThrow(MalformedRequestException.class).when(mockHandler).handle(anyString());
+        doThrow(MalformedRequestException.class).when(mockHandler).handle(anyString());
 
         // WHEN
         testListener.onText(mockWebSocket, message, true);

@@ -8,22 +8,24 @@ import com.google.common.cache.LoadingCache;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
+@Singleton
 public class ComputeAuthTokenManager {
     private final LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache;
     /**
-     *  When calling Amazon GameLift to get a ComputeAuthToken, if less than 2 minutes remain on expiration a new
-     *  token is generated. If the cached value has less than 2 minutes remaining until expiration it should be
+     *  When calling Amazon GameLift to get a ComputeAuthToken, if less than 15 minutes remain on expiration a new
+     *  token is generated. If the cached value has less than 15 minutes remaining until expiration it should be
      *  invalidated to force a cache load.
      *
      *  Cache expiration time is set to 5 minutes so that a call is made to Amazon GameLift GetComputeAuthToken
      *  at least once every 5 minutes just as a precaution to check for any potential issue with the existing token.
      */
-    private static final Duration CACHE_REFRESH_THRESHOLD = Duration.ofMinutes(2);
+    private static final Duration CACHE_REFRESH_THRESHOLD = Duration.ofMinutes(15);
     private static final String COMPUTE_AUTH_TOKEN_CACHE_KEY = "computeAuthToken";
 
     /**

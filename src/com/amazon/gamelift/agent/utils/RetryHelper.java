@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RetryHelper {
     private static final int EXPONENTIAL_BACKOFF_FACTOR_MS = 500;
+    private static final int MAX_EXPONENTIAL_BACKOFF_MS = 15000;
     private static final double MAX_JITTER_RANDOMIZATION_FACTOR = 0.25;
 
     private static boolean forceDisableBackoff = false;
@@ -36,10 +37,11 @@ public class RetryHelper {
            } catch (final Exception e) {
                final double jitterRandomizationFactor = ThreadLocalRandom.current()
                         .nextDouble(1 - MAX_JITTER_RANDOMIZATION_FACTOR, 1 + MAX_JITTER_RANDOMIZATION_FACTOR);
-               final long sleepIntervalMs = Math.round(Math.pow(2.0, retryAttempt) * EXPONENTIAL_BACKOFF_FACTOR_MS * jitterRandomizationFactor);
-               lastExceptionEncountered = e;
-               retryAttempt++;
-               log.warn("Action failed attempt {} / {}", retryAttempt, numRetries + 1, e);
+               final long sleepIntervalMs = Math.min(MAX_EXPONENTIAL_BACKOFF_MS, (long) (Math.pow(2.0, retryAttempt)
+                       * EXPONENTIAL_BACKOFF_FACTOR_MS * jitterRandomizationFactor));
+                lastExceptionEncountered = e;
+                retryAttempt++;
+                log.warn("Action failed attempt {} / {}", retryAttempt, numRetries + 1, e);
 
                // If the exception received is a modeled exception in the GameLiftAgent code, see if a retry should be
                // performed. If the exception isn't modeled in the GameLiftAgent code, retry by default.
@@ -79,6 +81,18 @@ public class RetryHelper {
     public static <V> V runRetryable(final Callable<V> func) throws AgentException {
         final int defaultNumRetries = 2;
         return RetryHelper.runRetryable(defaultNumRetries, true, func);
+    }
+
+
+    /**
+     * Run function with given number of retries and exponential backoff
+     *
+     * @param numRetries number of times to retry the given function
+     * @param func Callable to retry
+     * @throws Exception if the function fails after the given number of retries
+     */
+    public static <V> V runRetryable(final int numRetries, final Callable<V> func) throws AgentException {
+        return RetryHelper.runRetryable(numRetries, true, func);
     }
 
     /**

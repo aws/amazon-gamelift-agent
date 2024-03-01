@@ -108,6 +108,15 @@ public class StateManager {
     }
 
     /**
+     * Returns true if status is terminated
+     * @return
+     */
+    @Synchronized("statusLock")
+    public boolean isComputeTerminated() {
+        return computeStatus == ComputeStatus.Terminated;
+    }
+
+    /**
      * Returns true if status is initializing
      * @return
      */

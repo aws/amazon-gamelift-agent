@@ -123,4 +123,23 @@ public class StateManagerTest {
         stateManager.reportComputeActive();
         assertFalse(stateManager.isComputeTerminatingOrTerminated());
     }
+
+    @Test
+    public void GIVEN_stateIsTerminated_WHEN_isHostTerminated_THEN_returnsTrue() {
+        stateManager.reportComputeTerminated();
+        assertTrue(stateManager.isComputeTerminated());
+    }
+
+    @Test
+    public void GIVEN_nonTerminatedStates_WHEN_isHostTerminated_THEN_returnsFalse() {
+        assertFalse(stateManager.isComputeTerminated());
+        stateManager.reportComputeActivating();
+        assertFalse(stateManager.isComputeTerminated());
+        stateManager.reportComputeActive();
+        assertFalse(stateManager.isComputeTerminated());
+        stateManager.reportComputeTerminating();
+        assertFalse(stateManager.isComputeTerminated());
+        stateManager.reportComputeInterrupted();
+        assertFalse(stateManager.isComputeTerminated());
+    }
 }

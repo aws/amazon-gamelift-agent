@@ -62,6 +62,8 @@ public class AgentWebSocketTest {
     private static final String TEST_REQUEST_ID = "testRequestId";
     private static final String TEST_SERIALIZED_RESPONSE = "{\"RequestId\":\"" + TEST_REQUEST_ID + "\"}";
     private static final String TEST_SERIALIZED_REQUEST = "testSerializedRequest";
+    private static final String TEST_WEBSOCKET_ENDPOINT =
+            "testWebSocketEndpoint.com/" + RandomStringUtils.randomAlphanumeric(5);
 
     @Mock private WebSocket mockWebSocketSender;
     @Mock private GameLiftAgentWebSocketListener mockWebSocketListener;
@@ -75,7 +77,7 @@ public class AgentWebSocketTest {
     @BeforeEach
     public void setup() {
         webSocketClient = new AgentWebSocket(mockWebSocketSender, mockWebSocketListener,
-                mockWebSocketExceptionProvider, objectMapperSpy);
+                mockWebSocketExceptionProvider, TEST_WEBSOCKET_ENDPOINT, objectMapperSpy);
     }
 
     @Test

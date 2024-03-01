@@ -3,6 +3,7 @@
  */
 package com.amazon.gamelift.agent.websocket.handlers;
 
+import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.websocket.RefreshConnectionMessage;
 import com.amazon.gamelift.agent.websocket.WebSocketConnectionManager;
 
@@ -41,23 +42,23 @@ public class RefreshConnectionHandlerTest {
     }
 
     @Test
-    public void GIVEN_input_WHEN_handle_THEN_refreshConnection() {
+    public void GIVEN_input_WHEN_handle_THEN_refreshConnection() throws InternalServiceException {
         // WHEN
         connectionHandler.handle(input);
 
         // THEN
-        verify(connectionManager).reconnect(input);
+        verify(connectionManager).refreshWebSocketConnection(input);
     }
 
     @Test
-    public void GIVEN_input_WHEN_handleFails_THEN_doesntThrow() {
+    public void GIVEN_input_WHEN_handleFails_THEN_doesntThrow() throws InternalServiceException {
         // GIVEN
-        doThrow(RuntimeException.class).when(connectionManager).reconnect(input);
+        doThrow(RuntimeException.class).when(connectionManager).refreshWebSocketConnection(input);
 
         // WHEN
         connectionHandler.handle(input);
 
         // THEN
-        verify(connectionManager).reconnect(input);
+        verify(connectionManager).refreshWebSocketConnection(input);
     }
 }

@@ -6,6 +6,7 @@ package com.amazon.gamelift.agent.websocket;
 import java.net.http.WebSocket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,12 +31,21 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @AllArgsConstructor
-public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
+class GameLiftAgentWebSocketListener implements WebSocket.Listener {
 
     // openRequests is a map used specifically for processing messages in a request/response manner.
     // Requests, and responses to those requests, will have an associated ID which is used to map responses to the
     // request. When a response is found when processing messages, the associated future in this map is completed.
     private final Map<String, CompletableFuture<String>> openRequests = new HashMap<>();
+
+    // An internal unique ID assigned to our WebSocket instances to differentiate them when multiple connections
+    // are open simultaneously. This is generated here since the WebSocket.Listener instance is generated before the
+    // WebSocket instance.
+    @Getter private final String webSocketIdentifier = UUID.randomUUID().toString();
+
+    // The WebSocketConnectionManager should be the only place where this class is initialized. Pass the instance of
+    // the manager to this class so that it can call back for handling WebSocket reconnects
+    private final WebSocketConnectionManager webSocketConnectionManager;
 
     private final StringBuilder messageBuffer = new StringBuilder();
     private final Map<String, MessageHandler<?>> messageHandlers;
@@ -48,7 +59,7 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
      */
     @Override
     public void onOpen(final WebSocket webSocket) {
-        log.info("GameLift agent WebSocket connection opened");
+        log.info("GameLift Agent WebSocket connection opened: webSocketId={}", webSocketIdentifier);
         WebSocket.Listener.super.onOpen(webSocket);
     }
 
@@ -60,11 +71,14 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
      */
     @Override
     public void onError(final WebSocket webSocket, final Throwable error) {
-        log.error("GameLift agent error received from Websocket connection", error);
+        log.error(String.format("GameLift Agent encountered an error from Websocket connection: webSocketId=%s",
+                webSocketIdentifier), error);
     }
 
     /**
-     * Simple implementation of onClose which logs and cancels/clears out any pending request futures
+     * Simple implementation of onClose which logs and cancels/clears out any pending request futures,
+     * and then calls into the connection manager to process the disconnection. If this is an unexpected WebSocket
+     * disconnect, the connection manager may perform a WebSocket reconnection.
      *
      * @param webSocket - the associated websocket connection that encountered the error
      * @param statusCode - status code for the connection closure
@@ -72,14 +86,24 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
      */
     @Override
     public CompletionStage<?> onClose(final WebSocket webSocket, final int statusCode, final String reason) {
-        log.info("GameLift agent WebSocket connection closed: code={}, reason={}", statusCode, reason);
-        synchronized (openRequests) {
-            for (final CompletableFuture<String> openRequestFuture : openRequests.values()) {
-                openRequestFuture.cancel(true);
+        try {
+            log.info("GameLiftAgent WebSocket connection closed: webSocketId={}, code={}, reason={}",
+                    webSocketIdentifier, statusCode, reason);
+            synchronized (openRequests) {
+                for (final CompletableFuture<String> openRequestFuture : openRequests.values()) {
+                    openRequestFuture.cancel(true);
+                }
+                openRequests.clear();
             }
-            openRequests.clear();
-        }
-        return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
+
+                // Notify the connection manager that the associated WebSocket connection has closed. If the disconnected
+                // connection was the currently used WebSocket connection, this will perform a WebSocket reconnect
+                webSocketConnectionManager.handleWebSocketDisconnect(webSocketIdentifier);
+            } catch (final Exception e) {
+                log.error("Unexpected exception occurred when handling WebSocket onClose event", e);
+            }
+
+            return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
     }
 
     /**
@@ -114,7 +138,8 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
                 boolean synchronousRequestProcessed = false;
 
                 synchronized (openRequests) {
-                    // requestId will be null if a message is received instead of a response
+                    // requestId will be null if this was a message sent from the server, rather than a response from
+                    // a previously sent message
                     if (openRequests.containsKey(requestId)) {
                         openRequests.remove(requestId).complete(completedMessage);
                         synchronousRequestProcessed = true;
