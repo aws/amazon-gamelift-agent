@@ -268,7 +268,7 @@ scp user@cloud-desktop-address:/path/to/GameScaleServerSdkCSharp/src/GameScaleSe
 1. Record your IP address with the following: `ifconfig | grep inet`
 1. Run this command to launch GameLiftAgent (substituting values as appropriate)
 ```
-sudo java -jar build/GameLiftAgent-standalone-1_0.jar \
+sudo java -jar build/GameLiftAgent-1_0.jar \
   -r us-west-2 \
   -glc environment-variable \
   -gleo 'https://gamelift-alpha.us-west-2.amazonaws.com' \
@@ -288,7 +288,7 @@ sudo java -jar build/GameLiftAgent-standalone-1_0.jar \
 2. SCP the SDK file:
 
 scp <source> <destination>.
-scp user@cloud-desktop-address:/path/to/GameLiftAgent/build/GameLiftAgent/GameLiftAgent-1.0/AL2_x86_64/DEV.STD.PTHREAD/build/GameLiftAgent-standalone-1_0.jar "C:\Game\GameLiftAgent-standalone-1_0.jar"
+scp user@cloud-desktop-address:/path/to/GameLiftAgent/build/GameLiftAgent/GameLiftAgent-1.0/AL2_x86_64/DEV.STD.PTHREAD/build/GameLiftAgent-1_0.jar "C:\Game\GameLiftAgent-1_0.jar"
 ```
 3. Run the following with your Fleet and desired ComputeName in Windows PowerShell: 
 ```
@@ -301,7 +301,7 @@ Get-NetIPAddress
 ```
 6. Run this command to launch GameLiftAgent in Windows PowerShell (substituting values as appropriate)
 ```
-java -jar GameLiftAgent-standalone-1_0.jar `
+java -jar GameLiftAgent-1_0.jar `
 -r us-west-2 `
 -glc environment-variable `
 -gleo 'https://gamelift-alpha.us-west-2.amazonaws.com' `
@@ -392,7 +392,7 @@ You will want to add -RedirectStandardError and/or -RedirectStandardOutput along
 ### Check Git Commit Id From Jar
 Run
 ```
-unzip -q -c GameLiftAgent-standalone-1_0.jar META-INF/MANIFEST.MF
+unzip -q -c GameLiftAgent-1_0.jar META-INF/MANIFEST.MF
 ```
 
 ### Install Maven and Java 17 in your Environment

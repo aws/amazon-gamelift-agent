@@ -12,4 +12,4 @@ archive_system: archive_jars
 archive_system_regex_exclude:
   - .*
 data_files_regex_include:
-  - GameLiftAgent-standalone-[0-9_]+\.jar
+  - GameLiftAgent-[0-9_]+\.jar

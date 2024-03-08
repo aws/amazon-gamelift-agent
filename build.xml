@@ -49,7 +49,7 @@
     S3 bucket.
   -->
   <property name="jar.name"
-            value="GameLiftAgent-standalone-${jar.name.package-major-version}.jar"
+            value="GameLiftAgent-${jar.name.package-major-version}.jar"
             description="Name of the standalone jar" />
 
   <target name="copy-dependencies"
