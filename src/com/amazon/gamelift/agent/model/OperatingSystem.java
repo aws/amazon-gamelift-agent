@@ -14,6 +14,7 @@ public enum OperatingSystem {
     WIN_2012("Windows Server 2012 R2", OperatingSystemFamily.WINDOWS),
     WINDOWS_2016("Windows Server 2016", OperatingSystemFamily.WINDOWS),
     WINDOWS_2019("Windows Server 2019", OperatingSystemFamily.WINDOWS),
+    WINDOWS_2022("Windows Server 2022", OperatingSystemFamily.WINDOWS),
     AMAZON_LINUX_2("Amazon Linux 2", OperatingSystemFamily.LINUX),
     AMAZON_LINUX_2023("Amazon Linux 2023", OperatingSystemFamily.LINUX),
     INVALID("Invalid OperatingSystem", OperatingSystemFamily.INVALID);
@@ -23,6 +24,7 @@ public enum OperatingSystem {
     private static final String AMAZON_LINUX_2023_VERSION = "amzn2023";
     private static final String WINDOWS_SERVER_2016_NAME = "Windows Server 2016";
     private static final String WINDOWS_SERVER_2019_NAME = "Windows Server 2019";
+    private static final String WINDOWS_SERVER_2022_NAME = "Windows Server 2022";
     private static final String OS_NAME_SYSTEM_PROPERTY = "os.name";
 
     @Getter private final String displayName;
@@ -98,6 +100,9 @@ public enum OperatingSystem {
         } else if (WINDOWS_SERVER_2019_NAME.equals(System.getProperty(OS_NAME_SYSTEM_PROPERTY))) {
             // similar method doesn't exist in SystemUtils
             operatingSystem = WINDOWS_2019;
+        } else if (WINDOWS_SERVER_2022_NAME.equals(System.getProperty(OS_NAME_SYSTEM_PROPERTY))) {
+            // similar method doesn't exist in SystemUtils
+            operatingSystem = WINDOWS_2022;
         } else if (SystemUtils.IS_OS_LINUX && SystemUtils.OS_VERSION.contains(AMAZON_LINUX_2_VERSION)) {
             operatingSystem = AMAZON_LINUX_2;
         } else if (SystemUtils.IS_OS_LINUX && SystemUtils.OS_VERSION.contains(AMAZON_LINUX_2023_VERSION)) {

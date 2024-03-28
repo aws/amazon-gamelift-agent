@@ -6,7 +6,9 @@ package com.amazon.gamelift.agent.model.constants;
 public enum WebSocketActions {
     Default,
     DescribeRuntimeConfiguration,
+    // @deprecated
     ForceExitProcess,
+    ForceExitServerProcess,
     GetFleetRoleCredentials,
     NotifyGameSessionActivated,
     NotifyProcessRegistered,

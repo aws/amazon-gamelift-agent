@@ -21,6 +21,7 @@ import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
 import com.amazon.gamelift.agent.websocket.WebSocketExceptionProvider;
 import com.amazon.gamelift.agent.websocket.handlers.DefaultHandler;
 import com.amazon.gamelift.agent.websocket.handlers.ForceExitProcessHandler;
+import com.amazon.gamelift.agent.websocket.handlers.ForceExitServerProcessHandler;
 import com.amazon.gamelift.agent.websocket.handlers.MessageHandler;
 import com.amazon.gamelift.agent.websocket.handlers.NotifyGameSessionActivatedHandler;
 import com.amazon.gamelift.agent.websocket.handlers.NotifyProcessRegisteredHandler;
@@ -95,6 +96,7 @@ public class ProcessModule {
     public Map<String, MessageHandler<?>> provideMessageHandlers(
             final DefaultHandler defaultHandler,
             final ForceExitProcessHandler forceExitProcessHandler,
+            final ForceExitServerProcessHandler forceExitServerProcessHandler,
             final NotifyGameSessionActivatedHandler notifyGameSessionActivatedHandler,
             final NotifyProcessRegisteredHandler notifyProcessRegisteredHandler,
             final RefreshConnectionHandler refreshConnectionHandler,
@@ -103,6 +105,7 @@ public class ProcessModule {
         return ImmutableMap.<String, MessageHandler<?>>builder()
                 .put(WebSocketActions.Default.name(), defaultHandler)
                 .put(WebSocketActions.ForceExitProcess.name(), forceExitProcessHandler)
+                .put(WebSocketActions.ForceExitServerProcess.name(), forceExitServerProcessHandler)
                 .put(WebSocketActions.NotifyGameSessionActivated.name(), notifyGameSessionActivatedHandler)
                 .put(WebSocketActions.NotifyProcessRegistered.name(), notifyProcessRegisteredHandler)
                 .put(WebSocketActions.RefreshConnection.name(), refreshConnectionHandler)
