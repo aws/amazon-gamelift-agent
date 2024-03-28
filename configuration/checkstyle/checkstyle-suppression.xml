@@ -22,6 +22,7 @@
     <suppress checks="VisibilityModifier" files="com.amazon.gamelift.agent.manager.ExecutorServiceManager" />
     <suppress checks="ParameterNumber" files="com.amazon.gamelift.agent.manager.ShutdownOrchestrator" />
     <suppress checks="ParameterNumber" files="com.amazon.gamelift.agent.websocket.WebSocketConnectionManager" />
+    <suppress checks="ParameterNumber" files="com.amazon.gamelift.agent.module.ProcessModule" />
     <suppress checks="[a-zA-Z0-9]*" files="com.amazon.gamelift.agent.windows.MoreAdvapi32" />
     <suppress checks="[a-zA-Z0-9]*" files="com.amazon.gamelift.agent.windows.MoreLMAccess" />
     <suppress checks="[a-zA-Z0-9]*" files="com.amazon.gamelift.agent.windows.MoreNetapi32" />

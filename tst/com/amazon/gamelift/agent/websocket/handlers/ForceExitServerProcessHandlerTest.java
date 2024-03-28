@@ -4,9 +4,9 @@
 package com.amazon.gamelift.agent.websocket.handlers;
 
 import com.amazon.gamelift.agent.model.ProcessTerminationReason;
-import com.amazon.gamelift.agent.model.websocket.ForceExitProcessMessage;
-import com.amazon.gamelift.agent.process.GameProcessManager;
 import com.amazon.gamelift.agent.model.constants.WebSocketActions;
+import com.amazon.gamelift.agent.model.websocket.ForceExitServerProcessMessage;
+import com.amazon.gamelift.agent.process.GameProcessManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,9 +18,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@Deprecated
 @ExtendWith(MockitoExtension.class)
-public class ForceExitProcessHandlerTest {
+public class ForceExitServerProcessHandlerTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final String PROCESS_ID = "ProcessId";
@@ -28,26 +27,26 @@ public class ForceExitProcessHandlerTest {
     @Mock
     private GameProcessManager gameProcessManager;
 
-    private ForceExitProcessMessage message;
+    private ForceExitServerProcessMessage message;
     private String messageAsString;
 
-    private ForceExitProcessHandler forceExitProcessHandler;
+    private ForceExitServerProcessHandler forceExitServerProcessHandler;
 
     @BeforeEach
     public void setup() {
-        forceExitProcessHandler = new ForceExitProcessHandler(OBJECT_MAPPER, gameProcessManager);
+        forceExitServerProcessHandler = new ForceExitServerProcessHandler(OBJECT_MAPPER, gameProcessManager);
     }
 
     @Test
     public void GIVEN_terminateProcessMessage_WHEN_handle_THEN_processTerminated() throws Exception {
         //Givens
-        message = new ForceExitProcessMessage();
+        message = new ForceExitServerProcessMessage();
         message.setProcessId(PROCESS_ID);
-        message.setAction(WebSocketActions.ForceExitProcess.name());
+        message.setAction(WebSocketActions.ForceExitServerProcess.name());
         messageAsString = OBJECT_MAPPER.writeValueAsString(message);
 
         //When
-        forceExitProcessHandler.handle(messageAsString);
+        forceExitServerProcessHandler.handle(messageAsString);
 
         //Then
         verify(gameProcessManager).terminateProcessByUUID(PROCESS_ID,
@@ -57,13 +56,13 @@ public class ForceExitProcessHandlerTest {
     @Test
     public void GIVEN_invalidAction_WHEN_handle_THEN_processTerminated() throws Exception {
         //Givens
-        message = new ForceExitProcessMessage();
+        message = new ForceExitServerProcessMessage();
         message.setProcessId(PROCESS_ID);
         message.setAction("");
         messageAsString = OBJECT_MAPPER.writeValueAsString(message);
 
         //When
-        forceExitProcessHandler.handle(messageAsString);
+        forceExitServerProcessHandler.handle(messageAsString);
 
         //Then
         verify(gameProcessManager, never()).terminateProcessByUUID(any(), any());

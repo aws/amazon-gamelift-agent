@@ -47,7 +47,7 @@ public class GameLiftAgentWebSocketListenerTest {
     @BeforeEach
     public void setup() {
         Map<String, MessageHandler<?>> mockHandlers = ImmutableMap.of(
-                WebSocketActions.ForceExitProcess.name(), mockHandler,
+                WebSocketActions.ForceExitServerProcess.name(), mockHandler,
                 WebSocketActions.Default.name(), mockDefaultHandler);
         testListener = new GameLiftAgentWebSocketListener(mockHandlers, OBJECT_MAPPER);
     }
@@ -88,7 +88,7 @@ public class GameLiftAgentWebSocketListenerTest {
     public void GIVEN_validTextAndLastMessage_WHEN_onText_THEN_passesMessageToHandler() throws Exception {
         // GIVEN
         final String message =
-                "{\"Action\":\"" + WebSocketActions.ForceExitProcess.name() +
+                "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() +
                 "\",\"RequestId\":\"" + TEST_REQUEST_ID +
                 "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
 
@@ -104,7 +104,7 @@ public class GameLiftAgentWebSocketListenerTest {
     public void GIVEN_validTextOverMultipleMessages_WHEN_onText_THEN_passesCompleteMessageToHandler() throws Exception {
         // GIVEN
         final String firstMessage =
-                "{\"Action\":\"" + WebSocketActions.ForceExitProcess.name() + "\",\"RequestId\":\"";
+                "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() + "\",\"RequestId\":\"";
         final String secondMessage =
                 TEST_REQUEST_ID + "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
 
@@ -121,7 +121,7 @@ public class GameLiftAgentWebSocketListenerTest {
     public void GIVEN_validTextWithOpenRequest_WHEN_onText_THEN_passesMessageToFuture() {
         // GIVEN
         final String message =
-                "{\"Action\":\"" + WebSocketActions.ForceExitProcess.name() +
+                "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() +
                 "\",\"RequestId\":\"" + TEST_REQUEST_ID +
                 "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
         testListener.addExpectedResponse(TEST_REQUEST_ID, mockResponseFuture);
@@ -138,7 +138,7 @@ public class GameLiftAgentWebSocketListenerTest {
     public void GIVEN_requestAddedAndRemoved_WHEN_onText_THEN_passesMessageToHandler() throws Exception {
         // GIVEN
         final String message =
-                "{\"Action\":\"" + WebSocketActions.ForceExitProcess.name() +
+                "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() +
                 "\",\"RequestId\":\"" + TEST_REQUEST_ID +
                 "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
         testListener.addExpectedResponse(TEST_REQUEST_ID, mockResponseFuture);
@@ -172,7 +172,7 @@ public class GameLiftAgentWebSocketListenerTest {
     public void GIVEN_malformedInput_WHEN_onText_THEN_swallowsException() throws Exception {
         // GIVEN
         final String message =
-                "{\"Action\":\"" + WebSocketActions.ForceExitProcess.name() +
+                "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() +
                 "\",\"RequestId\":\"" + TEST_REQUEST_ID +
                 "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
         Mockito.doThrow(MalformedRequestException.class).when(mockHandler).handle(anyString());
@@ -189,7 +189,7 @@ public class GameLiftAgentWebSocketListenerTest {
     public void GIVEN_unknownExceptionFromFuture_WHEN_onText_THEN_swallowsException() {
         // GIVEN
         final String message =
-                "{\"Action\":\"" + WebSocketActions.ForceExitProcess.name() +
+                "{\"Action\":\"" + WebSocketActions.ForceExitServerProcess.name() +
                         "\",\"RequestId\":\"" + TEST_REQUEST_ID +
                         "\",\"ProcessId\":\"" + TEST_PROCESS_ID + "\"}";
         testListener.addExpectedResponse(TEST_REQUEST_ID, mockResponseFuture);
