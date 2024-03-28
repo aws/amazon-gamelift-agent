@@ -16,6 +16,8 @@ import com.amazon.gamelift.agent.process.builder.ProcessBuilderWrapper;
 import com.amazon.gamelift.agent.logging.UploadGameSessionLogsCallable;
 import com.amazon.gamelift.agent.manager.ProcessEnvironmentManager;
 import com.amazon.gamelift.agent.model.constants.ProcessConstants;
+import com.amazon.gamelift.agent.process.destroyer.ProcessDestroyerFactory;
+import com.amazon.gamelift.agent.process.destroyer.WindowsProcessDestroyer;
 import com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +54,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class GameProcessManagerTest {
 
-    private static final String TEST_PROCESS_ID = "TEST_PROCESS_ID";
+    private static final String TEST_PROCESS_UUID = "TEST_PROCESS_UUID";
     private static final String TEST_GAME_SESSION_ID = "TEST_GAME_SESSION_ID";
 
     @Mock private ProcessEnvironmentManager mockProcessEnvironmentManager;
@@ -85,28 +87,31 @@ public class GameProcessManagerTest {
     }
 
     @Test
-    public void GIVEN_nullProcessId_WHEN_isProcessAlive_THEN_returnsFalse() {
-        final String nullProcessId = null;
+    public void GIVEN_nullProcessUUID_WHEN_isProcessAlive_THEN_returnsFalse() {
+        final String nullProcessUUID = null;
 
-        assertThrows(NotFoundException.class, () -> processManager.isProcessAlive(nullProcessId));
+        assertThrows(NotFoundException.class, () -> processManager.isProcessAlive(nullProcessUUID));
     }
 
     @Test
-    public void GIVEN_invalidProcessId_WHEN_isProcessAlive_THEN_throwsNotFoundException() {
-        final String badProcessId = "1234";
+    public void GIVEN_invalidProcessUUID_WHEN_isProcessAlive_THEN_throwsNotFoundException() {
+        final String badProcessUUID = "1234";
 
-        assertThrows(NotFoundException.class, () -> processManager.isProcessAlive(badProcessId));
+        assertThrows(NotFoundException.class, () -> processManager.isProcessAlive(badProcessUUID));
     }
 
     @Test
-    public void GIVEN_validProcessId_WHEN_isProcessAlive_THEN_returnTrue() throws AgentException {
+    public void GIVEN_validProcessUUID_WHEN_isProcessAlive_THEN_returnTrue() throws AgentException {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("someexecutable")
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -133,7 +138,10 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -147,7 +155,7 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
             assertEquals(1, processManager.getAllProcessUUIDs().size());
             // Single process id, pull it out of the set
-            String processId = processManager.getAllProcessUUIDs().iterator().next();
+            String processUUID = processManager.getAllProcessUUIDs().iterator().next();
         }
     }
 
@@ -159,7 +167,10 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -169,33 +180,38 @@ public class GameProcessManagerTest {
 
             // WHEN
             processManager.startProcessFromConfiguration(processConfig);
-            String processId = processManager.getAllProcessUUIDs().iterator().next();
+            String processUUID = processManager.getAllProcessUUIDs().iterator().next();
             //Sleep to make sure onExit is executed
             Thread.sleep(200);
 
             // THEN
-            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(processId, 0, null);
+            verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(processUUID, 0, null);
             assertEquals(0, processManager.getAllProcessUUIDs().size());
         }
     }
 
     @Test
     public void GIVEN_processTerminatesAndNotifyTerminationFails_WHEN_processTerminates_THEN_swallowsException()
-            throws InterruptedException, BadExecutablePathException, AgentException {
+            throws InterruptedException, AgentException {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("someexecutable")
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
-            when(mockProcess.isAlive()).thenReturn(true);
-            // Call actual methods so call-back (BiFunction) is triggered
-            when(mockProcess.onExit()).thenCallRealMethod();
-
+            when(mockProcess.onExit()).thenReturn(new CompletableFuture<>());
+            when(mockProcess.destroyForcibly()).thenAnswer(it -> {
+                mockProcess.onExit().complete(mockProcess);
+                return mockProcess;
+            });
+            when(mockProcess.descendants()).thenReturn(Stream.empty());
             when(uploadGameSessionLogsCallableFactory.newUploadGameSessionLogsCallable(
                     anyString(), anyString(), eq(new ArrayList<>()), any()))
                     .thenReturn(mockUploadGameSessionLogsCallable);
@@ -205,20 +221,21 @@ public class GameProcessManagerTest {
 
             // WHEN
             processManager.startProcessFromConfiguration(processConfig);
-            String processId = processManager.getAllProcessUUIDs().iterator().next();
+            String processUUID = processManager.getAllProcessUUIDs().iterator().next();
+            processManager.terminateProcessByUUID(processUUID);
             //Sleep to make sure onExit is executed
             Thread.sleep(200);
 
             // THEN
             verify(mockTerminationEventManager, times(1))
-                    .notifyServerProcessTermination(processId, 0, null);
+                    .notifyServerProcessTermination(processUUID, 0, ProcessTerminationReason.SERVER_PROCESS_FORCE_TERMINATED);
             verify(executorService).submit(eq(mockUploadGameSessionLogsCallable));
             assertEquals(0, processManager.getAllProcessUUIDs().size());
         }
     }
 
     @Test
-    public void GIVEN_validProcessIdAndTerminationReason_WHEN_terminateProcessByUUID_THEN_terminatesProcess()
+    public void GIVEN_validProcessUUIDAndTerminationReason_WHEN_terminateProcessByUUID_THEN_terminatesProcess()
             throws AgentException, InterruptedException {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
@@ -226,7 +243,10 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -240,24 +260,24 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
 
             // WHEN
-            String processId = processManager.getAllProcessUUIDs().iterator().next();
-            processManager.terminateProcessByUUID(processId, ProcessTerminationReason.SERVER_PROCESS_TERMINATED_UNHEALTHY);
+            String processUUID = processManager.getAllProcessUUIDs().iterator().next();
+            processManager.terminateProcessByUUID(processUUID, ProcessTerminationReason.SERVER_PROCESS_TERMINATED_UNHEALTHY);
             Thread.sleep(200);
 
             // THEN
             assertEquals(0, processManager.getAllProcessUUIDs().size());
             verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
-                    eq(processId), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_TERMINATED_UNHEALTHY));
+                    eq(processUUID), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_TERMINATED_UNHEALTHY));
         }
     }
 
     @Test
-    public void GIVEN_invalidProcessId_WHEN_terminateProcessByUUID_THEN_doesNothing() {
+    public void GIVEN_invalidProcessUUID_WHEN_terminateProcessByUUID_THEN_doesNothing() {
         // GIVEN
-        final String badProcessUuid = "1234";
+        final String badProcessUUID = "1234";
 
         // WHEN
-        processManager.terminateProcessByUUID(badProcessUuid, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN);
+        processManager.terminateProcessByUUID(badProcessUUID, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN);
 
         // THEN - no exception
         assertEquals(0, processManager.getAllProcessUUIDs().size());
@@ -275,7 +295,10 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(3)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             ProcessBuilder processBuilder = new ProcessBuilder(new ImmutableList.Builder<String>()
@@ -310,7 +333,11 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
+
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -372,7 +399,11 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
+
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any()))
@@ -454,8 +485,11 @@ public class GameProcessManagerTest {
         final List<String> logPathsList = Arrays.asList("/log/path/1234", "C:\\Log\\Path\\1234", "/log/path/1234");
         final List<String> logPathsDedupedList = Arrays.asList("/log/path/1234", "C:\\Log\\Path\\1234");
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
             // Perform a more functional test to ensure the log paths get correctly sent on the termination hook
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -471,9 +505,9 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
 
             // WHEN
-            for (String processId : processManager.getAllProcessUUIDs()) {
-                processManager.updateProcessOnRegistration(processId, logPathsList);
-                processManager.terminateProcessByUUID(processId, ProcessTerminationReason.SERVER_PROCESS_CRASHED);
+            for (String processUUID : processManager.getAllProcessUUIDs()) {
+                processManager.updateProcessOnRegistration(processUUID, logPathsList);
+                processManager.terminateProcessByUUID(processUUID, ProcessTerminationReason.SERVER_PROCESS_CRASHED);
             }
 
             // THEN
@@ -487,12 +521,12 @@ public class GameProcessManagerTest {
     }
 
     @Test
-    public void GIVEN_processIdDoesNotExist_WHEN_setLogPathsForProcess_THEN_throwsNotFoundException() throws AgentException {
+    public void GIVEN_processUUIDDoesNotExist_WHEN_setLogPathsForProcess_THEN_throwsNotFoundException() throws AgentException {
         // GIVEN
         final List<String> logPathsList = Arrays.asList("/log/path/1234", "C:\\Log\\Path\\1234", "/log/path/1234");
 
         // WHEN/THEN
-        assertThrows(NotFoundException.class, () -> processManager.updateProcessOnRegistration(TEST_PROCESS_ID, logPathsList));
+        assertThrows(NotFoundException.class, () -> processManager.updateProcessOnRegistration(TEST_PROCESS_UUID, logPathsList));
     }
 
     @Test
@@ -505,8 +539,11 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
             // Perform a more functional test to ensure the log paths get correctly sent on the termination hook
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
@@ -522,9 +559,9 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
 
             // WHEN
-            for (String processId : processManager.getAllProcessUUIDs()) {
-                processManager.updateProcessOnGameSessionActivation(processId, TEST_GAME_SESSION_ID);
-                processManager.terminateProcessByUUID(processId, ProcessTerminationReason.SERVER_PROCESS_CRASHED);
+            for (String processUUID : processManager.getAllProcessUUIDs()) {
+                processManager.updateProcessOnGameSessionActivation(processUUID, TEST_GAME_SESSION_ID);
+                processManager.terminateProcessByUUID(processUUID, ProcessTerminationReason.SERVER_PROCESS_CRASHED);
             }
 
             // THEN
@@ -538,11 +575,11 @@ public class GameProcessManagerTest {
     }
 
     @Test
-    public void GIVEN_processIdDoesNotExist_WHEN_updateProcessOnGameSessionActivation_THEN_throwsNotFoundException()
+    public void GIVEN_processUUIDDoesNotExist_WHEN_updateProcessOnGameSessionActivation_THEN_throwsNotFoundException()
             throws NotFoundException {
         // WHEN/THEN
         assertThrows(NotFoundException.class, ()
-                -> processManager.updateProcessOnGameSessionActivation(TEST_PROCESS_ID, TEST_GAME_SESSION_ID));
+                -> processManager.updateProcessOnGameSessionActivation(TEST_PROCESS_UUID, TEST_GAME_SESSION_ID));
     }
 
     @Test
@@ -553,7 +590,10 @@ public class GameProcessManagerTest {
                 .concurrentExecutions(1)
                 .build();
 
-        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class)) {
+        try (MockedStatic<ProcessBuilderFactory> processBuilderFactory = mockStatic(ProcessBuilderFactory.class);
+             MockedStatic<ProcessDestroyerFactory> processDestroyerFactory = mockStatic(ProcessDestroyerFactory.class)) {
+            processDestroyerFactory.when(() -> ProcessDestroyerFactory.getProcessDestroyer(any()))
+                    .thenReturn(new WindowsProcessDestroyer(OperatingSystem.WINDOWS_2019));
             processBuilderFactory.when(() -> ProcessBuilderFactory.getProcessBuilder(any(), any()))
                     .thenReturn(processBuilderWrapper);
             when(processBuilderWrapper.buildProcess(any())).thenReturn(mockProcess);
