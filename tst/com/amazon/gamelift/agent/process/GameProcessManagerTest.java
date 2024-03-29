@@ -289,7 +289,7 @@ public class GameProcessManagerTest {
         final long pollWaitMillis = 100L;
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("sleep")
-                .parameters("60")
+                .parameters("100")
                 .concurrentExecutions(3)
                 .build();
 
@@ -356,7 +356,7 @@ public class GameProcessManagerTest {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("sleep")
-                .parameters("3")
+                .parameters("100")
                 .concurrentExecutions(3)
                 .build();
 
@@ -476,7 +476,7 @@ public class GameProcessManagerTest {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("sleep")
-                .parameters("10")
+                .parameters("100")
                 .concurrentExecutions(1)
                 .build();
 
@@ -533,7 +533,7 @@ public class GameProcessManagerTest {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("sleep")
-                .parameters("10")
+                .parameters("100")
                 .concurrentExecutions(1)
                 .build();
 

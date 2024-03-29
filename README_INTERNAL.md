@@ -271,13 +271,13 @@ scp user@cloud-desktop-address:/path/to/GameScaleServerSdkCSharp/src/GameScaleSe
 
 ### Set up and execute GameLiftAgent (Linux)
 
-1. Build GameLiftAgent: `brazil-build`
+1. Build GameLiftAgent: `mvn clean compile assembly:single test`
 1. Run the following with your Fleet and desired ComputeName: `export GAMELIFT_FLEET_ID=fleet-<id> && export GAMELIFT_COMPUTE_NAME=compute-1`
 1. Export dev AWS account temporary credentials to env vars: `ada cred update --account <account-id> --once --role Admin`
 1. Record your IP address with the following: `ifconfig | grep inet`
 1. Run this command to launch GameLiftAgent (substituting values as appropriate)
 ```
-sudo java -jar build/GameLiftAgent-1_0.jar \
+sudo java -jar target/GameLiftAgent-1.0.jar \
   -r us-west-2 \
   -glc environment-variable \
   -gleo 'https://gamelift-alpha.us-west-2.amazonaws.com' \
@@ -290,21 +290,21 @@ sudo java -jar build/GameLiftAgent-1_0.jar \
 
 ### Set up and execute GameLiftAgent (Windows)
 
-1. Build GameLiftAgent: `brazil-build`
+1. Build GameLiftAgent: `mvn clean compile assembly:single test`
 2. SCP transfer GameLiftAgent JAR to Windows machine (if necessary, such as from Cloud Desktop):
 ```
 1. Open `cmd.exe` on the Windows machine
 2. SCP the SDK file:
 
 scp <source> <destination>.
-scp user@cloud-desktop-address:/path/to/GameLiftAgent/build/GameLiftAgent/GameLiftAgent-1.0/AL2_x86_64/DEV.STD.PTHREAD/build/GameLiftAgent-1_0.jar "C:\Game\GameLiftAgent-1_0.jar"
+scp user@cloud-desktop-address:/path/to/GameLiftAgent/src/GameLiftAgent/target/GameLiftAgent-1.0.jar "C:\Game\GameLiftAgent-1_0.jar"
 ```
-3. Run the following with your Fleet and desired ComputeName in Windows PowerShell: 
+3. Run the following with your Fleet and desired ComputeName in Windows PowerShell:
 ```
 $Env:GAMELIFT_FLEET_ID = 'fleet-<id>'; $Env:GAMELIFT_COMPUTE_NAME = '<compute-name>';`
 ```
 4. Export dev AWS account PowerShell temporary credentials to env vars on Windows machine (fetch from Isengard)
-5. Obtain your IP address with the following in Windows PowerShell: 
+5. Obtain your IP address with the following in Windows PowerShell:
 ```
 Get-NetIPAddress
 ```
@@ -389,9 +389,9 @@ The application is configured to create a `logs` directory with a time-specific 
 The application log is configured to rotate every hour and be shared between the application and its subprocesses.
 
 #### Extra Logging from ProcessBuilder
-ProcessBuilder has a redirectError/Output which lets you redirect the I/O to a file. 
+ProcessBuilder has a redirectError/Output which lets you redirect the I/O to a file.
 
-For Linux: 
+For Linux:
 If you want to use this, you will need to remove the 'setsid' within the command to get the proper I/O to the error file.
 Setsid spins up the process within its own session (like a daemon). This ensures that if GameLiftAgent terminates, the process itself will not.
 
@@ -433,3 +433,17 @@ If the java version is not showing Java 17, then you will have to install Java 1
 Here are the instructions for [DevDesktop](https://w.amazon.com/bin/view/Java_17/#HHowtoinstallJDK17onDevDesktop) and for [macOS](https://w.amazon.com/bin/view/Java_17/#HHowtoinstallJDK17onmacOS).
 
 After you install Java 17 on your macOS, you may want to close your terminal and open a new one to open up a new Java 17 environment.
+
+### Building with Maven
+
+The following command will build the JAR with all necessary dependencies and put it into the `target/` subfolder:
+
+```
+mvn clean compile assembly:single
+```
+
+To run unit tests through Maven, use the following command:
+
+```
+mvn clean compile assembly:single test
+```
