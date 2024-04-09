@@ -15,13 +15,20 @@ This project is licensed under the Apache-2.0 License.
 ## Quick Start
 ### JDK Version
 GameLiftAgent was built with Java 17 and will require (at least) this version to compile.
-Check your java version.
+Check the java version.
 ```
 java -version
 ```
 If the java version is not showing Java 17, then you will have to install Java 17.
 
 ### Build GameLiftAgent using Maven
+Check the Maven version.
+```
+mvn -version
+```
+GameLiftAgent will require (at least) version 3.2.5.
+
+If the Maven version is not greater than version 3.2.5, then you will have to update the Maven version to be at least version 3.2.5.
 
 1. Navigate to the GameLiftAgent package root (directory including `pom.xml` file)
 2. Execute the following to download dependencies, compile the project and generate a standalone jar using Maven:
@@ -34,8 +41,42 @@ If this is successfully, then GameLiftAgent-1.0.jar will become available in the
 ls ./target/GameLiftAgent-1.0.jar
 ```
 
+### Before running the application/jar
+Have an active Anywhere fleet and an active compute for the fleet before running the JAR. The LaunchPath for the Server
+Process should be the location of a game build executable or Realtime Servers script.
+
+1. Copy the GameLiftAgent-1.0.jar to the directory (Example: /local/game or C:\game\).
+#### Linux
+```
+cp ./target/GameLiftAgent-1.0.jar /local/game
+```
+
+#### Powershell
+```
+Copy-Item -Path .\target\GameLiftAgent-1.0.jar -Destination C:\game\
+```
+
+2. Move the game executable to the same directory (/local/game).
+#### Linux
+```
+cp [GAME_EXECUTABLE] /local/game
+```
+
+#### Powershell
+```
+Copy-Item -Path [GAME_EXECUTABLE] -Destination C:\game\
+```
+
+3. Grant read and execute permissions to run the JAR and the game executable.
+#### Linux
+```
+sudo chmod 755 /local/game/GameLiftAgent-1.0.jar
+sudo chmod 755 /local/game/[GAME_EXECUTABLE]
+```
+
 ### Run the application/jar
-1. The standalone jar will be located in `./target/` and can be launched with a command such as the following:
+1. The standalone jar will be located in `./target/` and can be launched with a command such as the following (There are
+   some example launch commands listed at the end):
 ```
 java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
 ```
@@ -60,14 +101,14 @@ java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
     1. Optional - The source of credentials, which are used by the Amazon GameLift client make the `RegisterCompute` and `GetComputeAuthToken` API calls.
     1. Options are as follows (default is `instance-profile`):
         1. `instance-profile` - Uses credentials from the IAM profile associated with the Amazon GameLift EC2 fleet instance.
-        1. `container` - Uses credentials from an ECS container IAM profile. (this option is not yet available)
-        1. `environment-variable` - Uses temporary IAM role credentials exported to environment variables. (this option is not yet available)
+        1. `container` - Uses credentials from an ECS container IAM profile.
+        1. `environment-variable` - Uses temporary IAM role credentials exported to environment variables.
 1. `game-session-log-bucket` / `gslb`
     1. Optional - The name of an Amazon S3 bucket in the AWS account to upload game session logs.
     1. Using this option requires Amazon GameLift fleets to specify an `InstanceRoleArn`. The IAM role must include `s3:PutObject` permission.
     1. Using this option results in `InstanceRoleArn` credentials being fetched and cached via the web socket `GetFleetRoleCredentials` route.
 1. `ip-address` / `ip`
-    1. Optional - The IP address of the compute resource. (this option is not yet available)
+    1. Optional - The IP address of the compute resource.
     1. This option is used with Amazon GameLift Anywhere fleets only. Either `dns-name` or `ip-address` is required.
 1. `location` / `loc`
     1. Optional -  The location where the compute resource resides.
@@ -94,6 +135,11 @@ java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
 
 ```
 java -jar /<path>/<to>/GameLiftAgent-1.0.jar \
+  -c '<compute-name>' \
+  -f '<fleet id>' \
+  -loc 'custom-<custom location name>' \
+  -r '<region name>' \
+  -glc environment-variable \
   -gslb 'gameliftgamesessionlogS3bucketname' \
   -galb 'gameliftagentlogS3bucketname' \
   -galp '/local/gameliftagent/logs/'
@@ -103,7 +149,29 @@ java -jar /<path>/<to>/GameLiftAgent-1.0.jar \
 
 ```
 java -jar C:\\path\\to\\GameLiftAgent-1.0.jar `
-   -gslb 'gameliftgamesessionlogS3bucketname' `
-   -galb 'gameliftagentlogS3bucketname' `
-   -galp 'C:\\GameLiftAgent\\logs\\'
+  -c '<compute-name>' \
+  -f '<fleet id>' \
+  -loc 'custom-<custom location name>' \
+  -r '<region name>' \
+  -glc environment-variable \
+  -gslb 'gameliftgamesessionlogS3bucketname' `
+  -galb 'gameliftagentlogS3bucketname' `
+  -galp 'C:\\GameLiftAgent\\logs\\'
 ```
+
+### Example Environment Variables - Managed GameLift
+#### Linux
+```
+export GAMELIFT_FLEET_ID=fleet-<id>
+export GAMELIFT_COMPUTE_NAME=gamelift-compute-name
+export GAMELIFT_REGION=us-west-2
+export GAMELIFT_LOCATION=custom-<custom location name>
+``` 
+
+#### Windows
+```
+set GAMELIFT_FLEET_ID=fleet-<id>
+set GAMELIFT_COMPUTE_NAME=gamelift-compute-name
+set GAMELIFT_REGION=us-west-2
+set GAMELIFT_LOCATION=custom-<custom location name>
+``` 
