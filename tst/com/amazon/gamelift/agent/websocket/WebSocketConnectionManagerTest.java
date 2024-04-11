@@ -36,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -103,7 +104,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_validInputWithWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws InterruptedException, RuntimeException, AgentException {
+    public void GIVEN_validInputWithWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws RuntimeException, AgentException {
         // GIVEN
         when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(COMPUTE_AUTH_TOKEN);
 
@@ -128,7 +129,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_validInputWithoutWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws InterruptedException, RuntimeException, AgentException {
+    public void GIVEN_validInputWithoutWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws RuntimeException, AgentException {
         // GIVEN
         final WebSocketConnectionManager connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME, null,
@@ -208,8 +209,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_getComputeAuthTokenFails_WHEN_connect_THEN_throws() throws RuntimeException,
-            InvalidRequestException, InternalServiceException, NotFoundException {
+    public void GIVEN_getComputeAuthTokenFails_WHEN_connect_THEN_throws() throws RuntimeException {
         // GIVEN
         doThrow(RuntimeException.class).when(computeAuthTokenManager).getComputeAuthToken();
 
@@ -238,7 +238,7 @@ public class WebSocketConnectionManagerTest {
 
         // WHEN / THEN
         final RuntimeException e = assertThrows(RuntimeException.class, () -> connectionManager.connect());
-        assertTrue(e.getCause() instanceof InterruptedException);
+        assertInstanceOf(InterruptedException.class, e.getCause());
     }
 
     @Test
@@ -249,7 +249,7 @@ public class WebSocketConnectionManagerTest {
         when(mockFuture.get(anyLong(), any())).thenThrow(TimeoutException.class);
         // WHEN / THEN
         final RuntimeException e = assertThrows(RuntimeException.class, () -> connectionManager.connect());
-        assertTrue(e.getCause() instanceof TimeoutException);
+        assertInstanceOf(TimeoutException.class, e.getCause());
     }
 
     @Test
@@ -261,7 +261,7 @@ public class WebSocketConnectionManagerTest {
 
         // WHEN / THEN
         final RuntimeException e = assertThrows(RuntimeException.class, () -> connectionManager.connect());
-        assertTrue(e.getCause() instanceof ExecutionException);
+        assertInstanceOf(ExecutionException.class, e.getCause());
     }
 
     @Test

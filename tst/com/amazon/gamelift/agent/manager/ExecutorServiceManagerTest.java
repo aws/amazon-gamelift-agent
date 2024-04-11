@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ExecutorServiceManagerTest {
     private static final String EXECUTOR_SERVICE_NAME_1 = "executorServiceOne";
     private static final String EXECUTOR_SERVICE_NAME_2 = "executorServiceTwo";
-    private static int DEFAULT_THREAD_COUNT = 1;
+    private static final int DEFAULT_THREAD_COUNT = 1;
 
     @Test
     public void GIVEN_validInput_WHEN_getOrCreateScheduledThreadPoolExecutorService_THEN_executorCreated() {
@@ -115,7 +115,7 @@ public class ExecutorServiceManagerTest {
         executorServiceOne.submit(() -> {
             try {
                 Thread.sleep(100);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 // Do Nothing
             }
         });
@@ -142,7 +142,7 @@ public class ExecutorServiceManagerTest {
         executorServiceOne.execute(() -> {
             try {
                 Thread.sleep(500);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 // Do Nothing
             }
         });

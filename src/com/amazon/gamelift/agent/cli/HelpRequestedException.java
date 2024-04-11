@@ -11,7 +11,7 @@ public class HelpRequestedException extends RuntimeException {
      * Constructor for HelpRequestedException
      * @param message
      */
-    public HelpRequestedException(String message) {
+    public HelpRequestedException(final String message) {
         super(message);
     }
 }

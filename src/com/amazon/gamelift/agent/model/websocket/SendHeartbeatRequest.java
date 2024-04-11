@@ -34,7 +34,9 @@ public class SendHeartbeatRequest extends WebsocketRequest {
      * @param processList
      * @param heartbeatTimeMillis
      */
-    public SendHeartbeatRequest(final String status, final List<String> processList, final long heartbeatTimeMillis) {
+    public SendHeartbeatRequest(final @NonNull String status,
+                                final @NonNull List<String> processList,
+                                final long heartbeatTimeMillis) {
         this.status = status;
         this.processList = processList;
         this.heartbeatTimeMillis = heartbeatTimeMillis;

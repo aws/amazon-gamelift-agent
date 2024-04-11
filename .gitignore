@@ -1,0 +1,13 @@
+*.iml
+*.idea
+build
+.DS_Store
+cdk.out
+dist/
+*.zip
+.env
+node_modules/
+logs/
+.attach*
+annotation-generated-src*
+out/

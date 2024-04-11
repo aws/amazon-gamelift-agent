@@ -11,7 +11,7 @@ public class ConflictException extends AgentException {
     /**
      * Creates ConflictException with message and throwable
      */
-    public ConflictException(String message, Throwable exception) {
+    public ConflictException(final String message, final Throwable exception) {
         super(message, exception, false);
     }
 }

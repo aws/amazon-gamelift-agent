@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -29,8 +30,8 @@ public class LogFileHelper {
     private static final String ZIP_EXTENSION = ".zip";
     private static final String GZIP_EXTENSION = ".gz";
 
-    private File gameLiftAgentLogDirectory;
-    private FileFilter gameLiftAgentLogFileFilter;
+    private final File gameLiftAgentLogDirectory;
+    private final FileFilter gameLiftAgentLogFileFilter;
 
     /**
      * Constructor for LogFileHelper
@@ -49,7 +50,7 @@ public class LogFileHelper {
      * @return
      */
     public List<File> getArchivedGameLiftAgentLogs() {
-        return Arrays.stream(gameLiftAgentLogDirectory.listFiles(gameLiftAgentLogFileFilter))
+        return Arrays.stream(Objects.requireNonNull(gameLiftAgentLogDirectory.listFiles(gameLiftAgentLogFileFilter)))
                 .filter(this::isArchivedFile)
                 .collect(Collectors.toList());
     }
@@ -61,7 +62,7 @@ public class LogFileHelper {
      * @return an optional of the active log file
      */
     public Optional<File> getActiveGameLiftAgentLog() {
-        return Arrays.stream(gameLiftAgentLogDirectory.listFiles(gameLiftAgentLogFileFilter))
+        return Arrays.stream(Objects.requireNonNull(gameLiftAgentLogDirectory.listFiles(gameLiftAgentLogFileFilter)))
                 .filter(file -> LogConfigurationManager.APPLICATION_LOG_FILE_BASENAME.equals(file.getName()))
                 .findFirst();
     }

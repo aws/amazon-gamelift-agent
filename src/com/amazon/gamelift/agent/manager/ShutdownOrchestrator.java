@@ -50,7 +50,7 @@ public class ShutdownOrchestrator {
     // the full wait time configured below may not be available prior to instance termination.
     private static final Long LOG_UPLOAD_WAIT_TIME_MILLIS = 60000L;
     private static final String DEREGISTER_COMPUTE_SUCCESS_MESSAGE =
-            "Compute Deregistered - DeregisterCompute Completely Successfully";
+            "Compute Deregistered - DeregisterCompute Completed Successfully: {}";
 
     private final StateManager stateManager;
     private final HeartbeatSender heartbeatSender;
@@ -155,13 +155,13 @@ public class ShutdownOrchestrator {
     }
 
     /**
-     * A validation that is intended to be ran periodically to check if the Compute can terminate early if all processes
-     * have shut down. In the happy-case termination path, all of the processes will get notifications through the
+     * A validation that is intended to be run periodically to check if the Compute can terminate early if all processes
+     * have shut down. In the happy-case termination path, all the processes will get notifications through the
      * GameLift SDK Websocket to terminate and should cleanly shut themselves down. If all processes do that, then
      * the ProcessManager can skip the rest of the wait time for termination.
      */
     @VisibleForTesting synchronized void validateSafeTermination() {
-        int numProcessesActive = gameProcessManager.getAllProcessUUIDs().size();
+        final int numProcessesActive = gameProcessManager.getAllProcessUUIDs().size();
         if (numProcessesActive > 0) {
             log.info("Compute still has {} processes active - waiting for processes to exit cleanly",
                     numProcessesActive);
@@ -189,7 +189,7 @@ public class ShutdownOrchestrator {
         try {
             gameProcessManager.terminateAllProcessesForShutdown(
                     TOTAL_PROCESS_TERMINATION_WAIT_TIME_MS, PROCESS_TERMINATION_POLL_TIME_MS);
-        } catch (NotFinishedException e) {
+        } catch (final NotFinishedException e) {
             log.warn("Some processes didn't complete termination after waiting; continuing with instance shutdown", e);
         }
 
@@ -210,7 +210,7 @@ public class ShutdownOrchestrator {
     }
 
     private synchronized void deregisterCompute() {
-        DeregisterComputeRequest deregisterComputeRequest = new DeregisterComputeRequest()
+        final DeregisterComputeRequest deregisterComputeRequest = new DeregisterComputeRequest()
                 .withFleetId(fleetId)
                 .withComputeName(computeName);
         try {

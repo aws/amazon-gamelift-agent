@@ -40,11 +40,11 @@ public class AgentWebSocket {
 
     // This queue is used to store an ordered list of messages to be sent out over the websocket. Only one message may
     // be outgoing (IE actually sending text out) at once or IllegalStateException is thrown and message fails to send
-    // https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/WebSocket.html#sendText(java.lang.CharSequence,boolean)
+    // https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/WebSocket.html#sendText(java.lang.CharSequence,boolean
     private final Queue<WebsocketRequest> requestQueue = new LinkedList<>();
 
-    // Boolean flag for whether a message is currently being sent out over the websocket. When this is 'true' we will
-    // enqueue other incoming messages to be sent in order.
+    // Boolean flag for whether a message is currently being sent out over the websocket. When this is 'true'
+    // AgentWebSocket will enqueue other incoming messages to be sent in order.
     private boolean messageInFlight;
 
     /**
@@ -73,8 +73,8 @@ public class AgentWebSocket {
      * and this method will return the deserialized response.
      *
      * @param request - The message to send over the connection
-     * @param responseClass - The class we'll attempt to deserialize the response into
-     * @param timeout - The amount of time we'll block to wait for a response
+     * @param responseClass - The class to deserialize the response into
+     * @param timeout - The amount of time the function will wait for a response
      * @throws AgentException
      */
     public <T extends WebsocketResponse> T sendRequest(
@@ -89,9 +89,9 @@ public class AgentWebSocket {
         try {
             sendRequestAsync(request);
 
-            String webSocketResponse = responseFuture.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            final String webSocketResponse = responseFuture.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
 
-            AgentException responseException =
+            final AgentException responseException =
                     webSocketExceptionProvider.getExceptionFromWebSocketMessage(webSocketResponse);
             if (responseException != null) {
                 throw responseException;
@@ -104,14 +104,14 @@ public class AgentWebSocket {
         } catch (final ExecutionException | InterruptedException e) {
             log.error("Failed to process the response for request {}", request, e);
             throw new RuntimeException(e);
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             log.error("Failed to deserialize the response for request {}", request, e);
             throw new RuntimeException(e);
         } catch (final TimeoutException e) {
             log.error("Failed to receive a response for request {} in {}", request, timeout, e);
             throw new RuntimeException(e);
         } finally {
-            // Must be done within a finally to ensure we don't have memory leaks
+            // Must be done within a finally to ensure no memory leaks
             websocketListener.removeExpectedResponse(requestId);
         }
     }
@@ -146,7 +146,7 @@ public class AgentWebSocket {
     }
 
     /**
-     * Sends a message out over the web socket connection. This send returns a CompletableFuture. When this future
+     * Sends a message out over the web socket connection. This method returns a CompletableFuture. When this future
      * completes, `thenRun` will trigger a callback to the `handleSendTextCompletion` method, which is responsible
      * for continuing to send enqueued messages or for releasing the `messageInFlight` boolean if no work remains
      * @param message
@@ -158,7 +158,7 @@ public class AgentWebSocket {
                     = websocketSender.sendText(objectMapper.writeValueAsString(message), true);
             future.thenRun(this::handleSendTextCompletion);
             return future;
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             log.error("Failed to serialize websocket message: {}", message, e);
             throw new RuntimeException(e);
         }
@@ -194,7 +194,7 @@ public class AgentWebSocket {
         try {
             websocketSender.sendClose(WebSocket.NORMAL_CLOSURE, "GameLift agent requested Websocket closure")
                     .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.warn("Swallowing exception encountered when closing GameLiftAgent Websocket connection", e);
         }
     }

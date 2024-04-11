@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 public class LogConfigurationManager {
 
     public static final String APPLICATION_LOG_FILE_BASENAME = "gameliftagent.log";
-
     private static final String APP_NAME = "GameLiftAgent";
     private static final String LOG_PATTERN_LAYOUT = "%d{dd MMM yyyy HH:mm:ss,SSS} %highlight{[%p]} (%t) %c: %m%n";
     private static final String APPLICATION_LOG_FILE_PATTERN_FORMAT =
@@ -50,19 +49,19 @@ public class LogConfigurationManager {
     private static final int APPENDER_BUFFER_SIZE = 16 * 1024; // 16KB
 
     /**
-     * Configures loging setup
+     * Configures logging setup
      * @throws IOException
      */
     public static void configureLogging(final String cliGameLiftAgentLogPath) throws IOException {
         // Disable shutdown hook which automatically shuts down logging, this cuts off some logs
-        // we make in our own shutdown hooks if left enabled.
+        // made in own shutdown hooks if left enabled
         System.setProperty(DefaultShutdownCallbackRegistry.SHUTDOWN_HOOK_ENABLED, "false");
 
         final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
         final Configuration config = ctx.getConfiguration();
 
         // Log4j will automatically use a default configuration if log events are made before this method is called.
-        // Remove these appenders so that we can replace them with the ones initialized here.
+        // Remove these appenders so that they can be replaced with the ones initialized here.
         for (final String appenderName : config.getAppenders().keySet()) {
             config.getRootLogger().removeAppender(appenderName);
         }
@@ -71,7 +70,7 @@ public class LogConfigurationManager {
         config.addAppender(consoleAppender);
         config.getRootLogger().addAppender(consoleAppender, null, null);
 
-        boolean disableLogging = Boolean.parseBoolean(System.getProperty(DISABLE_LOGGING_SYSTEM_PROPERTY_NAME));
+        final boolean disableLogging = Boolean.parseBoolean(System.getProperty(DISABLE_LOGGING_SYSTEM_PROPERTY_NAME));
         if (!disableLogging) {
             final Appender applicationLogAppender = createApplicationLogFileAppender(config, cliGameLiftAgentLogPath);
             config.addAppender(applicationLogAppender);
@@ -101,10 +100,10 @@ public class LogConfigurationManager {
         } else {
             processManagerLogPath = OperatingSystem.fromSystemOperatingSystem().getAgentLogsFolder();
         }
-        Path activeProcessManagerLogFilePath = Paths.get(
+        final Path activeProcessManagerLogFilePath = Paths.get(
                 processManagerLogPath,
                 APPLICATION_LOG_FILE_BASENAME);
-        Path rotatedProcessManagerLogFilePath = Paths.get(
+        final Path rotatedProcessManagerLogFilePath = Paths.get(
                 processManagerLogPath,
                 APPLICATION_LOG_FILE_PATTERN_FORMAT);
         Files.createDirectories(activeProcessManagerLogFilePath.getParent());

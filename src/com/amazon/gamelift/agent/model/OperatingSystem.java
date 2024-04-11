@@ -10,6 +10,7 @@ import lombok.Getter;
 /**
  *  Specifies and describes Amazon GameLift's supported Operating Systems and their properties.
  */
+@Getter
 public enum OperatingSystem {
     WIN_2012("Windows Server 2012 R2", OperatingSystemFamily.WINDOWS),
     WINDOWS_2016("Windows Server 2016", OperatingSystemFamily.WINDOWS),
@@ -27,13 +28,13 @@ public enum OperatingSystem {
     private static final String WINDOWS_SERVER_2022_NAME = "Windows Server 2022";
     private static final String OS_NAME_SYSTEM_PROPERTY = "os.name";
 
-    @Getter private final String displayName;
-    @Getter private final OperatingSystemFamily operatingSystemFamily;
-    @Getter private String launchPathPrefix;
-    @Getter private String agentLogsFolder;
-    @Getter private String gameMetadataFolder;
-    @Getter private String gameServerCertificatesFolder;
-    @Getter private String pathSeparator;
+    private final String displayName;
+    private final OperatingSystemFamily operatingSystemFamily;
+    private String launchPathPrefix;
+    private String agentLogsFolder;
+    private String gameMetadataFolder;
+    private String gameServerCertificatesFolder;
+    private String pathSeparator;
 
     OperatingSystem(final String displayName,
                     final OperatingSystemFamily osFamily) {
@@ -77,7 +78,7 @@ public enum OperatingSystem {
      * @return The matching {@link OperatingSystem} value, or {@link OperatingSystem.INVALID} if no match is found.
      */
     public static OperatingSystem fromString(final String desiredOS) {
-        for (OperatingSystem os : values()) {
+        for (final OperatingSystem os : values()) {
             if (os.name().equalsIgnoreCase(desiredOS)) {
                 return os;
             }

@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException;
 
 @Slf4j
 public class ComputeAuthTokenManager {
-    private LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache;
+    private final LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache;
     /**
      *  When calling Amazon GameLift to get a ComputeAuthToken, if less than 2 minutes remain on expiration a new
      *  token is generated. If the cached value has less than 2 minutes remaining until expiration it should be
@@ -31,7 +31,7 @@ public class ComputeAuthTokenManager {
      * @param computeAuthTokenCache
      */
     @Inject
-    public ComputeAuthTokenManager(LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache) {
+    public ComputeAuthTokenManager(final LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache) {
         this.computeAuthTokenCache = computeAuthTokenCache;
     }
 
@@ -51,7 +51,7 @@ public class ComputeAuthTokenManager {
             } else {
                 return authTokenResponse.getAuthToken();
             }
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             log.error("Caught an exception while loading computeAuthToken from cache", e);
             throw new RuntimeException("Caught an exception while loading computeAuthToken from cache", e);
         }

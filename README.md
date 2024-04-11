@@ -63,7 +63,7 @@ java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
         1. `container` - Uses credentials from an ECS container IAM profile. (this option is not yet available)
         1. `environment-variable` - Uses temporary IAM role credentials exported to environment variables. (this option is not yet available)
 1. `game-session-log-bucket` / `gslb`
-    1. Optional - The name of an Amazon S3 bucket in the customer AWS account to upload game session logs.
+    1. Optional - The name of an Amazon S3 bucket in the AWS account to upload game session logs.
     1. Using this option requires Amazon GameLift fleets to specify an `InstanceRoleArn`. The IAM role must include `s3:PutObject` permission.
     1. Using this option results in `InstanceRoleArn` credentials being fetched and cached via the web socket `GetFleetRoleCredentials` route.
 1. `ip-address` / `ip`
@@ -74,7 +74,7 @@ java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
     1. Required for Amazon GameLift Anywhere fleets. Must match the custom location registered on the fleet.
     1. For Amazon GameLift EC2 fleets, this option is set by Amazon GameLift to environment variable `GAMELIFT_REGION`. No command line option required.
 1. `gamelift-agent-log-bucket` / `galb`
-    1. Optional - The name of an Amazon S3 bucket in the customer AWS account to upload logs for GameLiftAgent.
+    1. Optional - The name of an Amazon S3 bucket in the AWS account to upload logs for GameLiftAgent.
     1. Using this option requires Amazon GameLift fleets to specify an `InstanceRoleArn`. The IAM role must include `s3:PutObject` permission.
     1. Using this option results in `InstanceRoleArn` credentials being fetched and cached via the web socket `GetFleetRoleCredentials` route.
 1. `gamelift-agent-log-path` / `galp`

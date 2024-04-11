@@ -5,18 +5,18 @@ package com.amazon.gamelift.agent.websocket.handlers;
 
 import com.amazon.gamelift.agent.model.websocket.RefreshConnectionMessage;
 import com.amazon.gamelift.agent.websocket.WebSocketConnectionManager;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dagger.Lazy;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import dagger.Lazy;
 
 @ExtendWith(MockitoExtension.class)
 public class RefreshConnectionHandlerTest {
@@ -25,8 +25,6 @@ public class RefreshConnectionHandlerTest {
 
     @Mock
     private WebSocketConnectionManager connectionManager;
-    @Mock
-    private ObjectMapper objectMapper;
     @Mock
     private Lazy<WebSocketConnectionManager> lazyConnectionManager;
 

@@ -3,10 +3,10 @@
 # https://builderhub.corp.amazon.com/docs/bats/user-guide/transformers-lambda.html#how-it-works
 #
 # The GameLiftAgent produces a standalone JAR in the build, which contains all the dependencies.
-# This is the only JAR we need to deploy, so customize the archive system to only include that JAR
+# This is the only JAR GameLiftAgent needs to deploy, so customize the archive system to only include that JAR
 # and not include JARs for the rest of our dependencies.
 #
-# We're using archive_jars over archive_empty since archive_jars will validate that at least one file
+# Using archive_jars over archive_empty since archive_jars will validate that at least one file
 # gets transformed by the archive system
 archive_system: archive_jars
 archive_system_regex_exclude:

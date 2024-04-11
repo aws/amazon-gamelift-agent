@@ -93,7 +93,7 @@ public class LinuxProcessDestroyerTest {
      * This test creates actual processes, without child processes, destroys one, and verifies that the other is
      * still running correctly.
      */
-    @Disabled // Disabled since we cannot run sudo on builder tools hosts.  Remove to test locally.
+    @Disabled // Disabled in case sudo is not available. Remove annotation to test.
     @Test
     public void GIVEN_processesWithoutChildren_WHEN_destroyProcess_THEN_onlyKillsOneProcess()
             throws IOException, InterruptedException {
@@ -121,7 +121,7 @@ public class LinuxProcessDestroyerTest {
      * This test uses actual processes, which each create a child process, to verify that the child process is
      * killed when the parent is killed.  And also that the child of the second process is not killed accidentally.
      */
-    @Disabled // Disabled since we cannot run sudo on builder tools hosts.  Remove to test locally.
+    @Disabled // Disabled in case sudo is not available. Remove annotation to test.
     @Test
     public void GIVEN_processesWithChildren_WHEN_destroyProcess_THEN_onlyKillsOneProcessAndChild()
             throws IOException, InterruptedException {

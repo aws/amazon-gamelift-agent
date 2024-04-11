@@ -62,7 +62,7 @@ public final class Application {
             // Start the GameLiftAgent and wait for the main thread to terminate
             agent.start();
             Thread.currentThread().join();
-        } catch (HelpRequestedException e) {
+        } catch (final HelpRequestedException e) {
             // Exit gracefully if help requested
             System.exit(0);
         }

@@ -117,7 +117,7 @@ public class SendHeartbeatHandler extends MessageHandler<SendHeartbeatResponse> 
                 stateManager.reportComputeActive();
             }
         } else if (ComputeStatus.Initializing.name().equalsIgnoreCase(computeStatusFromResponse)) {
-            // Wait to transition to Activating until we receive Initializing from the server
+            // Wait to transition to Activating until Initializing is received from the server
             log.info("Received Initializing status from Heartbeat. Updating internal status to Activating");
             stateManager.reportComputeActivating();
         }

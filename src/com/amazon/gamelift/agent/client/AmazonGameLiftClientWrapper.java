@@ -44,7 +44,7 @@ public class AmazonGameLiftClientWrapper {
      * @throws NotFoundException
      * @throws InternalServiceException
      */
-    public GetComputeAuthTokenResponse getComputeAuthToken(GetComputeAuthTokenRequest request)
+    public GetComputeAuthTokenResponse getComputeAuthToken(final GetComputeAuthTokenRequest request)
             throws UnauthorizedException, InvalidRequestException, NotFoundException, InternalServiceException {
         try {
             final GetComputeAuthTokenResult result = amazonGameLift.getComputeAuthToken(request);
@@ -55,13 +55,13 @@ public class AmazonGameLiftClientWrapper {
                     .authToken(result.getAuthToken())
                     .expirationTimeEpochMillis(Instant.ofEpochMilli(result.getExpirationTimestamp().getTime()))
                     .build();
-        } catch (com.amazonaws.services.gamelift.model.UnauthorizedException e) {
+        } catch (final com.amazonaws.services.gamelift.model.UnauthorizedException e) {
             throw new UnauthorizedException("Failed to authorize request", e);
-        } catch (com.amazonaws.services.gamelift.model.InvalidRequestException e) {
+        } catch (final com.amazonaws.services.gamelift.model.InvalidRequestException e) {
             throw new InvalidRequestException("Invalid request", e);
-        } catch (com.amazonaws.services.gamelift.model.NotFoundException e) {
+        } catch (final com.amazonaws.services.gamelift.model.NotFoundException e) {
             throw new NotFoundException("Resource not found", e);
-        } catch (com.amazonaws.services.gamelift.model.InternalServiceException e) {
+        } catch (final com.amazonaws.services.gamelift.model.InternalServiceException e) {
             throw new InternalServiceException("Internal Server Issue", e);
         }
     }
@@ -75,7 +75,7 @@ public class AmazonGameLiftClientWrapper {
      * @throws ConflictException
      * @throws InternalServiceException
      */
-    public RegisterComputeResponse registerCompute(RegisterComputeRequest request) throws UnauthorizedException,
+    public RegisterComputeResponse registerCompute(final RegisterComputeRequest request) throws UnauthorizedException,
             InvalidRequestException, ConflictException, InternalServiceException {
         log.info("RegisterCompute request received. Processing...");
         try {
@@ -89,13 +89,13 @@ public class AmazonGameLiftClientWrapper {
                     .location(computeResult.getLocation())
                     .creationTime(computeResult.getCreationTime())
                     .build();
-        } catch (com.amazonaws.services.gamelift.model.UnauthorizedException e) {
+        } catch (final com.amazonaws.services.gamelift.model.UnauthorizedException e) {
             throw new UnauthorizedException("Failed to authorize request", e);
-        } catch (com.amazonaws.services.gamelift.model.InvalidRequestException e) {
+        } catch (final com.amazonaws.services.gamelift.model.InvalidRequestException e) {
             throw new InvalidRequestException("Invalid request", e);
-        } catch (com.amazonaws.services.gamelift.model.ConflictException e) {
+        } catch (final com.amazonaws.services.gamelift.model.ConflictException e) {
             throw new ConflictException("Resource already exists", e);
-        } catch (com.amazonaws.services.gamelift.model.InternalServiceException e) {
+        } catch (final com.amazonaws.services.gamelift.model.InternalServiceException e) {
             throw new InternalServiceException("Internal Server Issue", e);
         }
     }
@@ -109,19 +109,18 @@ public class AmazonGameLiftClientWrapper {
      * @throws NotFoundException
      * @throws InternalServiceException
      */
-    public DeregisterComputeResult deregisterCompute(DeregisterComputeRequest deregisterComputeRequest)
+    public DeregisterComputeResult deregisterCompute(final DeregisterComputeRequest deregisterComputeRequest)
             throws UnauthorizedException, InvalidRequestException, NotFoundException, InternalServiceException {
         log.info("DeregisterCompute request received. Processing...");
         try {
-            final DeregisterComputeResult deregisterComputeResult = amazonGameLift.deregisterCompute(deregisterComputeRequest);
-            return deregisterComputeResult;
-        } catch (com.amazonaws.services.gamelift.model.UnauthorizedException e) {
+            return amazonGameLift.deregisterCompute(deregisterComputeRequest);
+        } catch (final com.amazonaws.services.gamelift.model.UnauthorizedException e) {
             throw new UnauthorizedException("Failed to authorized request", e);
-        } catch (com.amazonaws.services.gamelift.model.InvalidRequestException e) {
+        } catch (final com.amazonaws.services.gamelift.model.InvalidRequestException e) {
             throw new InvalidRequestException("Invalid request", e);
-        } catch (com.amazonaws.services.gamelift.model.NotFoundException e) {
+        } catch (final com.amazonaws.services.gamelift.model.NotFoundException e) {
             throw new NotFoundException("Resource not found", e);
-        } catch (com.amazonaws.services.gamelift.model.InternalServiceException e) {
+        } catch (final com.amazonaws.services.gamelift.model.InternalServiceException e) {
             throw new InternalServiceException("Internal Server Issue", e);
         }
     }

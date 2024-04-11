@@ -68,8 +68,6 @@ public class GameProcessManagerTest {
     @Mock private ScheduledExecutorService executorService;
     private GameProcessManager processManager;
 
-    @Captor ArgumentCaptor<GameProcess> gameProcessCaptor;
-
     @BeforeEach
     public void setup() {
         // This test attempts to spin up a Linux Process
@@ -81,7 +79,7 @@ public class GameProcessManagerTest {
     public void teardown() {
         try {
             processManager.terminateAllProcessesForShutdown(0L, 0L);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Swallow Exception
         }
     }
@@ -155,12 +153,12 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
             assertEquals(1, processManager.getAllProcessUUIDs().size());
             // Single process id, pull it out of the set
-            String processUUID = processManager.getAllProcessUUIDs().iterator().next();
+            processManager.getAllProcessUUIDs().iterator().next();
         }
     }
 
     @Test
-    public void GIVEN_processTerminates_WHEN_processTerminates_THEN_reportTerminate() throws InterruptedException, BadExecutablePathException, AgentException {
+    public void GIVEN_processTerminates_WHEN_processTerminates_THEN_reportTerminate() throws InterruptedException, AgentException {
         // GIVEN
         final GameProcessConfiguration processConfig = GameProcessConfiguration.builder()
                 .launchPath("someexecutable")
@@ -505,7 +503,7 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
 
             // WHEN
-            for (String processUUID : processManager.getAllProcessUUIDs()) {
+            for (final String processUUID : processManager.getAllProcessUUIDs()) {
                 processManager.updateProcessOnRegistration(processUUID, logPathsList);
                 processManager.terminateProcessByUUID(processUUID, ProcessTerminationReason.SERVER_PROCESS_CRASHED);
             }
@@ -515,13 +513,13 @@ public class GameProcessManagerTest {
             verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
                     anyString(), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_CRASHED));
 
-            // Transiently tests that we generated the callable using the correct list of log paths
+            // Transiently tests that the callable is generated using the correct list of log paths
             verify(executorService).submit(eq(mockUploadGameSessionLogsCallable));
         }
     }
 
     @Test
-    public void GIVEN_processUUIDDoesNotExist_WHEN_setLogPathsForProcess_THEN_throwsNotFoundException() throws AgentException {
+    public void GIVEN_processUUIDDoesNotExist_WHEN_setLogPathsForProcess_THEN_throwsNotFoundException() {
         // GIVEN
         final List<String> logPathsList = Arrays.asList("/log/path/1234", "C:\\Log\\Path\\1234", "/log/path/1234");
 
@@ -559,7 +557,7 @@ public class GameProcessManagerTest {
             processManager.startProcessFromConfiguration(processConfig);
 
             // WHEN
-            for (String processUUID : processManager.getAllProcessUUIDs()) {
+            for (final String processUUID : processManager.getAllProcessUUIDs()) {
                 processManager.updateProcessOnGameSessionActivation(processUUID, TEST_GAME_SESSION_ID);
                 processManager.terminateProcessByUUID(processUUID, ProcessTerminationReason.SERVER_PROCESS_CRASHED);
             }
@@ -569,14 +567,13 @@ public class GameProcessManagerTest {
             verify(mockTerminationEventManager, times(1)).notifyServerProcessTermination(
                     anyString(), anyInt(), eq(ProcessTerminationReason.SERVER_PROCESS_CRASHED));
 
-            // Transiently tests that we generated the callable using the correct list of log paths
+            // Transiently tests that the callable is generated using the correct list of log paths
             verify(executorService).submit(eq(mockUploadGameSessionLogsCallable));
         }
     }
 
     @Test
-    public void GIVEN_processUUIDDoesNotExist_WHEN_updateProcessOnGameSessionActivation_THEN_throwsNotFoundException()
-            throws NotFoundException {
+    public void GIVEN_processUUIDDoesNotExist_WHEN_updateProcessOnGameSessionActivation_THEN_throwsNotFoundException() {
         // WHEN/THEN
         assertThrows(NotFoundException.class, ()
                 -> processManager.updateProcessOnGameSessionActivation(TEST_PROCESS_UUID, TEST_GAME_SESSION_ID));

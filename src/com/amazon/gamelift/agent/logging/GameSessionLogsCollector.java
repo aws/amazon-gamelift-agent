@@ -32,6 +32,7 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -48,7 +49,7 @@ public class GameSessionLogsCollector {
     private static final String LOG_ERROR_README_FILENAME = "ReadMe.txt";
 
     /**
-     * Creates zipped customer log file based on log paths and game session ID
+     * Creates zipped log file based on log paths and game session ID
      * @param logPaths
      * @param gameSessionId
      * @return
@@ -96,7 +97,7 @@ public class GameSessionLogsCollector {
 
         // Collect logs to zip file
         gameSessionLogPaths.addAll(expandWildcardLogPathsToFileLogPaths(gameSessionLogPaths, errorReadMeFile));
-        List<File> logFiles = copyLogFilesToTempDirectory(tempLogsDirectory, gameSessionLogPaths, errorReadMeFile);
+        copyLogFilesToTempDirectory(tempLogsDirectory, gameSessionLogPaths, errorReadMeFile);
         recordInvalidLogPaths(errorReadMeFile, invalidLogPaths);
         errorReadMeFile.close();
         writeZipFile(tempLogsDirectory);
@@ -105,7 +106,7 @@ public class GameSessionLogsCollector {
     }
 
     /**
-     * Deletes customer log files based on log paths.
+     * Deletes log files based on log paths.
      * @param logPaths
      */
     public void deleteGameSessionLogs(final List<String> logPaths) {
@@ -121,13 +122,13 @@ public class GameSessionLogsCollector {
             if (StringUtils.isBlank(logPath.getWildcardToGet())) {
                 log.info("Deleting GameSession log file: {}", logPath.getSourcePath());
                 try {
-                    File logFile = new File(logPath.getSourcePath()).getAbsoluteFile();
+                    final File logFile = new File(logPath.getSourcePath()).getAbsoluteFile();
                     if (logFile.isFile()) {
                         Files.deleteIfExists(logFile.toPath());
                     } else {
                         FileUtils.deleteDirectory(logFile);
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     log.error("Failed to delete GameSession log file: {}", logPath.getSourcePath(), e);
                 }
             }
@@ -135,23 +136,23 @@ public class GameSessionLogsCollector {
     }
 
     /**
-     * Checks for customer log paths with wildcards and expands these into log paths for individual matching files
+     * Checks for log paths with wildcards and expands these into log paths for individual matching files
      * @param logLocations GameSessionLogPath objects - paths for log file, relative path in zip and optional wildcard
-     * @param customerReadMeFile
+     * @param readMeFile
      * @return List of ConfiguredLogPaths to add to the overall list of paths
      */
     private List<GameSessionLogPath> expandWildcardLogPathsToFileLogPaths(
                                                             final List<GameSessionLogPath> logLocations,
-                                                            final GameSessionLogsErrorReadMeFile customerReadMeFile) {
-        List<GameSessionLogPath> addedLogPaths = new ArrayList<>();
+                                                            final GameSessionLogsErrorReadMeFile readMeFile) {
+        final List<GameSessionLogPath> addedLogPaths = new ArrayList<>();
 
-        for (GameSessionLogPath path : logLocations) {
-            String wildCard = path.getWildcardToGet();
+        for (final GameSessionLogPath path : logLocations) {
+            final String wildCard = path.getWildcardToGet();
             if (wildCard != null) {
                 final File sourceFolder = new File(path.getSourcePath());
 
                 if (sourceFolder.exists()) {
-                    for (File file : sourceFolder.listFiles()) {
+                    for (final File file : Objects.requireNonNull(sourceFolder.listFiles())) {
                         if (FilenameUtils.wildcardMatch(file.getName(), wildCard, IOCase.INSENSITIVE)) {
                             final String relativePathInZip = path.getRelativePathInZip();
                             String destinationPath = null;
@@ -162,8 +163,8 @@ public class GameSessionLogsCollector {
                         }
                     }
                 } else {
-                    if (customerReadMeFile != null) {
-                        customerReadMeFile.writeLine("Error: Missing file/directory\t" + sourceFolder);
+                    if (readMeFile != null) {
+                        readMeFile.writeLine("Error: Missing file/directory\t" + sourceFolder);
                     }
                     log.info("Missing file/directory: {}", sourceFolder);
                 }
@@ -174,25 +175,27 @@ public class GameSessionLogsCollector {
 
     private List<File> copyLogFilesToTempDirectory(final File tempLogsDirectory,
                                                    final List<GameSessionLogPath> logList,
-                                                   GameSessionLogsErrorReadMeFile customerReadMeFile) {
+                                                   final GameSessionLogsErrorReadMeFile readMeFile) {
         final List<String> alreadyCollectedPaths = new ArrayList<>();
         final List<File> logFiles = new ArrayList<>();
 
-        for (GameSessionLogPath logEntry : logList) {
+        for (final GameSessionLogPath logEntry : logList) {
             log.info("Attempting to collect log path: {}", logEntry.getSourcePath());
-            String logPath = logEntry.getSourcePath();
-            String fileName = FilenameUtils.getName(logPath);
-            String relativePath = logEntry.getRelativePathInZip() == null ? fileName : logEntry.getRelativePathInZip();
-            String sourcePath = logEntry.getSourcePath() == null ? fileName : logEntry.getSourcePath();
+            final String logPath = logEntry.getSourcePath();
+            final String fileName = FilenameUtils.getName(logPath);
+            final String relativePath = logEntry.getRelativePathInZip() == null
+                    ? fileName : logEntry.getRelativePathInZip();
+            final String sourcePath = logEntry.getSourcePath() == null
+                    ? fileName : logEntry.getSourcePath();
 
             try {
                 if (StringUtils.isEmpty(logPath)) {
                     continue;
                 }
 
-                File logFile = new File(logPath).getCanonicalFile();
-                String canonicalPath = logFile.getCanonicalPath();
-                File copiedLogFile = new File(tempLogsDirectory, relativePath);
+                final File logFile = new File(logPath).getCanonicalFile();
+                final String canonicalPath = logFile.getCanonicalPath();
+                final File copiedLogFile = new File(tempLogsDirectory, relativePath);
 
                 // Ignore log locations pointing to destination file and log paths searching for wild cards
                 if (canonicalPath.equals(tempLogsDirectory.getCanonicalPath()) || logEntry.getWildcardToGet() != null) {
@@ -204,13 +207,13 @@ public class GameSessionLogsCollector {
                 }
 
                 if (!logFile.exists()) {
-                    customerReadMeFile.writeLine("Error: Missing file/directory\t" + sourcePath);
+                    readMeFile.writeLine("Error: Missing file/directory\t" + sourcePath);
                     log.debug("Missing file/directory: {}", sourcePath);
                     continue;
                 }
 
                 if (!canRead(logFile)) {
-                    customerReadMeFile.writeLine("Error: No Read Permission\t" + sourcePath);
+                    readMeFile.writeLine("Error: No Read Permission\t" + sourcePath);
                     log.debug("Unreadable log: {}", sourcePath);
                     continue;
                 }
@@ -219,16 +222,16 @@ public class GameSessionLogsCollector {
                 if (logFile.isFile()) {
                     logFiles.add(copyLogFile(logFile, copiedLogFile));
 
-                    customerReadMeFile.writeLine("1 File Collected\t\t\t\t" + sourcePath);
+                    readMeFile.writeLine("1 File Collected\t\t\t\t" + sourcePath);
                     log.debug("Collected log: {}", sourcePath);
                 } else {
-                    List<File> dirFiles = copyDirectory(logFile, copiedLogFile, alreadyCollectedPaths);
+                    final List<File> dirFiles = copyDirectory(logFile, copiedLogFile, alreadyCollectedPaths);
                     logFiles.addAll(dirFiles);
 
-                    customerReadMeFile.writeLine(dirFiles.size() + " File(s) Collected\t\t\t\t" + sourcePath);
+                    readMeFile.writeLine(dirFiles.size() + " File(s) Collected\t\t\t\t" + sourcePath);
                 }
-            } catch (IOException e) {
-                customerReadMeFile.writeLine("Error: Internal Error\t" + sourcePath);
+            } catch (final IOException e) {
+                readMeFile.writeLine("Error: Internal Error\t" + sourcePath);
                 log.error("Error collecting log '{}': {}", logPath, e.getMessage(), e);
             }
         }
@@ -237,20 +240,21 @@ public class GameSessionLogsCollector {
         return logFiles;
     }
 
-    private void recordInvalidLogPaths(GameSessionLogsErrorReadMeFile customerReadMeFile,
-                                       List<String> invalidLogsPaths) {
+    private void recordInvalidLogPaths(final GameSessionLogsErrorReadMeFile readMeFile,
+                                       final List<String> invalidLogsPaths) {
         if (CollectionUtils.isNotEmpty(invalidLogsPaths)) {
-            for (String invalidLogPath : invalidLogsPaths) {
-                customerReadMeFile.writeLine("Error: Invalid Log Path\t" + invalidLogPath);
+            for (final String invalidLogPath : invalidLogsPaths) {
+                readMeFile.writeLine("Error: Invalid Log Path\t" + invalidLogPath);
                 log.debug("Invalid log path '{}'", invalidLogPath);
             }
         }
     }
 
-    private List<File> copyDirectory(final File srcDir, final File destDir,
+    private List<File> copyDirectory(final File srcDir,
+                                     final File destDir,
                                      final List<String> alreadyCopiedPaths) throws IOException {
         // Code taken from FileUtils.copyDirectory but modified to track copied directories
-        File[] srcFiles = srcDir.listFiles();
+        final File[] srcFiles = srcDir.listFiles();
         if (srcFiles == null) {
             // null if abstract pathname does not denote a directory, or if an I/O error occurs
             throw new IOException("Failed to list contents of " + srcDir);
@@ -268,20 +272,20 @@ public class GameSessionLogsCollector {
             throw new IOException("Destination '" + destDir + "' cannot be written to");
         }
 
-        List<File> logFiles = new ArrayList<>();
+        final List<File> logFiles = new ArrayList<>();
 
-        for (File srcFile : srcFiles) {
+        for (final File srcFile : srcFiles) {
             if (!canRead(srcFile)) {
                 continue;
             }
 
-            String canPath = srcFile.getCanonicalPath();
+            final String canPath = srcFile.getCanonicalPath();
             if (alreadyCopiedPaths.contains(canPath)) {
                 continue;
             }
             alreadyCopiedPaths.add(canPath);
 
-            File dstFile = new File(destDir, srcFile.getName());
+            final File dstFile = new File(destDir, srcFile.getName());
             if (srcFile.isDirectory()) {
                 logFiles.addAll(copyDirectory(srcFile, dstFile, alreadyCopiedPaths));
             } else {
@@ -293,12 +297,12 @@ public class GameSessionLogsCollector {
     }
 
     private boolean canRead(final File file) throws IOException {
-        Path path = Paths.get(file.getCanonicalPath());
+        final Path path = Paths.get(file.getCanonicalPath());
 
         if (SystemUtils.IS_OS_WINDOWS) {
-            AclFileAttributeView attrs = Files.getFileAttributeView(path, AclFileAttributeView.class);
+            final AclFileAttributeView attrs = Files.getFileAttributeView(path, AclFileAttributeView.class);
 
-            for (AclEntry entry: attrs.getAcl()) {
+            for (final AclEntry entry: attrs.getAcl()) {
                 if (entry.principal().getName().equals("WHITEWATER\\WhitewaterDeveloper")
                         && entry.type() == AclEntryType.DENY) {
                     return !entry.permissions().contains(AclEntryPermission.READ_DATA);
@@ -306,10 +310,10 @@ public class GameSessionLogsCollector {
             }
             return true;
         } else {
-            PosixFileAttributes attrs = Files.getFileAttributeView(path,
+            final PosixFileAttributes attrs = Files.getFileAttributeView(path,
                     PosixFileAttributeView.class).readAttributes();
 
-            boolean isInUsersGroup = attrs.group().getName()
+            final boolean isInUsersGroup = attrs.group().getName()
                     .equalsIgnoreCase("Users");
 
             return (isInUsersGroup && attrs.permissions().contains(
@@ -319,7 +323,7 @@ public class GameSessionLogsCollector {
         }
     }
 
-    private File copyLogFile(File logFile, File copiedLogFile) throws IOException {
+    private File copyLogFile(final File logFile, final File copiedLogFile) throws IOException {
         // Copy File to temp directory
         FileUtils.copyFile(logFile, copiedLogFile);
         return copiedLogFile;
@@ -330,40 +334,40 @@ public class GameSessionLogsCollector {
                 FileOutputStream fos = new FileOutputStream(directoryToZip.getCanonicalPath() + ".zip");
                 ZipOutputStream zos = new ZipOutputStream(fos)
         ) {
-            int baseDirLength = directoryToZip.getCanonicalPath().length() + 1;
+            final int baseDirLength = directoryToZip.getCanonicalPath().length() + 1;
             addToZip(directoryToZip, baseDirLength, zos);
             log.debug("Zip file successfully created");
-        } catch (FileNotFoundException e) {
+        } catch (final FileNotFoundException e) {
             log.error("{}.zip file not found: {}", directoryToZip.getPath(), e.getMessage(), e);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log.error("getCanonicalFile() failed for '{}': {}", directoryToZip.getPath(), e.getMessage(), e);
         }
     }
 
     private void addToZip(final File file, final int baseDirLength, final ZipOutputStream zos) {
         try {
-            if (file.isFile() || (file.isDirectory() && file.list().length == 0)) {
+            if (file.isFile() || (file.isDirectory() && Objects.requireNonNull(file.list()).length == 0)) {
                 // Add this entry to the zip.
                 String zipPath = StringUtils.substring(file.getCanonicalPath(), baseDirLength);
                 if (file.isDirectory()) {
                     zipPath += File.separator;
                 }
 
-                ZipEntry zipEntry = new ZipEntry(zipPath);
+                final ZipEntry zipEntry = new ZipEntry(zipPath);
                 zos.putNextEntry(zipEntry);
 
                 if (file.isFile()) {
                     try (FileInputStream fis = new FileInputStream(file)) {
-                        long bytesCopied = IOUtils.copyLarge(fis, zos);
+                        final long bytesCopied = IOUtils.copyLarge(fis, zos);
                         log.debug("Added to zip file: '{}' ({} byte(s))", file.getPath(), bytesCopied);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         log.error("Error writing data for '{}': {}", file.getPath(), e.getMessage(), e);
                     }
                 }
                 zos.closeEntry();
             } else {
                 // Recurse directory.
-                for (File subFile : file.listFiles()) {
+                for (final File subFile : Objects.requireNonNull(file.listFiles())) {
                     addToZip(subFile, baseDirLength, zos);
                 }
             }

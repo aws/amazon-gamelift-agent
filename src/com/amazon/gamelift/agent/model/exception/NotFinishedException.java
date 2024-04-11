@@ -11,14 +11,14 @@ public class NotFinishedException extends AgentException {
     /**
      * Creates NotFinishedException with message and throwable
      */
-    public NotFinishedException(String message, Throwable exception) {
+    public NotFinishedException(final String message, final Throwable exception) {
         super(message, exception, true);
     }
 
     /**
      * Creates NotFinishedException with message
      */
-    public NotFinishedException(String message) {
+    public NotFinishedException(final String message) {
         super(message, true);
     }
 }

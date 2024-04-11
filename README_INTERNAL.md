@@ -26,6 +26,15 @@ NOTE: This section is likely inaccurate for GameLiftAgent - it is an import from
 1. Post a CR with `gamelift-devs (TEAM)` as a required approver
 1. Push changes to mainline and monitor deployment until it reaches the end of the pipeline
 
+### Open Source Considerations
+Open source docs have guidance for a different copyright than we have rules for in GameScaleCheckstyle:
+https://w.amazon.com/bin/view/Open_Source/LicensingForGitHubProjects#HCopyrightDatesforAmazon-createdOpenSource
+ ```
+ /*
+  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+  */
+ ```
+
 ## Test GameLiftAgent with GameLift Anywhere Container Compute
 
 Reference this Quip document to generate the Container Image and test it on an Anywhere Fleet

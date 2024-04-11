@@ -4,6 +4,7 @@
 package com.amazon.gamelift.agent.model;
 
 import com.amazon.gamelift.agent.model.constants.GameLiftCredentials;
+
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;

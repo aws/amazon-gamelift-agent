@@ -157,12 +157,12 @@ public class WebSocketConnectionManager {
 
         log.info("Registering compute {}", registerComputeRequest);
         try {
-            // Save the SDK Websocket Endpoint from the response for use when we spin up processes
+            // Save the SDK Websocket Endpoint from the response for use when spinning up processes.
             // and pass it via environment variables
-            RegisterComputeResponse response = amazonGameLift.registerCompute(registerComputeRequest);
+            final RegisterComputeResponse response = amazonGameLift.registerCompute(registerComputeRequest);
             sdkWebsocketEndpointProvider.setSdkWebsocketEndpoint(response.getSdkWebsocketEndpoint());
             log.info("Successfully registered compute: {}", response);
-        } catch (ConflictException e) {
+        } catch (final ConflictException e) {
             log.info("Compute already registered. Treating as success due to likely occurrence of Cold Start.");
         } catch (final UnauthorizedException | InvalidRequestException
                        | InternalServiceException e) {
@@ -177,10 +177,10 @@ public class WebSocketConnectionManager {
         log.info("Creating Websocket connection to {}", webSocketEndpoint);
 
         final URI permanentConnectionUri = buildConnectionUri(webSocketEndpoint, authToken);
-        GameLiftAgentWebSocketListener webSocketListener = new GameLiftAgentWebSocketListener(messageHandlers,
+        final GameLiftAgentWebSocketListener webSocketListener = new GameLiftAgentWebSocketListener(messageHandlers,
                 objectMapper);
         try {
-            WebSocket connectedWebsocket =
+            final WebSocket connectedWebsocket =
                     webSocketBuilder.buildAsync(permanentConnectionUri, webSocketListener)
                                     .get(WEBSOCKET_CONNECT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             return new AgentWebSocket(connectedWebsocket, webSocketListener,
@@ -205,7 +205,7 @@ public class WebSocketConnectionManager {
                     .addParameter("ComputeName", computeName)
                     .addParameter("Authorization", authToken)
                     .build();
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             log.error("Failed to construct the GameLiftAgent's web socket URI", e);
             throw new RuntimeException("'" + webSocketEndpoint + "' endpoint is not a valid URL", e);
         }

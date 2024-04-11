@@ -25,7 +25,7 @@ public class RetryHelper {
      * @return Arbitrary return value from func
      * @throws Exception
      */
-    public static <V> V runRetryable(int numRetries, boolean exponentialBackoff, Callable<V> func)
+    public static <V> V runRetryable(final int numRetries, final boolean exponentialBackoff, final Callable<V> func)
             throws AgentException {
         double retryAttempt = 0;
         boolean shouldRetry = true;
@@ -33,32 +33,32 @@ public class RetryHelper {
         while (retryAttempt <= numRetries) {
            try {
                return func.call();
-           } catch (Exception e) {
-                double jitterRandomizationFactor = ThreadLocalRandom.current()
+           } catch (final Exception e) {
+               final double jitterRandomizationFactor = ThreadLocalRandom.current()
                         .nextDouble(1 - MAX_JITTER_RANDOMIZATION_FACTOR, 1 + MAX_JITTER_RANDOMIZATION_FACTOR);
-                long sleepIntervalMs = Math.round(Math.pow(2.0, retryAttempt) * EXPONENTIAL_BACKOFF_FACTOR_MS * jitterRandomizationFactor);
-                lastExceptionEncountered = e;
-                retryAttempt++;
-                log.warn("Action failed attempt {} / {}", retryAttempt, numRetries + 1, e);
+               final long sleepIntervalMs = Math.round(Math.pow(2.0, retryAttempt) * EXPONENTIAL_BACKOFF_FACTOR_MS * jitterRandomizationFactor);
+               lastExceptionEncountered = e;
+               retryAttempt++;
+               log.warn("Action failed attempt {} / {}", retryAttempt, numRetries + 1, e);
 
-                // If the exception received is a modeled exception in the GameLiftAgent code, see if a retry should be
-                // performed. If the exception isn't modeled in the GameLiftAgent code, retry by default.
-                if (e instanceof AgentException) {
-                    shouldRetry = ((AgentException) e).isRetryable();
-                }
+               // If the exception received is a modeled exception in the GameLiftAgent code, see if a retry should be
+               // performed. If the exception isn't modeled in the GameLiftAgent code, retry by default.
+               if (e instanceof AgentException) {
+                   shouldRetry = ((AgentException) e).isRetryable();
+               }
 
-                if (exponentialBackoff && shouldRetry && !forceDisableBackoff && retryAttempt <= numRetries) {
-                    log.info("Waiting {} milliseconds before retrying action.", sleepIntervalMs);
-                    try {
-                        Thread.sleep(sleepIntervalMs);
-                    } catch (InterruptedException ex) {
-                        log.error("Retryable action was interrupted.");
-                        throw new RuntimeException(ex);
-                    }
-                } else if (!shouldRetry) {
-                    log.warn("Exception type identified as not retryable, skipping retries. Exception was {}", e.getClass());
-                    break;
-                }
+               if (exponentialBackoff && shouldRetry && !forceDisableBackoff && retryAttempt <= numRetries) {
+                   log.info("Waiting {} milliseconds before retrying action.", sleepIntervalMs);
+                   try {
+                       Thread.sleep(sleepIntervalMs);
+                   } catch (final InterruptedException ex) {
+                       log.error("Retryable action was interrupted.");
+                       throw new RuntimeException(ex);
+                   }
+               } else if (!shouldRetry) {
+                   log.warn("Exception type identified as not retryable, skipping retries. Exception was {}", e.getClass());
+                   break;
+               }
            }
         }
 
@@ -76,7 +76,7 @@ public class RetryHelper {
      * @param func Callable to retry
      * @throws Exception
      */
-    public static <V> V runRetryable(Callable<V> func) throws AgentException {
+    public static <V> V runRetryable(final Callable<V> func) throws AgentException {
         final int defaultNumRetries = 2;
         return RetryHelper.runRetryable(defaultNumRetries, true, func);
     }

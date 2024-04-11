@@ -4,12 +4,8 @@
   -->
 <!DOCTYPE suppressions PUBLIC
         "-//Puppy Crawl//DTD Suppressions 1.1//EN"
-        "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
+        "classpath:com/puppycrawl/tools/checkstyle/suppressions_1_1.dtd">
 
-<!--
-    ~ Open source docs have guidance for a different copyright than we have rules for in GameScaleCheckstyle
-    ~ https://w.amazon.com/bin/view/Open_Source/LicensingForGitHubProjects#HCopyrightDatesforAmazon-createdOpenSource
--->
 <suppressions>
     <suppress checks="RegexpMultiline" files="com.amazon.gamelift.agent.*" />
     <suppress checks="FileLength" files="com.amazon.gamelift.agent.module.ConfigModule" />

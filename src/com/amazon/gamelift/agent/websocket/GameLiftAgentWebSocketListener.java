@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * The GameLift agent implementation of the Java 11 WebSocket.Listener.
  * This handles the logic for parsing messages over the WebSocket connection and determining how to process them.
- * It is associated with a WebSocket instance, but operates independently from it.
+ * It is associated with a WebSocket instance, but operates independently of it.
  *
  * See Java docs for more details:
  * https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/WebSocket.Listener.html
@@ -104,33 +104,33 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
         messageBuffer.append(data);
 
         if (last) {
-            String completedMessage = messageBuffer.toString();
+            final String completedMessage = messageBuffer.toString();
             messageBuffer.setLength(0); // Reset the buffer for following messages
 
             try {
                 final WebsocketResponse response = objectMapper.readValue(completedMessage, WebsocketResponse.class);
                 final String requestId = response.getRequestId();
                 final String action = response.getAction();
-                boolean synchonousRequestProcessed = false;
+                boolean synchronousRequestProcessed = false;
 
                 synchronized (openRequests) {
-                    // requestId will be null if we got a message instead of a response
+                    // requestId will be null if a message is received instead of a response
                     if (openRequests.containsKey(requestId)) {
                         openRequests.remove(requestId).complete(completedMessage);
-                        synchonousRequestProcessed = true;
+                        synchronousRequestProcessed = true;
                     }
                 }
 
-                // If we return the message via the openRequests queue, then that means it was a response that
-                // was being processed synchronously, and we don't need to invoke an async handler
-                if (!synchonousRequestProcessed) {
+                // If the function returns the message via the openRequests queue, then that means it was a response that
+                // was being processed synchronously, and the function doesn't need to invoke an async handler
+                if (!synchronousRequestProcessed) {
                     final MessageHandler<?> handler =
                             messageHandlers.getOrDefault(action, messageHandlers.get(WebSocketActions.Default.name()));
                     handler.handle(completedMessage);
                 }
-            } catch (JsonProcessingException | MalformedRequestException e) {
+            } catch (final JsonProcessingException | MalformedRequestException e) {
                 log.error("Failed to deserialize message {} into a response", completedMessage, e);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // Swallow and log any unknown exceptions that occur. Throwing an exception from the onText() handler
                 // will cause the WebSocket connection to be closed and the onError() handler to be triggered
                 log.error("Unexpected error occurred when processing WebSocket message: {}", completedMessage, e);
@@ -151,7 +151,7 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
      * NOTE: Make sure any requests enqueued are safely dequeued via removeExpectedResponse.
      *       Failure to do so will result in memory leaks.
      *
-     * @param requestId - the ID of the request which we're expecting a response for
+     * @param requestId - the ID of the request which the function is expecting a response for
      * @param responseFuture - the Future which will be completed once the response is received over the Websocket
      */
     void addExpectedResponse(final String requestId, final CompletableFuture<String> responseFuture) {
@@ -164,7 +164,7 @@ public class GameLiftAgentWebSocketListener implements WebSocket.Listener {
      * Dequeues the request ID from the openRequests queue. Should be utilized in a safe manner (i.e. finally blocks)
      * to ensure there's no memory leaks caused by not removing entries from the request queue.
      *
-     * @param requestId - the ID of the request which we're removing from the openRequests queue
+     * @param requestId - the ID of the request that the function is removing from the openRequests queue.
      */
     void removeExpectedResponse(final String requestId) {
         synchronized (openRequests) {

@@ -171,7 +171,7 @@ public class GameSessionLogsCollectorTest {
     }
 
     @Test
-    public void GIVEN_failedDeleteion_WHEN_deleteGameSessionLogs_THEN_continueToAllFiles() {
+    public void GIVEN_failedDeletion_WHEN_deleteGameSessionLogs_THEN_continueToAllFiles() {
         try (
                 final MockedStatic<Files> mockedFiles = mockStatic(Files.class);
                 final MockedStatic<FileUtils> mockedFileUtils = mockStatic(FileUtils.class)
@@ -209,7 +209,7 @@ public class GameSessionLogsCollectorTest {
         unzip(zipFile, ROOT_PATH_DOWNLOADED);
 
         // Check that files either do or do not exist (as expected) for provided log paths
-        for (String logPath: logPaths) {
+        for (final String logPath: logPaths) {
             File logFile = new File(ROOT_PATH_DOWNLOADED, logPath).getCanonicalFile();
 
             if (logPath.equals(missingLogPath)
@@ -282,14 +282,14 @@ public class GameSessionLogsCollectorTest {
             expectedReadMeContentList.add("Error: Invalid Log Path\t/privater/stuff.txt\n");
         }
 
-        for (String s : expectedReadMeContentList) {
+        for (final String s : expectedReadMeContentList) {
             assertTrue(readMeToString.contains(s),
                     String.format("Expected ReadMe file to contain line/content %s", s));
         }
     }
 
     private void createLogFiles() throws IOException {
-        for (String logPath: logPaths) {
+        for (final String logPath: logPaths) {
             switch(logPath) {
                 case emptyFolderPath:
                     new File(emptyFolderPath).mkdir();

@@ -11,14 +11,14 @@ public class NotFoundException extends AgentException {
     /**
      * Throws NotFoundException with message and throwable
      */
-    public NotFoundException(String message, Throwable exception) {
+    public NotFoundException(final String message, final Throwable exception) {
         super(message, exception, false);
     }
 
     /**
      * Throws NotFoundException with message
      */
-    public NotFoundException(String message) {
+    public NotFoundException(final String message) {
         super(message, false);
     }
 }

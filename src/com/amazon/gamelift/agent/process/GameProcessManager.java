@@ -85,7 +85,7 @@ public class GameProcessManager {
         final String processUuid;
         try {
             processUuid = gameProcess.start();
-        } catch (BadExecutablePathException e) {
+        } catch (final BadExecutablePathException e) {
             // Note: Since the process was not started, the process UUID will not be registered with GameLift.
             // The notify call is still made to report the launch failure here as a Fleet event.
             processTerminationEventManager.notifyServerProcessTermination(
@@ -116,7 +116,7 @@ public class GameProcessManager {
                         gameProcess.getProcessUUID(),
                         internalProcess.exitValue(),
                         gameProcess.getTerminationReason());
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 log.error("Encountered exception reporting process exit for process UUID {}",
                         gameProcess.getProcessUUID(), e);
             }
@@ -128,7 +128,7 @@ public class GameProcessManager {
                                 new ArrayList<String>(gameProcess.getLogPaths()),
                                 gameProcess.getGameSessionId());
                 executorService.submit(callable);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 log.error("Encountered exception during game session log upload for process UUID {}",
                         gameProcess.getProcessUUID(), e);
             }
@@ -217,10 +217,10 @@ public class GameProcessManager {
      */
     public void terminateAllProcessesForShutdown(
             final long totalWaitTimeMillis, final long pollWaitTimeMillis) throws NotFinishedException {
-        for (String processUuid : gameProcessByUUID.keySet()) {
+        for (final String processUuid : gameProcessByUUID.keySet()) {
             try {
                 terminateProcessByUUID(processUuid, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 log.warn("Ignoring exception caught while terminating process UUID {} for instance shut down",
                         processUuid, e);
             }
@@ -228,8 +228,8 @@ public class GameProcessManager {
 
         // Poll the GameProcessManager until all processes have been removed from the GameLift agent websocket connection.
         // This allows processes to exit using their normal termination hook and send their exit information via the GameLiftAgent Websocket connection
-        Instant processWaitTimeStart = Instant.now();
-        Instant processWaitTimeEnd = processWaitTimeStart.plusMillis(totalWaitTimeMillis);
+        final Instant processWaitTimeStart = Instant.now();
+        final Instant processWaitTimeEnd = processWaitTimeStart.plusMillis(totalWaitTimeMillis);
         int processesLeft = gameProcessByUUID.keySet().size();
         while (processesLeft > 0 && processWaitTimeEnd.isAfter(Instant.now())) {
             log.info("GameLift agent still waiting for {} more processes to complete termination",
@@ -237,7 +237,7 @@ public class GameProcessManager {
 
             try {
                 Thread.sleep(pollWaitTimeMillis);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 log.warn("Interrupted while waiting for processes to spin down");
             }
 
@@ -260,7 +260,7 @@ public class GameProcessManager {
      */
     public void updateProcessOnRegistration(final String processUuid, final List<String> logPaths)
             throws NotFoundException {
-        GameProcess gameProcess = gameProcessByUUID.get(processUuid);
+        final GameProcess gameProcess = gameProcessByUUID.get(processUuid);
         if (gameProcess != null) {
             gameProcess.setProcessStatus(ProcessStatus.Active);
             gameProcess.setLogPaths(logPaths);
@@ -280,7 +280,7 @@ public class GameProcessManager {
      */
     public void updateProcessOnGameSessionActivation(final String processUuid, final String gameSessionId)
             throws NotFoundException {
-        GameProcess gameProcess = gameProcessByUUID.get(processUuid);
+        final GameProcess gameProcess = gameProcessByUUID.get(processUuid);
         if (gameProcess != null) {
             gameProcess.setGameSessionId(gameSessionId);
         } else {

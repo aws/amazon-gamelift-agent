@@ -1,7 +1,6 @@
 /*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
-
 package com.amazon.gamelift.agent.utils;
 
 import com.google.gson.Gson;
@@ -55,7 +54,7 @@ public class EcsMetadataReader {
         final HttpResponse<String> response;
         try {
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());
         }
         return parseIdFromJsonField(response.body(), CONTAINER_ARN_FIELD);
@@ -75,13 +74,13 @@ public class EcsMetadataReader {
         final HttpResponse<String> response;
         try {
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e.getMessage());
         }
         return parseIdFromJsonField(response.body(), TASK_ARN_FIELD);
     }
 
-    private String parseIdFromJsonField(String jsonBody, String fieldName) {
+    private String parseIdFromJsonField(final String jsonBody, final String fieldName) {
         final JsonObject json = gson.fromJson(jsonBody, JsonObject.class);
         final String[] splitTaskArn = json.get(fieldName).toString().split(ARN_DELIMITER);
         final String untrimmedId = splitTaskArn[splitTaskArn.length - 1];

@@ -10,6 +10,8 @@ import com.amazon.gamelift.agent.model.exception.NotFoundException;
 import com.amazon.gamelift.agent.model.exception.AgentException;
 import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
 import com.google.common.cache.CacheLoader;
+
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Inject;
@@ -30,7 +32,7 @@ public class RuntimeConfigCacheLoader extends CacheLoader<String, RuntimeConfigu
     }
 
     @Override
-    public RuntimeConfiguration load(final String key) throws AgentException {
+    public @NonNull RuntimeConfiguration load(final @NonNull String key) throws AgentException {
         log.info("Sending DescribeRuntimeConfigurationRequest.");
         final DescribeRuntimeConfigurationResponse response = webSocketConnectionProvider.getCurrentConnection().sendRequest(
                 new DescribeRuntimeConfigurationRequest(), DescribeRuntimeConfigurationResponse.class, REFRESH_TIMEOUT);

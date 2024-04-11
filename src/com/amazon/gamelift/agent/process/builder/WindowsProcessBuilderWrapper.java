@@ -46,7 +46,7 @@ public class WindowsProcessBuilderWrapper implements ProcessBuilderWrapper {
     public WindowsProcessBuilderWrapper(final GameProcessConfiguration processConfiguration,
                                         @Named(ConfigModule.OPERATING_SYSTEM) final OperatingSystem operatingSystem) {
         if (!OperatingSystemFamily.WINDOWS.equals(operatingSystem.getOperatingSystemFamily())) {
-            //Creation validation. This class should only be used for Windows-based OS
+            // Creation validation. This class should only be used for Windows-based OS
             throw new IllegalArgumentException("Attempted to create Windows process for non Windows-based OS. Found "
                     + operatingSystem);
         }
@@ -56,18 +56,18 @@ public class WindowsProcessBuilderWrapper implements ProcessBuilderWrapper {
     }
 
     @Override
-    public Process buildProcess(Map<String, String> environmentVariables) throws BadExecutablePathException {
+    public Process buildProcess(final Map<String, String> environmentVariables) throws BadExecutablePathException {
 
         try {
             // Create an environment variable pointer; see javadoc comment on function (below)
-            Pointer envVars = createEnvironmentVariablePointer(environmentVariables);
+            final Pointer envVars = createEnvironmentVariablePointer(environmentVariables);
 
             // See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms686331(v=vs.85).aspx
-            WinBase.STARTUPINFO startupInfo = new WinBase.STARTUPINFO();
+            final WinBase.STARTUPINFO startupInfo = new WinBase.STARTUPINFO();
             startupInfo.lpDesktop = StringUtils.EMPTY;
 
             // See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms684873(v=vs.85).aspx
-            WinBase.PROCESS_INFORMATION processInformation = new WinBase.PROCESS_INFORMATION();
+            final WinBase.PROCESS_INFORMATION processInformation = new WinBase.PROCESS_INFORMATION();
 
             // See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms682429(v=vs.85).aspx
             final boolean processCreated =
@@ -87,19 +87,19 @@ public class WindowsProcessBuilderWrapper implements ProcessBuilderWrapper {
             if (processCreated) {
                 return new WindowsProcess(processInformation.hProcess, processInformation.dwProcessId);
             } else {
-                int errorCode = Kernel32.INSTANCE.GetLastError();
+                final int errorCode = Kernel32.INSTANCE.GetLastError();
                 // Exit code 2 implies that the executable path was not valid
-                // In case of linux we use isFile() API to determine if the executable path is valid
+                // In case of linux use isFile() API to determine if the executable path is valid
                 if (ProcessConstants.INVALID_LAUNCH_PATH_PROCESS_EXIT_CODE == errorCode) {
                     throw new BadExecutablePathException(String.format("Executable path (%s) is invalid.",
                                                                         processConfiguration.getLaunchPath()));
                 }
                 throw new Win32Exception(errorCode);
             }
-        } catch (BadExecutablePathException e) {
+        } catch (final BadExecutablePathException e) {
             log.error("Error starting windows process", e);
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Error starting windows process", e);
             throw new RuntimeException(e);
         }
@@ -124,55 +124,51 @@ public class WindowsProcessBuilderWrapper implements ProcessBuilderWrapper {
      * Each string is in the following form: name=value\0
      * Because the equal sign is used as a separator, it must not be used in the name of an environment variable.
      *
-     * You may see older code pull current environment variables through:
+     * To find older code pull current environment variables using:
      *     Userenv.INSTANCE.CreateEnvironmentBlock(environment, token, false);
      * Unfortunately, JNA doesn't make it easy to iterate through a given pointer as Windows uses UTF_16LE
      * (2 byte, Little Endian) while JNA pulls the chars as a single byte. To avoid doing any String encoding
-     * conversion, we're just using java System.getEnv() to get the vars.
+     * conversion, java System.getEnv() is used to get the vars.
      */
     private Pointer createEnvironmentVariablePointer(final Map<String, String> toBeSet) {
-        Map<String, String> completeEnvVars = new HashMap<>(toBeSet);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        final Map<String, String> completeEnvVars = new HashMap<>(toBeSet);
+        final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         // Windows is little endian
-        Charset charset = StandardCharsets.UTF_16LE;
+        final Charset charset = StandardCharsets.UTF_16LE;
 
-        Map<String, String> env = System.getenv();
+        final Map<String, String> env = System.getenv();
         // Push system env vars into byte stream
+        pushEnvVarsToByteStream(bos, charset, env);
+
+        // Pushing provided env vars to byte stream
+        pushEnvVarsToByteStream(bos, charset, completeEnvVars);
+
+        // env vars are terminated with an extra terminal char
+        bos.write(Character.MIN_VALUE);
+        bos.write(Character.MIN_VALUE);
+        final byte[] byteArray = bos.toByteArray();
+        log.debug("Generated environment vars: {}", new String(byteArray, StandardCharsets.UTF_16LE));
+        // Allocating a new block of memory to store the env vars and writing to said block
+        final Pointer pointer = new Memory(byteArray.length);
+        pointer.write(0, byteArray, 0, byteArray.length);
+        return pointer;
+    }
+
+    private void pushEnvVarsToByteStream(final ByteArrayOutputStream bos,
+                                         final Charset charset,
+                                         final Map<String, String> env) {
         env.forEach((key, value) -> {
             try {
                 bos.write(key.getBytes(charset));
                 bos.write("=".getBytes(charset));
                 bos.write(value.getBytes(charset));
-                // env vars are separated by \0. need to ensure we have two bytes for UTF_16 - \u0000
+                // env vars are separated by \0. Need to ensure there are two bytes for UTF_16 - \u0000
                 bos.write(Character.MIN_VALUE);
                 bos.write(Character.MIN_VALUE);
-            } catch (Exception e) {
-                log.error("Failed to write to buffer: {}", e);
+            } catch (final Exception e) {
+                log.error("Failed to write env var key: {}, value: {} to output stream.", key, value, e);
                 throw new RuntimeException(e);
             }
         });
-
-        // Pushing provided env vars to byte stream
-        completeEnvVars.forEach((key, value) -> {
-            try {
-                bos.write(key.getBytes(charset));
-                bos.write("=".getBytes(charset));
-                bos.write(value.getBytes(charset));
-                bos.write(Character.MIN_VALUE);
-                bos.write(Character.MIN_VALUE);
-            } catch (Exception e) {
-                log.error("Failed to write to buffer: {}", e);
-                throw new RuntimeException(e);
-            }
-        });
-        // env vars are terminated with an extra terminal char
-        bos.write(Character.MIN_VALUE);
-        bos.write(Character.MIN_VALUE);
-        byte[] byteArray = bos.toByteArray();
-        log.debug("Generated environment vars: {}", new String(byteArray, StandardCharsets.UTF_16LE));
-        // Allocating a new block of memory to store the env vars and writing to said block
-        Pointer pointer = new Memory(byteArray.length);
-        pointer.write(0, byteArray, 0, byteArray.length);
-        return pointer;
     }
 }

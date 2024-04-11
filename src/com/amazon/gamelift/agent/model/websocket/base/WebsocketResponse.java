@@ -11,16 +11,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+@Setter
+@Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class WebsocketResponse extends WebsocketMessage {
-    @Setter
-    @Getter
     @JsonProperty(value = "RequestId")
     private String requestId;
 
-    @Setter
-    @Getter
     @JsonProperty(value = "StatusCode")
     private Integer statusCode;
 
