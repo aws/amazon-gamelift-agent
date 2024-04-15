@@ -51,9 +51,9 @@ use new ComputeNames OR manually delete (in preprod) the corresponding Terminate
 
 ### Set up your dev AWS Account
 
-Until release, this testing requires adding your dev / test account ID to the External ProcessManager FAC:
+Until release, this testing requires adding your dev / test account ID to the Containers FAC:
 
-https://code.amazon.com/packages/GameScaleServiceFacConfig/blobs/mainline/--/features/policies/fac-external-process-manager.json
+https://code.amazon.com/packages/GameScaleServiceFacConfig/blobs/mainline/--/features/policies/feature-gamelift-containers.json
 
 If you want to capture GameLiftAgent and/or GameSession logs, create 1 or 2 S3 buckets in the AWS console.
 Create 2 buckets if you want GameLiftAgent and GameSession logs stored separately.
