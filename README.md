@@ -1,16 +1,9 @@
 ## GameLiftAgent
 GameLiftAgent is a Java application that is used to launch game server processes on Amazon GameLift fleets.
 
-This application, as provided, registers a compute resource for an existing Amazon GameLift fleet using the RegisterCompute
-API. It also calls GetComputeAuthToken to fetch an authorization token for the compute resource and uses it to make
-a web socket connection to the Amazon GameLift service.
-
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-This project is licensed under the Apache-2.0 License.
+This application registers a compute resource for an existing Amazon GameLift fleet using the RegisterCompute
+API. The application also calls the GetComputeAuthToken API to fetch an authorization token for the compute resource,
+using it to make a web socket connection to the Amazon GameLift service.
 
 ## Quick Start
 ### JDK Version
@@ -21,29 +14,30 @@ java -version
 ```
 If the java version is not showing Java 17, then you will have to install Java 17.
 
-### Build GameLiftAgent using Maven
-Check the Maven version.
+### Build the GameLiftAgent using Maven
+The GameLiftAgent requires a minimum version of 3.2.5. for Maven to run.
+Check your maven version with the command:
 ```
 mvn -version
 ```
-GameLiftAgent will require (at least) version 3.2.5.
 
-If the Maven version is not greater than version 3.2.5, then you will have to update the Maven version to be at least version 3.2.5.
+If the Maven version is less than version 3.2.5, you will have to update the Maven version to be at least version 3.2.5.
 
 1. Navigate to the GameLiftAgent package root (directory including `pom.xml` file)
 2. Execute the following to download dependencies, compile the project and generate a standalone jar using Maven:
 ```
 mvn clean compile assembly:single
 ```
-If this is successfully, then GameLiftAgent-1.0.jar will become available in the following path:
+If this successfully compiles, then GameLiftAgent-1.0.jar will become available in the following path:
 
 ```
 ls ./target/GameLiftAgent-1.0.jar
 ```
 
 ### Before running the application/jar
-Have an active Anywhere fleet and an active compute for the fleet before running the JAR. The LaunchPath for the Server
-Process should be the location of a game build executable or Realtime Servers script.
+Make sure you have an active Anywhere fleet and an active compute for the fleet before running the JAR.
+The LaunchPath for the Server Process should be the in the same location as a game build executable or
+Realtime Servers script. Use the following commands to perform the setup:
 
 1. Copy the GameLiftAgent-1.0.jar to the directory (Example: /local/game or C:\game\).
 #### Linux
@@ -56,7 +50,7 @@ cp ./target/GameLiftAgent-1.0.jar /local/game
 Copy-Item -Path .\target\GameLiftAgent-1.0.jar -Destination C:\game\
 ```
 
-2. Move the game executable to the same directory (/local/game).
+2. Then move the game executable to the same directory (/local/game).
 #### Linux
 ```
 cp [GAME_EXECUTABLE] /local/game
@@ -75,8 +69,9 @@ sudo chmod 755 /local/game/[GAME_EXECUTABLE]
 ```
 
 ### Run the application/jar
-1. The standalone jar will be located in `./target/` and can be launched with a command such as the following (There are
-   some example launch commands listed at the end):
+Use the following instructions to run the application:
+1. The standalone jar will be located in `./target/` and can be launched with a command such as the following
+(There are some example launch commands listed at the end):
 ```
 java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
 ```
@@ -175,3 +170,11 @@ set GAMELIFT_COMPUTE_NAME=gamelift-compute-name
 set GAMELIFT_REGION=us-west-2
 set GAMELIFT_LOCATION=custom-<custom location name>
 ``` 
+
+## Security
+
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+
+
+## License
+This project is licensed under the Apache-2.0 License.
