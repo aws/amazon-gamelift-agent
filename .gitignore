@@ -11,3 +11,4 @@ logs/
 .attach*
 annotation-generated-src*
 out/
+target/

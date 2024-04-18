@@ -93,20 +93,20 @@ public class LogConfigurationManager {
     }
 
     private static Appender createApplicationLogFileAppender(final Configuration config,
-                                                             final String cliProcessManagerLogPath) throws IOException {
-        final String processManagerLogPath;
-        if (!StringUtils.isBlank(cliProcessManagerLogPath)) {
-            processManagerLogPath = cliProcessManagerLogPath;
+                                                             final String cliGameLiftAgentLogPath) throws IOException {
+        final String agentLogPath;
+        if (!StringUtils.isBlank(cliGameLiftAgentLogPath)) {
+            agentLogPath = cliGameLiftAgentLogPath;
         } else {
-            processManagerLogPath = OperatingSystem.fromSystemOperatingSystem().getAgentLogsFolder();
+            agentLogPath = OperatingSystem.fromSystemOperatingSystem().getAgentLogsFolder();
         }
-        final Path activeProcessManagerLogFilePath = Paths.get(
-                processManagerLogPath,
+        final Path activeAgentLogFilePath = Paths.get(
+                agentLogPath,
                 APPLICATION_LOG_FILE_BASENAME);
-        final Path rotatedProcessManagerLogFilePath = Paths.get(
-                processManagerLogPath,
+        final Path rotatedAgentLogFilePath = Paths.get(
+                agentLogPath,
                 APPLICATION_LOG_FILE_PATTERN_FORMAT);
-        Files.createDirectories(activeProcessManagerLogFilePath.getParent());
+        Files.createDirectories(activeAgentLogFilePath.getParent());
 
         final PatternLayout layout = PatternLayout.newBuilder()
                 .withPattern(LOG_PATTERN_LAYOUT)
@@ -124,8 +124,8 @@ public class LogConfigurationManager {
                 .build();
 
         final RollingRandomAccessFileAppender applicationLogAppender = RollingRandomAccessFileAppender.newBuilder()
-                .withFileName(activeProcessManagerLogFilePath.toString())
-                .withFilePattern(rotatedProcessManagerLogFilePath.toString())
+                .withFileName(activeAgentLogFilePath.toString())
+                .withFilePattern(rotatedAgentLogFilePath.toString())
                 .withAppend(true)                    // Always append to existing log files
                 .withAdvertise(false)                // Do not advertise log4j config
                 .setBufferSize(APPENDER_BUFFER_SIZE) // Set custom buffer size. This appender type always uses buffered IO

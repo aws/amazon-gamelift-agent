@@ -19,7 +19,7 @@ public class NotifyProcessRegisteredHandler extends MessageHandler<NotifyProcess
 
     /**
      * Constructor for NotifyProcessRegisteredHandler
-     * See ProcessManagerWebSocketListener for message routing by Action
+     * See GameLiftAgentWebSocketListener for message routing by Action
      * @param objectMapper
      */
     @Inject

@@ -60,7 +60,7 @@ public class WebSocketConnectionProvider {
      * is saved in the event that there are in-flight messages being processed, but all outgoing messages will still
      * be sent on the new connection.
      *
-     * @param newConnection the instance of ProcessManagerWebSocket for the new active WebSocket connection
+     * @param newConnection the instance of AgentWebSocket for the new active WebSocket connection
      */
     @Synchronized("connectionLock")
     public void updateConnection(final AgentWebSocket newConnection) {

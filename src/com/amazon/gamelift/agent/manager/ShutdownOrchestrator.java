@@ -35,6 +35,7 @@ import static com.amazon.gamelift.agent.module.ConfigModule.FLEET_ID;
 import static com.amazon.gamelift.agent.module.ThreadingModule.GAME_SESSION_LOGS_UPLOAD_EXECUTOR;
 import static com.amazon.gamelift.agent.module.ThreadingModule.SHUTDOWN_ORCHESTRATOR_EXECUTOR;
 import static com.amazon.gamelift.agent.module.ConfigModule.IS_CONTAINER_FLEET;
+
 /**
  * Class responsible for shutting down GameLiftAgent. For cleanest shutdown this class should be used for all reasons.
  */
@@ -109,9 +110,9 @@ public class ShutdownOrchestrator {
     }
 
     /**
-     * Starts ProcessManager shutdown
+     * Starts Agent shutdown
      *
-     * @param terminationDeadline The deadline by which ProcessManager must be shut down
+     * @param terminationDeadline The deadline by which Agent must be shut down
      */
     public synchronized void startTermination(final Instant terminationDeadline, final boolean spotInterrupted) {
         if (this.isContainerFleet) {
@@ -120,7 +121,7 @@ public class ShutdownOrchestrator {
 
         final ComputeStatus computeStatus = stateManager.getComputeStatus();
         // If ComputeStatus is Terminating, it's possible there was a spot interruption during normal termination.
-        // In this case, schedule another "completeTermination" callback, so ProcessManager will terminate early enough.
+        // In this case, schedule another "completeTermination" callback, so Agent will terminate early enough.
         if (computeStatus == ComputeStatus.Terminated) {
             log.info("Compute is already terminated");
             return;
@@ -157,8 +158,8 @@ public class ShutdownOrchestrator {
     /**
      * A validation that is intended to be run periodically to check if the Compute can terminate early if all processes
      * have shut down. In the happy-case termination path, all the processes will get notifications through the
-     * GameLift SDK Websocket to terminate and should cleanly shut themselves down. If all processes do that, then
-     * the ProcessManager can skip the rest of the wait time for termination.
+     * GameLift SDK to terminate and should cleanly shut themselves down. If all processes do that, then
+     * the Agent can skip the rest of the wait time for termination.
      */
     @VisibleForTesting synchronized void validateSafeTermination() {
         final int numProcessesActive = gameProcessManager.getAllProcessUUIDs().size();
@@ -172,7 +173,7 @@ public class ShutdownOrchestrator {
     }
 
     /**
-     * Finishes the ProcessManager shutdown process. After this method gets called, the ProcessManager should exit.
+     * Finishes the Agent shutdown process. After this method gets called, the Agent should exit.
      */
     public synchronized void completeTermination() {
         if (this.isContainerFleet) {
