@@ -33,6 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 class GameLiftAgentWebSocketListener implements WebSocket.Listener {
 
+    // A status code used when the onError() handler needs to invoke the onClose() handler
+    private static final int ON_ERROR_CLOSE_STATUS_CODE = -1;
+
     // openRequests is a map used specifically for processing messages in a request/response manner.
     // Requests, and responses to those requests, will have an associated ID which is used to map responses to the
     // request. When a response is found when processing messages, the associated future in this map is completed.
@@ -71,8 +74,13 @@ class GameLiftAgentWebSocketListener implements WebSocket.Listener {
      */
     @Override
     public void onError(final WebSocket webSocket, final Throwable error) {
-        log.error(String.format("GameLift Agent encountered an error from Websocket connection: webSocketId=%s",
-                webSocketIdentifier), error);
+        String errorMessage = String.format(
+                "GameLiftAgent encountered an error from WebSocket connection: webSocketId=%s, message=%s",
+                webSocketIdentifier, error.getMessage());
+        log.error(errorMessage, error);
+
+        // Defer to the onClose() handler so that the disconnect-handling logic remains the same across these methods.
+        onClose(webSocket, ON_ERROR_CLOSE_STATUS_CODE, errorMessage);
     }
 
     /**
@@ -89,21 +97,22 @@ class GameLiftAgentWebSocketListener implements WebSocket.Listener {
         try {
             log.info("GameLiftAgent WebSocket connection closed: webSocketId={}, code={}, reason={}",
                     webSocketIdentifier, statusCode, reason);
+            // Notify the connection manager that the associated WebSocket connection has closed. If the disconnected
+            // connection was the currently used WebSocket connection, this will perform a WebSocket reconnect
+            webSocketConnectionManager.handleWebSocketDisconnect(webSocketIdentifier);
+        } catch (Exception e) {
+            log.error("Unexpected exception occurred when handling WebSocket onClose event", e);
+        } finally {
+            // After processing the disconnect message, cancel all pending requests
             synchronized (openRequests) {
                 for (final CompletableFuture<String> openRequestFuture : openRequests.values()) {
                     openRequestFuture.cancel(true);
                 }
                 openRequests.clear();
             }
+        }
 
-                // Notify the connection manager that the associated WebSocket connection has closed. If the disconnected
-                // connection was the currently used WebSocket connection, this will perform a WebSocket reconnect
-                webSocketConnectionManager.handleWebSocketDisconnect(webSocketIdentifier);
-            } catch (final Exception e) {
-                log.error("Unexpected exception occurred when handling WebSocket onClose event", e);
-            }
-
-            return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
+        return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
     }
 
     /**

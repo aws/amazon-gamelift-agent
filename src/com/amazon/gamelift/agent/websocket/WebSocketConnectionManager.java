@@ -177,6 +177,7 @@ public class WebSocketConnectionManager {
         final AgentWebSocket newConnection = RetryHelper.runRetryable(WEBSOCKET_RECONNECT_RETRY_ATTEMPTS,
                 () -> connectToWebSocket(currentConnection.getWebSocketEndpoint(),
                         computeAuthTokenManager.getComputeAuthToken()));
+        webSocketConnectionProvider.updateConnection(newConnection);
     }
 
     private Void registerCompute() throws AgentException {

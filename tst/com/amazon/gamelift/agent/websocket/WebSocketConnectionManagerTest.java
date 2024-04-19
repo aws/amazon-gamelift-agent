@@ -31,17 +31,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.WebSocket;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -49,6 +53,7 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,6 +76,7 @@ public class WebSocketConnectionManagerTest {
     private static final String COMPUTE_AUTH_TOKEN = "computeAuthToken";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    @Mock private GetComputeAuthTokenResponse getComputeAuthTokenResponse;
     @Mock private AmazonGameLiftClientWrapper gameLift;
     @Mock private WebSocketConnectionProvider webSocketConnectionProvider;
     @Mock private WebSocketExceptionProvider mockWebSocketExceptionProvider;
@@ -110,7 +116,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_validInputWithWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws RuntimeException, AgentException {
+    public void GIVEN_validInputWithWebSocketEndPointOverride_WHEN_connect_THEN_connects() throws RuntimeException, AgentException {
         // GIVEN
         when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(COMPUTE_AUTH_TOKEN);
 
@@ -134,7 +140,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_validInputWithoutWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws RuntimeException, AgentException {
+    public void GIVEN_validInputWithoutWebSocketEndPointOverride_WHEN_connect_THEN_connects() throws RuntimeException, AgentException {
         // GIVEN
         final WebSocketConnectionManager connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME, null,
@@ -267,7 +273,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_validInput_WHEN_reconnect_THEN_handshakesAndConnects() throws ConflictException,
+    public void GIVEN_validInput_WHEN_refreshWebSocketConnection_THEN_connects() throws ConflictException,
             UnauthorizedException, InvalidRequestException, InternalServiceException, NotFoundException {
         // GIVEN
         final RefreshConnectionMessage refreshConnectionMessage = new RefreshConnectionMessage();
@@ -290,5 +296,119 @@ public class WebSocketConnectionManagerTest {
 
         verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
     }
+
+    @Test
+    public void GIVEN_activeWebSocketDisconnected_WHEN_handleWebSocketDisconnect_THEN_reconnectsWebSocket() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(false);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+        when(mockAgentWebSocket.getWebSocketIdentifier()).thenReturn(WEBSOCKET_IDENTIFIER);
+        when(mockAgentWebSocket.getWebSocketEndpoint()).thenReturn(RECONNECT_WEB_SOCKET_ENDPOINT);
+
+        when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(RECONNECT_WEB_SOCKET_AUTH_TOKEN);
+
+        try (final MockedConstruction<AgentWebSocket> constructions = mockConstruction(
+                AgentWebSocket.class, this::setupGetComputeAuthTokenResponseMock)) {
+            // WHEN
+            connectionManager.handleWebSocketDisconnect(WEBSOCKET_IDENTIFIER);
+
+            // THEN
+            verify(gameLift, never()).registerCompute(any());
+            verify(gameLift, never()).getComputeAuthToken(any());
+
+            verify(mockWebSocketBuilder).buildAsync(uriCaptor.capture(), any(GameLiftAgentWebSocketListener.class));
+            final String newUri = uriCaptor.getValue().toString();
+            assertTrue(newUri.contains(RECONNECT_WEB_SOCKET_ENDPOINT));
+            assertTrue(newUri.contains(FLEET_ID));
+            assertTrue(newUri.contains(COMPUTE_NAME));
+            assertTrue(newUri.contains(RECONNECT_WEB_SOCKET_AUTH_TOKEN));
+
+            verify(computeAuthTokenManager).getComputeAuthToken();
+
+            final AgentWebSocket client = constructions.constructed().get(0);
+            verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
+            assertEquals(connectionCaptor.getValue(), client);
+        }
+    }
+
+    @Test
+    public void GIVEN_errorWhenEstablishingNewConnection_WHEN_handleWebSocketDisconnect_THEN_retriesAndReconnectsWebSocket() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(false);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+        when(mockAgentWebSocket.getWebSocketIdentifier()).thenReturn(WEBSOCKET_IDENTIFIER);
+        when(mockAgentWebSocket.getWebSocketEndpoint()).thenReturn(RECONNECT_WEB_SOCKET_ENDPOINT);
+        when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(RECONNECT_WEB_SOCKET_AUTH_TOKEN);
+
+        when(mockWebSocketBuilder.buildAsync(any(URI.class), any(GameLiftAgentWebSocketListener.class)))
+                .thenThrow(new RuntimeException("Test Error 1"))
+                .thenThrow(new RuntimeException("Test Error 2"))
+                .thenReturn(CompletableFuture.completedFuture(mockJavaWebSocket));
+
+        try (final MockedConstruction<AgentWebSocket> constructions = mockConstruction(
+                AgentWebSocket.class, this::setupGetComputeAuthTokenResponseMock)) {
+            // WHEN
+            connectionManager.handleWebSocketDisconnect(WEBSOCKET_IDENTIFIER);
+
+            // THEN
+            verify(gameLift, never()).registerCompute(any());
+            verify(gameLift, never()).getComputeAuthToken(any());
+
+            verify(mockWebSocketBuilder, times(3)).buildAsync(uriCaptor.capture(), any(GameLiftAgentWebSocketListener.class));
+            for (URI capturedUri : uriCaptor.getAllValues()) {
+                final String capturedUriString = capturedUri.toString();
+                assertTrue(capturedUriString.contains(RECONNECT_WEB_SOCKET_ENDPOINT));
+                assertTrue(capturedUriString.contains(FLEET_ID));
+                assertTrue(capturedUriString.contains(COMPUTE_NAME));
+                assertTrue(capturedUriString.contains(RECONNECT_WEB_SOCKET_AUTH_TOKEN));
+            }
+
+            verify(computeAuthTokenManager, times(3)).getComputeAuthToken();
+            final AgentWebSocket client = constructions.constructed().get(0);
+            verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
+            assertEquals(connectionCaptor.getValue(), client);
+        }
+    }
+
+    @Test
+    public void GIVEN_webSocketIdThatIsntTheActiveConnection_handleWebSocketDisconnect_THEN_doesNothing() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(false);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+        when(mockAgentWebSocket.getWebSocketIdentifier()).thenReturn(WEBSOCKET_IDENTIFIER);
+
+        // WHEN
+        connectionManager.handleWebSocketDisconnect("otherId");
+
+        // THEN
+        verify(webSocketConnectionProvider).getCurrentConnection();
+        verifyNoMoreInteractions(gameLift, computeAuthTokenManager, webSocketConnectionProvider,
+                mockWebSocketBuilder);
+    }
+
+    @Test
+    public void GIVEN_statusIsTerminated_handleWebSocketDisconnect_THEN_doesNothing() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(true);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+
+        // WHEN
+        connectionManager.handleWebSocketDisconnect("otherId");
+
+        // THEN
+        verify(webSocketConnectionProvider).getCurrentConnection();
+        verifyNoMoreInteractions(gameLift, computeAuthTokenManager, webSocketConnectionProvider,
+                mockWebSocketBuilder, mockAgentWebSocket);
+    }
+
+    private void setupGetComputeAuthTokenResponseMock(
+            final AgentWebSocket mock,
+            final MockedConstruction.Context context
+    ) throws AgentException {
+        when(mock.sendRequest(any(), eq(GetComputeAuthTokenResponse.class), any()))
+                .thenReturn(getComputeAuthTokenResponse);
+        doNothing().when(mock).closeConnection(any(Duration.class));
+    }
+
 
 }

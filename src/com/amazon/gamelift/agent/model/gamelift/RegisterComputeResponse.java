@@ -5,13 +5,14 @@ package com.amazon.gamelift.agent.model.gamelift;
 
 import java.util.Date;
 
+import com.amazon.gamelift.agent.model.websocket.base.WebsocketResponse;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 
 @Data
 @Builder
-public class RegisterComputeResponse {
+public class RegisterComputeResponse extends WebsocketResponse {
     @NonNull private final String fleetId;
     @NonNull private final String computeName;
     @NonNull private final String sdkWebsocketEndpoint;
