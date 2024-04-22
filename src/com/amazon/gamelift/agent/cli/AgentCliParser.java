@@ -81,14 +81,14 @@ public class AgentCliParser {
 
     /**
      * Constructor for AgentCliParser
-     * NOTE: slf4j / logging is intentionally omitted from this file. We configure log4j AFTER we parse information
+     * NOTE: slf4j / logging is intentionally omitted from this file. Log4j is configured AFTER information is parsed
      * from the CLI input because some of it may be used when configuring log4j.
      * @param parser
      * @param formatter
      * @param mapper
      */
     @Inject
-    public AgentCliParser(CommandLineParser parser, HelpFormatter formatter, ObjectMapper mapper) {
+    public AgentCliParser(final CommandLineParser parser, final HelpFormatter formatter, final ObjectMapper mapper) {
         this.parser = parser;
         this.formatter = formatter;
         this.mapper = mapper;
@@ -98,13 +98,13 @@ public class AgentCliParser {
     /**
      * Parse the commandline arguments and return a GameLiftAgent args object.
      * @param args Arguments to parse
-     * @return Parsged arguments object
+     * @return Parsed arguments object
      */
-    public AgentArgs parse(String[] args) {
+    public AgentArgs parse(final String[] args) {
         final Options options = createCommandLineOptions();
         final CommandLine commandLine = parseCommandLine(args, options);
 
-        // RuntimeConfiguration may be explicitly provided via CLI if desired. By default it will be fetched dynamically
+        // RuntimeConfiguration may be explicitly provided via CLI if desired. By default, it will be fetched dynamically
         // based on the latest RuntimeConfiguration set on the Fleet
         RuntimeConfiguration runtimeConfiguration = null;
         try {
@@ -113,7 +113,7 @@ public class AgentCliParser {
                 runtimeConfiguration = mapper.readValue(commandLine.getOptionValue(RUNTIME_CONFIGURATION_OPTION),
                         RuntimeConfiguration.class);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException(
                     String.format("Error processing provided RuntimeConfiguration. Error: %s", e));
         }
@@ -136,28 +136,25 @@ public class AgentCliParser {
         // GameLiftCredentials represents which credentials are used to create an Amazon GameLift client.
         // By default, GameLiftCredentials will be set to use EC2 InstanceProfileCredentials
         GameLiftCredentials gameLiftCredentials = GameLiftCredentials.INSTANCE_PROFILE;
-        Boolean isContainerFleet = false;
+        boolean isContainerFleet = false;
         if (commandLine.hasOption(GAMELIFT_CREDENTIALS)) {
-            switch (commandLine.getOptionValue(GAMELIFT_CREDENTIALS)) {
-                case ENVIRONMENT_VARIABLE_INPUT:
+            gameLiftCredentials = switch (commandLine.getOptionValue(GAMELIFT_CREDENTIALS)) {
+                case ENVIRONMENT_VARIABLE_INPUT ->
                     // Use credentials stored in environment variables when creating an Amazon GameLift client
-                    gameLiftCredentials = GameLiftCredentials.ENVIRONMENT_VARIABLE;
-                    break;
-                case CONTAINER_INPUT:
+                    GameLiftCredentials.ENVIRONMENT_VARIABLE;
+                case CONTAINER_INPUT ->
                     // Use credentials from an ECS container when creating an Amazon GameLift client
-                    gameLiftCredentials = GameLiftCredentials.CONTAINER;
-                    break;
-                case INSTANCE_PROFILE_INPUT:
+                    GameLiftCredentials.CONTAINER;
+                case INSTANCE_PROFILE_INPUT ->
                     // Use credentials from an EC2 instance profile to create an Amazon GameLift client
-                    gameLiftCredentials = GameLiftCredentials.INSTANCE_PROFILE;
-                    break;
-                default:
+                    GameLiftCredentials.INSTANCE_PROFILE;
+                default ->
                     // Anything besides the allowed options of GAMELIFT_CREDENTIALS will be rejected.
                     throw new IllegalArgumentException(
                             String.format("%s is not a valid option. Please use one of the follow options: "
                                             + "instance-profile | environment-variable | container",
                                     commandLine.getOptionValue(GAMELIFT_CREDENTIALS)));
-            }
+            };
         }
         if (COMPUTE_TYPE_CONTAINER.equals(systemEnvironmentProvider.getenv(GAMELIFT_COMPUTE_TYPE))) {
             gameLiftCredentials = GameLiftCredentials.CONTAINER;
@@ -230,30 +227,17 @@ public class AgentCliParser {
             gameLiftAgentWebSocketEndpoint = null;
         }
 
-        String certificatePath = commandLine.getOptionValue(CERTIFICATE_PATH);
-        if (StringUtils.isEmpty(certificatePath)) {
-            certificatePath = null;
-        }
-        String ipAddress = commandLine.getOptionValue(IP_ADDRESS);
-        if (StringUtils.isEmpty(ipAddress)) {
-            ipAddress = null;
-        }
-        String dnsName = commandLine.getOptionValue(DNS_NAME);
-        if (StringUtils.isEmpty(dnsName)) {
-            dnsName = null;
-        }
-        String gameSessionLogBucket = commandLine.getOptionValue(GAME_SESSION_LOG_BUCKET);
-        if (StringUtils.isEmpty(gameSessionLogBucket)) {
-            gameSessionLogBucket = null;
-        }
-        String gameliftAgentLogBucket = commandLine.getOptionValue(GAMELIFT_AGENT_LOG_BUCKET);
-        if (StringUtils.isEmpty(gameliftAgentLogBucket)) {
-            gameliftAgentLogBucket = null;
-        }
-        String gameliftAgentLogPath = commandLine.getOptionValue(GAMELIFT_AGENT_LOG_PATH);
-        if (StringUtils.isEmpty(gameliftAgentLogPath)) {
-            gameliftAgentLogPath = null;
-        }
+        final String certificatePath = getOptionValueOrNull(commandLine, CERTIFICATE_PATH);
+
+        final String ipAddress = getOptionValueOrNull(commandLine, IP_ADDRESS);
+
+        final String dnsName = getOptionValueOrNull(commandLine, DNS_NAME);
+
+        final String gameSessionLogBucket = getOptionValueOrNull(commandLine, GAME_SESSION_LOG_BUCKET);
+
+        final String gameliftAgentLogBucket = getOptionValueOrNull(commandLine, GAMELIFT_AGENT_LOG_BUCKET);
+
+        final String gameliftAgentLogPath = getOptionValueOrNull(commandLine, GAMELIFT_AGENT_LOG_PATH);
 
         return AgentArgs.builder()
                 .runtimeConfiguration(runtimeConfiguration)
@@ -373,7 +357,7 @@ public class AgentCliParser {
      * @param args args passed in
      * @return if help option present
      */
-    private void checkHelp(String[] args, Options options) {
+    private void checkHelp(final String[] args, final Options options) {
         final Options helpOptions = new Options();
         helpOptions.addOption(Option.builder()
                 .longOpt(HELP)
@@ -449,5 +433,10 @@ public class AgentCliParser {
                 GAMELIFT_CREDENTIALS, CONTAINER_INPUT,
                 GAME_SESSION_LOG_BUCKET, GAMELIFT_AGENT_LOG_BUCKET,
                 GAMELIFT_AGENT_LOG_PATH);
+    }
+
+    private static String getOptionValueOrNull(final CommandLine commandLine, final String optionValueKey) {
+        String optionValue = commandLine.getOptionValue(optionValueKey);
+        return StringUtils.isBlank(optionValue) ? null : optionValue;
     }
 }

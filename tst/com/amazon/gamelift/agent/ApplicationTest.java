@@ -1,7 +1,6 @@
 /*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
-
 package com.amazon.gamelift.agent;
 
 import static com.amazon.gamelift.agent.Application.JAVA_PROP_FORKJOINPOOL_PARALLELISM_KEY;
@@ -30,18 +29,18 @@ public class ApplicationTest {
     @SneakyThrows
     public void GIVEN_systemProperties_WHEN_mainIsCalled_THEN_javaSystemPropertiesAreSet() {
         // GIVEN
-        String params = "-r us-west-2 -fleet-id fleet-id -c compute_name -loc location";
-        String[] args = params.split(" ");
+        final String params = "-r us-west-2 -fleet-id fleet-id -c compute_name -loc location";
+        final String[] args = params.split(" ");
 
         // WHEN
         try {
             Application.main(args);
-        } catch (Exception ex) {
-            // Do nothing, we're only testing that the SystemProperties are set in this test.
+        } catch (final Exception ex) {
+            // Do nothing, only testing that the SystemProperties are set in this test.
         }
 
         // THEN
-        Map paramMap = new HashMap<String, String>();
+        final Map paramMap = new HashMap<String, String>();
         System.getProperties().forEach((k, v) -> {
             paramMap.put(k, v);
         });

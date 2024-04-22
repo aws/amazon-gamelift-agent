@@ -29,7 +29,7 @@ public class LinuxProcessDestroyer implements ProcessDestroyer {
     @Inject
     public LinuxProcessDestroyer(final OperatingSystem operatingSystem) {
         if (!OperatingSystemFamily.LINUX.equals(operatingSystem.getOperatingSystemFamily())) {
-            //Creation validation. This class should only be used for Linux-based OS
+            // Creation validation. This class should only be used for Linux-based OS
             throw new IllegalArgumentException("Attempted to create Linux process for non Linux-based OS. Found "
                     + operatingSystem);
         }
@@ -46,7 +46,7 @@ public class LinuxProcessDestroyer implements ProcessDestroyer {
     public LinuxProcessDestroyer(final OperatingSystem operatingSystem,
                                  final ProcessBuilder processBuilder) {
         if (!OperatingSystemFamily.LINUX.equals(operatingSystem.getOperatingSystemFamily())) {
-            //Creation validation. This class should only be used for Linux-based OS
+            // Creation validation. This class should only be used for Linux-based OS
             throw new IllegalArgumentException("Attempted to create Linux process for non Linux-based OS. Found "
                     + operatingSystem);
         }
@@ -66,8 +66,8 @@ public class LinuxProcessDestroyer implements ProcessDestroyer {
                 ImmutableList.of("setsid", "kill", "-9", String.format("-%s", processGroupId)));
         try {
             processBuilder.start().waitFor();
-        } catch (IOException | InterruptedException e) {
-            String errorMessage =
+        } catch (final IOException | InterruptedException e) {
+            final String errorMessage =
                     String.format("Failed to destroy process with PGID %s", processGroupId);
             log.error(errorMessage, e);
             throw new RuntimeException(errorMessage, e);

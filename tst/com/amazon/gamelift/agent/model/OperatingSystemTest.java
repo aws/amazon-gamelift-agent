@@ -1,6 +1,6 @@
 /*
-  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
-  */
+ * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+ */
 package com.amazon.gamelift.agent.model;
 
 import org.junit.jupiter.api.Test;

@@ -7,16 +7,16 @@ import lombok.Getter;
 
 @Getter
 public class GameSessionLogPath {
-    private String sourcePath;
-    private String relativePathInZip;
-    private String wildcardToGet;
+    private final String sourcePath;
+    private final String relativePathInZip;
+    private final String wildcardToGet;
 
     /**
      * Constructor for GameSessionLogPath
      * @param sourcePath - Path for the log file to be copied / uploaded
      * @param relativePathInZip - Relative path for the log file within the zip file created for upload
      */
-    public GameSessionLogPath(String sourcePath, String relativePathInZip) {
+    public GameSessionLogPath(final String sourcePath, final String relativePathInZip) {
         this(sourcePath, relativePathInZip, null);
     }
 
@@ -26,7 +26,7 @@ public class GameSessionLogPath {
      * @param relativePathInZip - Relative path for the log file within the zip file created for upload
      * @param wildcardToGet - Wildcard to be expanded into any matching existing log files
      */
-    public GameSessionLogPath(String sourcePath, String relativePathInZip, String wildcardToGet) {
+    public GameSessionLogPath(final String sourcePath, final String relativePathInZip, final String wildcardToGet) {
         this.sourcePath = sourcePath;
         this.relativePathInZip = relativePathInZip;
         this.wildcardToGet = wildcardToGet == null ? null : wildcardToGet.toLowerCase();

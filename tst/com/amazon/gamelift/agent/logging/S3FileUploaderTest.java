@@ -47,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class S3FileUploaderTest {
 
-    private static final String TEST_LOG = "test_log";
+    private static final String TEST_LOG_PATH = "tst/resources/test_log";
     private static final String BUCKET_NAME = RandomStringUtils.randomAlphanumeric(8);
     private static final String FILE_KEY = RandomStringUtils.randomAlphanumeric(12);
     private static final String FILE_NAME = RandomStringUtils.randomAlphanumeric(4);
@@ -83,8 +83,7 @@ public class S3FileUploaderTest {
     public void GIVEN_shouldZipFile_WHEN_uploadFile_THEN_zipsBeforeUpload() throws AgentException, IOException {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             // GIVEN - grab a local file to test with
-            final Path testPath = Paths.get(S3FileUploaderTest.class.getResource(TEST_LOG).getPath());
-            final File testFile = testPath.toFile();
+            final File testFile = new File(TEST_LOG_PATH);
 
             // WHEN
             uploader.uploadFile(BUCKET_NAME, FILE_KEY, testFile, true);
@@ -168,8 +167,7 @@ public class S3FileUploaderTest {
         try (MockedStatic<IOUtils> mockedIOUtils = mockStatic(IOUtils.class);
                 MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             // GIVEN - grab a local file to test with
-            final Path testPath = Paths.get(S3FileUploaderTest.class.getResource(TEST_LOG).getPath());
-            final File testFile = testPath.toFile();
+            final File testFile = new File(TEST_LOG_PATH);
             mockedIOUtils.when(() -> IOUtils.copy(any(InputStream.class), any(OutputStream.class)))
                     .thenThrow(IOException.class);
             log.info("##### {}", testFile.getName());

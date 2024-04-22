@@ -3,6 +3,7 @@
  */
 package com.amazon.gamelift.agent.websocket;
 
+import com.amazon.gamelift.agent.manager.StateManager;
 import com.amazon.gamelift.agent.model.exception.ConflictException;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
@@ -25,6 +26,7 @@ import org.apache.http.client.utils.URIBuilder;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,9 +39,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 @Slf4j
+@Singleton
 public class WebSocketConnectionManager {
     private static final Duration WEBSOCKET_CONNECT_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration WEBSOCKET_CLOSE_TIMEOUT = Duration.ofSeconds(5);
     private static final int MAX_REGISTER_COMPUTE_RETRIES = 8;
+
+    // A maximum number of times GameLift Agent will attempt to reconnect the WebSocket in the event of an unexpected
+    // disconnection. Given the default configurations defined in RetryHelper, this will allow the manager to retry
+    // for up to a total of 6.5 minutes of backoff time.
+    private static final int WEBSOCKET_RECONNECT_RETRY_ATTEMPTS = 30;
 
     private final AmazonGameLiftClientWrapper amazonGameLift;
     private final String fleetId;
@@ -51,30 +60,16 @@ public class WebSocketConnectionManager {
     private final String dnsName;
     private final String gameLiftAgentWebSocketEndpointOverride;
     private final WebSocketConnectionProvider webSocketConnectionProvider;
-    private final SdkWebsocketEndpointProvider sdkWebsocketEndpointProvider;
+    private final SdkWebsocketEndpointProvider sdkWebSocketEndpointProvider;
     private final WebSocketExceptionProvider webSocketExceptionProvider;
     private final Map<String, MessageHandler<?>> messageHandlers;
     private final ObjectMapper objectMapper;
     private final WebSocket.Builder webSocketBuilder;
     private final ComputeAuthTokenManager computeAuthTokenManager;
+    private final StateManager stateManager;
 
     /**
      * Constructor for WebSocketConnectionManager
-     * @param amazonGameLift
-     * @param fleetId
-     * @param computeName
-     * @param region
-     * @param location
-     * @param ipAddress
-     * @param certificatePath
-     * @param dnsName
-     * @param gameLiftAgentWebSocketEndpointOverride
-     * @param webSocketConnectionProvider
-     * @param sdkWebsocketEndpointProvider
-     * @param messageHandlers
-     * @param objectMapper
-     * @param webSocketBuilder
-     * @param computeAuthTokenManager
      */
     @Inject
     public WebSocketConnectionManager(
@@ -89,12 +84,13 @@ public class WebSocketConnectionManager {
             @Named(ConfigModule.GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE) @Nullable final String
                     gameLiftAgentWebSocketEndpointOverride,
             final WebSocketConnectionProvider webSocketConnectionProvider,
-            final SdkWebsocketEndpointProvider sdkWebsocketEndpointProvider,
+            final SdkWebsocketEndpointProvider sdkWebSocketEndpointProvider,
             final WebSocketExceptionProvider webSocketExceptionProvider,
             final Map<String, MessageHandler<?>> messageHandlers,
             final ObjectMapper objectMapper,
             final WebSocket.Builder webSocketBuilder,
-            final ComputeAuthTokenManager computeAuthTokenManager) {
+            final ComputeAuthTokenManager computeAuthTokenManager,
+            final StateManager stateManager) {
         this.amazonGameLift = amazonGameLift;
         this.fleetId = fleetId;
         this.computeName = computeName;
@@ -105,16 +101,19 @@ public class WebSocketConnectionManager {
         this.dnsName = dnsName;
         this.gameLiftAgentWebSocketEndpointOverride = gameLiftAgentWebSocketEndpointOverride;
         this.webSocketConnectionProvider = webSocketConnectionProvider;
-        this.sdkWebsocketEndpointProvider = sdkWebsocketEndpointProvider;
+        this.sdkWebSocketEndpointProvider = sdkWebSocketEndpointProvider;
         this.webSocketExceptionProvider = webSocketExceptionProvider;
         this.messageHandlers = messageHandlers;
         this.objectMapper = objectMapper;
         this.webSocketBuilder = webSocketBuilder;
         this.computeAuthTokenManager = computeAuthTokenManager;
+        this.stateManager = stateManager;
     }
 
     /**
-     * Connect to websocket
+     * Performs the initial WebSocket connection flow to register GameLift Agent
+     * as a compute with GameLift and connecting to the WebSocket. This should only be
+     * called once when GameLift Agent starts.
      */
     public void connect() {
         try {
@@ -125,24 +124,59 @@ public class WebSocketConnectionManager {
 
         final String webSocketEndpoint = buildWebSocketEndpoint();
         final String computeAuthToken = computeAuthTokenManager.getComputeAuthToken();
-        final AgentWebSocket connection = connectToWebsocket(webSocketEndpoint, computeAuthToken);
+        final AgentWebSocket connection = connectToWebSocket(webSocketEndpoint, computeAuthToken);
 
         webSocketConnectionProvider.setCurrentAuthToken(computeAuthToken);
         webSocketConnectionProvider.updateConnection(connection);
     }
 
     /**
-     * Reconnect to websocket
-     * @param reconnectMessage
+     * Performs a WebSocket connection refresh. Refreshes occur when a new connection needs to be created
+     * in order to persist the WebSocket connection for an extended period of time. A fresh ComputeAuthToken is also
+     * received through this message, which will be saved for later use.
+     *
+     * @param reconnectMessage message from the WebSocket that's received when GameLift Agent needs to refresh
      */
-    public void reconnect(final RefreshConnectionMessage reconnectMessage) {
+    public void refreshWebSocketConnection(final RefreshConnectionMessage reconnectMessage)
+            throws InternalServiceException {
         final String refreshConnectionEndpoint = reconnectMessage.getRefreshConnectionEndpoint();
         final String refreshConnectionAuthToken = reconnectMessage.getAuthToken();
-        log.info("Starting refresh of Websocket connection to endpoint {}", refreshConnectionEndpoint);
+        log.info("Starting refresh of WebSocket connection to endpoint {}", refreshConnectionEndpoint);
 
-        final AgentWebSocket newConnection = connectToWebsocket(refreshConnectionEndpoint,
+        final AgentWebSocket newConnection = connectToWebSocket(refreshConnectionEndpoint,
                 refreshConnectionAuthToken);
         webSocketConnectionProvider.setCurrentAuthToken(refreshConnectionAuthToken);
+        webSocketConnectionProvider.updateConnection(newConnection);
+    }
+
+    /**
+     * Processes the business logic that is needed when a WebSocket disconnection occurs. A unique ID is utilized
+     * to identify each WebSocket connection, and this logic uses that to determine if the disconnection occurred
+     * on the active/primary WebSocket connection. If so, GameLift Agent will attempt to reconnect to the WebSocket
+     * using the previous endpoint/AuthToken used.
+     *
+     * @param disconnectedWebSocketIdentifier the unique ID used for the WebSocket connection that disconnected
+     * @throws InternalServiceException thrown if this method is called before ever establishing a connection
+     */
+    public void handleWebSocketDisconnect(final String disconnectedWebSocketIdentifier)
+            throws AgentException {
+        final AgentWebSocket currentConnection = webSocketConnectionProvider.getCurrentConnection();
+        if (stateManager.isComputeTerminated()) {
+            log.info("Received WebSocket disconnect while in the Terminated status; not performing a WebSocket reconnect");
+            return;
+        } else if (!disconnectedWebSocketIdentifier.equals(currentConnection.getWebSocketIdentifier())) {
+            log.info("Disconnected WebSocket connection with ID {} is not the current WebSocket connection - "
+                    + "not performing a WebSocket reconnect", disconnectedWebSocketIdentifier);
+            return;
+        }
+
+        log.error("Encountered an unexpected disconnection for the primary WebSocket connection with ID: {}; "
+                        + "Attemping to reconnect to endpoint: {}", currentConnection.getWebSocketIdentifier(),
+                currentConnection.getWebSocketEndpoint());
+
+        final AgentWebSocket newConnection = RetryHelper.runRetryable(WEBSOCKET_RECONNECT_RETRY_ATTEMPTS,
+                () -> connectToWebSocket(currentConnection.getWebSocketEndpoint(),
+                        computeAuthTokenManager.getComputeAuthToken()));
         webSocketConnectionProvider.updateConnection(newConnection);
     }
 
@@ -155,14 +189,14 @@ public class WebSocketConnectionManager {
                 .withDnsName(dnsName)
                 .withCertificatePath(certificatePath);
 
-        log.info("Registering compute {}", registerComputeRequest);
+        log.info("Registering compute: {}", registerComputeRequest);
         try {
-            // Save the SDK Websocket Endpoint from the response for use when we spin up processes
+            // Save the SDK Websocket Endpoint from the response for use when spinning up processes.
             // and pass it via environment variables
-            RegisterComputeResponse response = amazonGameLift.registerCompute(registerComputeRequest);
-            sdkWebsocketEndpointProvider.setSdkWebsocketEndpoint(response.getSdkWebsocketEndpoint());
+            final RegisterComputeResponse response = amazonGameLift.registerCompute(registerComputeRequest);
+            sdkWebSocketEndpointProvider.setSdkWebsocketEndpoint(response.getSdkWebsocketEndpoint());
             log.info("Successfully registered compute: {}", response);
-        } catch (ConflictException e) {
+        } catch (final ConflictException e) {
             log.info("Compute already registered. Treating as success due to likely occurrence of Cold Start.");
         } catch (final UnauthorizedException | InvalidRequestException
                        | InternalServiceException e) {
@@ -172,29 +206,29 @@ public class WebSocketConnectionManager {
         return null;
     }
 
-    private AgentWebSocket connectToWebsocket(final String webSocketEndpoint,
+    private AgentWebSocket connectToWebSocket(final String webSocketEndpoint,
                                               final String authToken) {
-        log.info("Creating Websocket connection to {}", webSocketEndpoint);
+        log.info("Creating WebSocket connection to: {}", webSocketEndpoint);
 
         final URI permanentConnectionUri = buildConnectionUri(webSocketEndpoint, authToken);
-        GameLiftAgentWebSocketListener webSocketListener = new GameLiftAgentWebSocketListener(messageHandlers,
-                objectMapper);
+        final GameLiftAgentWebSocketListener webSocketListener = new GameLiftAgentWebSocketListener(
+                this, messageHandlers, objectMapper);
         try {
-            WebSocket connectedWebsocket =
+            final WebSocket connectedWebsocket =
                     webSocketBuilder.buildAsync(permanentConnectionUri, webSocketListener)
                                     .get(WEBSOCKET_CONNECT_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
             return new AgentWebSocket(connectedWebsocket, webSocketListener,
-                    webSocketExceptionProvider, objectMapper);
+                    webSocketExceptionProvider, webSocketEndpoint, objectMapper);
         } catch (final ExecutionException e) {
-            log.error("Failed to open the GameLiftAgent websocket connection", e);
-            throw new RuntimeException("Failed to open the GameLiftAgent websocket connection", e);
+            log.error("Failed to open the GameLiftAgent WebSocket connection", e);
+            throw new RuntimeException("Failed to open the GameLiftAgent WebSocket connection", e);
         } catch (final TimeoutException e) {
-            log.error("Timed out after {} seconds when opening the GameLiftAgent websocket connection",
+            log.error("Timed out after {} seconds when opening the GameLiftAgent WebSocket connection",
                     WEBSOCKET_CONNECT_TIMEOUT.toSeconds(), e);
-            throw new RuntimeException("Timed out when opening the GameLiftAgent websocket connection", e);
+            throw new RuntimeException("Timed out when opening the GameLiftAgent WebSocket connection", e);
         } catch (final InterruptedException | CancellationException e) {
-            log.error("Interrupted while attempting to connect to GameLiftAgent websocket", e);
-            throw new RuntimeException("Interrupted while attempting to connect to GameLiftAgent websocket", e);
+            log.error("Interrupted while attempting to connect to GameLiftAgent WebSocket", e);
+            throw new RuntimeException("Interrupted while attempting to connect to GameLiftAgent WebSocket", e);
         }
     }
 
@@ -205,7 +239,7 @@ public class WebSocketConnectionManager {
                     .addParameter("ComputeName", computeName)
                     .addParameter("Authorization", authToken)
                     .build();
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException e) {
             log.error("Failed to construct the GameLiftAgent's web socket URI", e);
             throw new RuntimeException("'" + webSocketEndpoint + "' endpoint is not a valid URL", e);
         }

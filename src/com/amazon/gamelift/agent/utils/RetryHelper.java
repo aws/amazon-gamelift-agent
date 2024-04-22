@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RetryHelper {
     private static final int EXPONENTIAL_BACKOFF_FACTOR_MS = 500;
+    private static final int MAX_EXPONENTIAL_BACKOFF_MS = 15000;
     private static final double MAX_JITTER_RANDOMIZATION_FACTOR = 0.25;
 
     private static boolean forceDisableBackoff = false;
@@ -25,7 +26,7 @@ public class RetryHelper {
      * @return Arbitrary return value from func
      * @throws Exception
      */
-    public static <V> V runRetryable(int numRetries, boolean exponentialBackoff, Callable<V> func)
+    public static <V> V runRetryable(final int numRetries, final boolean exponentialBackoff, final Callable<V> func)
             throws AgentException {
         double retryAttempt = 0;
         boolean shouldRetry = true;
@@ -33,32 +34,33 @@ public class RetryHelper {
         while (retryAttempt <= numRetries) {
            try {
                return func.call();
-           } catch (Exception e) {
-                double jitterRandomizationFactor = ThreadLocalRandom.current()
+           } catch (final Exception e) {
+               final double jitterRandomizationFactor = ThreadLocalRandom.current()
                         .nextDouble(1 - MAX_JITTER_RANDOMIZATION_FACTOR, 1 + MAX_JITTER_RANDOMIZATION_FACTOR);
-                long sleepIntervalMs = Math.round(Math.pow(2.0, retryAttempt) * EXPONENTIAL_BACKOFF_FACTOR_MS * jitterRandomizationFactor);
+               final long sleepIntervalMs = Math.min(MAX_EXPONENTIAL_BACKOFF_MS, (long) (Math.pow(2.0, retryAttempt)
+                       * EXPONENTIAL_BACKOFF_FACTOR_MS * jitterRandomizationFactor));
                 lastExceptionEncountered = e;
                 retryAttempt++;
                 log.warn("Action failed attempt {} / {}", retryAttempt, numRetries + 1, e);
 
-                // If the exception received is a modeled exception in the GameLiftAgent code, see if a retry should be
-                // performed. If the exception isn't modeled in the GameLiftAgent code, retry by default.
-                if (e instanceof AgentException) {
-                    shouldRetry = ((AgentException) e).isRetryable();
-                }
+               // If the exception received is a modeled exception in the GameLiftAgent code, see if a retry should be
+               // performed. If the exception isn't modeled in the GameLiftAgent code, retry by default.
+               if (e instanceof AgentException) {
+                   shouldRetry = ((AgentException) e).isRetryable();
+               }
 
-                if (exponentialBackoff && shouldRetry && !forceDisableBackoff && retryAttempt <= numRetries) {
-                    log.info("Waiting {} milliseconds before retrying action.", sleepIntervalMs);
-                    try {
-                        Thread.sleep(sleepIntervalMs);
-                    } catch (InterruptedException ex) {
-                        log.error("Retryable action was interrupted.");
-                        throw new RuntimeException(ex);
-                    }
-                } else if (!shouldRetry) {
-                    log.warn("Exception type identified as not retryable, skipping retries. Exception was {}", e.getClass());
-                    break;
-                }
+               if (exponentialBackoff && shouldRetry && !forceDisableBackoff && retryAttempt <= numRetries) {
+                   log.info("Waiting {} milliseconds before retrying action.", sleepIntervalMs);
+                   try {
+                       Thread.sleep(sleepIntervalMs);
+                   } catch (final InterruptedException ex) {
+                       log.error("Retryable action was interrupted.");
+                       throw new RuntimeException(ex);
+                   }
+               } else if (!shouldRetry) {
+                   log.warn("Exception type identified as not retryable, skipping retries. Exception was {}", e.getClass());
+                   break;
+               }
            }
         }
 
@@ -76,9 +78,21 @@ public class RetryHelper {
      * @param func Callable to retry
      * @throws Exception
      */
-    public static <V> V runRetryable(Callable<V> func) throws AgentException {
+    public static <V> V runRetryable(final Callable<V> func) throws AgentException {
         final int defaultNumRetries = 2;
         return RetryHelper.runRetryable(defaultNumRetries, true, func);
+    }
+
+
+    /**
+     * Run function with given number of retries and exponential backoff
+     *
+     * @param numRetries number of times to retry the given function
+     * @param func Callable to retry
+     * @throws Exception if the function fails after the given number of retries
+     */
+    public static <V> V runRetryable(final int numRetries, final Callable<V> func) throws AgentException {
+        return RetryHelper.runRetryable(numRetries, true, func);
     }
 
     /**

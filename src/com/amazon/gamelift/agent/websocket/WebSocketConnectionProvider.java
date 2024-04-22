@@ -55,17 +55,24 @@ public class WebSocketConnectionProvider {
     }
 
     /**
-     * Update a given connection
-     * @param newConnection
+     * Saves a new WebSocket connection as the active WebSocket connection that the GameLift Agent will use for
+     * calling GameLift. The previous connection will be kept alive for a short period of time after the new connection
+     * is saved in the event that there are in-flight messages being processed, but all outgoing messages will still
+     * be sent on the new connection.
+     *
+     * @param newConnection the instance of AgentWebSocket for the new active WebSocket connection
      */
     @Synchronized("connectionLock")
     public void updateConnection(final AgentWebSocket newConnection) {
+        log.info("Updating the current WebSocket connection: webSocketId={}", newConnection.getWebSocketIdentifier());
+
         // Store current connection into a local variable so Java captures it in the lambda to avoid it getting
         // garbage collected early.
         final AgentWebSocket oldConnection = this.currentConnection;
         // Important to not close oldConnection immediately. Some communication may still occur via this connection.
         connectionCloserService.schedule(new ExecutorServiceSafeRunnable(() -> closeConnection(oldConnection)),
                 OLD_CONNECTION_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+
         this.currentConnection = newConnection;
     }
 

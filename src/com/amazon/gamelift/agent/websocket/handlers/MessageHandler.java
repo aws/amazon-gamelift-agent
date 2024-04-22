@@ -35,7 +35,7 @@ public abstract class MessageHandler<T extends WebsocketMessage> {
     public void handle(final String message) throws MalformedRequestException {
         try {
             handle(objectMapper.readValue(message, clazz));
-        } catch (JsonProcessingException e) {
+        } catch (final JsonProcessingException e) {
             log.error("Failed to parse Websocket message: {}", message, e);
             throw new MalformedRequestException(String.format("Could not parse message %s", message), e);
         }

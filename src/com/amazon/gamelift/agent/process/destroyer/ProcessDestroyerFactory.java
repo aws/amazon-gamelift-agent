@@ -11,20 +11,12 @@ public class ProcessDestroyerFactory {
      * @param operatingSystem
      * @return
      */
-    public static final ProcessDestroyer getProcessDestroyer(final OperatingSystem operatingSystem) {
-        switch(operatingSystem) {
-            case AMAZON_LINUX_2:
-            case AMAZON_LINUX_2023:
-                return new LinuxProcessDestroyer(operatingSystem);
-            case WIN_2012:
-            case WINDOWS_2016:
-            case WINDOWS_2019:
-            case WINDOWS_2022:
-                return new WindowsProcessDestroyer(operatingSystem);
-            case INVALID:
-            default:
-                throw new IllegalArgumentException("Failed to find underlying process destroyer for OS "
-                        + operatingSystem);
-        }
+    public static ProcessDestroyer getProcessDestroyer(final OperatingSystem operatingSystem) {
+        return switch (operatingSystem) {
+            case AMAZON_LINUX_2, AMAZON_LINUX_2023 -> new LinuxProcessDestroyer(operatingSystem);
+            case WIN_2012, WINDOWS_2016, WINDOWS_2019, WINDOWS_2022 -> new WindowsProcessDestroyer(operatingSystem);
+            default -> throw new IllegalArgumentException("Failed to find underlying process destroyer for OS "
+                    + operatingSystem);
+        };
     }
 }

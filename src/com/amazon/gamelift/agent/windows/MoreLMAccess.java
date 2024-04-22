@@ -8,7 +8,6 @@ import com.sun.jna.Structure;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.LMAccess;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,8 +19,8 @@ public interface MoreLMAccess extends LMAccess {
     int LEVEL_USER_INFO_1003 = 1003;
 
     /**
-     * The USER_INFO_1003 structure contains a user password. This information level is valid only when you call the
-     * NetUserSetInfo function.
+     * The USER_INFO_1003 structure contains a user password. This information level is valid only when NetUserSetInfo
+     * function is called.
      *
      * @see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa370963(v=vs.85).aspx">MSDN</a>
      */
@@ -31,13 +30,13 @@ public interface MoreLMAccess extends LMAccess {
         public USER_INFO_1003() {
         }
 
-        public USER_INFO_1003(Pointer memory) {
+        public USER_INFO_1003(final Pointer memory) {
             super(memory);
             this.read();
         }
 
-        protected List getFieldOrder() {
-            return Arrays.asList(new String[]{"usri1003_password"});
+        protected List<String> getFieldOrder() {
+            return List.of("usri1003_password");
         }
     }
 }

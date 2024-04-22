@@ -4,6 +4,7 @@
 package com.amazon.gamelift.agent.websocket;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -61,20 +62,22 @@ public class AgentWebSocketTest {
     private static final String TEST_REQUEST_ID = "testRequestId";
     private static final String TEST_SERIALIZED_RESPONSE = "{\"RequestId\":\"" + TEST_REQUEST_ID + "\"}";
     private static final String TEST_SERIALIZED_REQUEST = "testSerializedRequest";
+    private static final String TEST_WEBSOCKET_ENDPOINT =
+            "testWebSocketEndpoint.com/" + RandomStringUtils.randomAlphanumeric(5);
 
     @Mock private WebSocket mockWebSocketSender;
     @Mock private GameLiftAgentWebSocketListener mockWebSocketListener;
     @Mock private WebSocketExceptionProvider mockWebSocketExceptionProvider;
     @Mock private CompletableFuture<WebSocket> mockFuture;
-    @Spy private ObjectMapper objectMapperSpy = new ObjectMapper();
+    @Spy private final ObjectMapper objectMapperSpy = new ObjectMapper();
 
     private AgentWebSocket webSocketClient;
-    private Random random = new Random();
+    private final Random random = new Random();
 
     @BeforeEach
     public void setup() {
         webSocketClient = new AgentWebSocket(mockWebSocketSender, mockWebSocketListener,
-                mockWebSocketExceptionProvider, objectMapperSpy);
+                mockWebSocketExceptionProvider, TEST_WEBSOCKET_ENDPOINT, objectMapperSpy);
     }
 
     @Test
@@ -84,7 +87,7 @@ public class AgentWebSocketTest {
         testRequest.setRequestId(TEST_REQUEST_ID);
         doAnswer(new Answer<String>() {
             @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
+            public String answer(InvocationOnMock invocation) {
                 invocation.getArgument(1, CompletableFuture.class).complete(TEST_SERIALIZED_RESPONSE);
                 return TEST_SERIALIZED_RESPONSE;
             }
@@ -109,7 +112,7 @@ public class AgentWebSocketTest {
         testRequest.setRequestId(TEST_REQUEST_ID);
         doAnswer(new Answer<String>() {
             @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
+            public String answer(InvocationOnMock invocation) {
                 invocation.getArgument(1, CompletableFuture.class).complete(TEST_SERIALIZED_RESPONSE);
                 return TEST_SERIALIZED_RESPONSE;
             }
@@ -129,14 +132,14 @@ public class AgentWebSocketTest {
     }
 
     @Test
-    public void GIVEN_futureGetsException_WHEN_sendRequest_WHEN_throwsException() throws Exception {
+    public void GIVEN_futureGetsException_WHEN_sendRequest_WHEN_throwsException() {
         // GIVEN
         WebsocketRequest testRequest = new WebsocketRequest();
         testRequest.setRequestId(TEST_REQUEST_ID);
 
         doAnswer(new Answer<String>() {
             @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
+            public String answer(InvocationOnMock invocation) {
                 invocation.getArgument(1, CompletableFuture.class).completeExceptionally(new InternalServiceException());
                 return TEST_SERIALIZED_RESPONSE;
             }
@@ -148,7 +151,7 @@ public class AgentWebSocketTest {
                 webSocketClient.sendRequest(testRequest, WebsocketResponse.class, Duration.ofSeconds(60)));
 
         // THEN
-        assertTrue(e.getCause() instanceof ExecutionException, String.format("Expected exception cause to be ExecutionException, "
+        assertInstanceOf(ExecutionException.class, e.getCause(), String.format("Expected exception cause to be ExecutionException, "
                 + "but actually was: %s", e.getCause()));
         verify(mockWebSocketListener).removeExpectedResponse(TEST_REQUEST_ID);
     }
@@ -161,7 +164,7 @@ public class AgentWebSocketTest {
 
         doAnswer(new Answer<String>() {
             @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
+            public String answer(InvocationOnMock invocation) {
                 invocation.getArgument(1, CompletableFuture.class).complete(TEST_SERIALIZED_RESPONSE);
                 return TEST_SERIALIZED_RESPONSE;
             }
@@ -177,7 +180,7 @@ public class AgentWebSocketTest {
                 webSocketClient.sendRequest(testRequest, WebsocketResponse.class, Duration.ofSeconds(60)));
 
         // THEN
-        assertTrue(e.getCause() instanceof JsonProcessingException, String.format("Expected exception cause to be JsonProcessingException, "
+        assertInstanceOf(JsonProcessingException.class, e.getCause(), String.format("Expected exception cause to be JsonProcessingException, "
                 + "but actually was: %s", e.getCause()));
         verify(mockWebSocketListener).removeExpectedResponse(TEST_REQUEST_ID);
     }
@@ -191,7 +194,7 @@ public class AgentWebSocketTest {
 
         doAnswer(new Answer<String>() {
             @Override
-            public String answer(InvocationOnMock invocation) throws Throwable {
+            public String answer(InvocationOnMock invocation) {
                 invocation.getArgument(1, CompletableFuture.class).cancel(true);
                 return TEST_SERIALIZED_RESPONSE;
             }
@@ -217,7 +220,7 @@ public class AgentWebSocketTest {
                 webSocketClient.sendRequest(testRequest, WebsocketResponse.class, Duration.ofMillis(1)));
 
         // THEN
-        assertTrue(e.getCause() instanceof TimeoutException);
+        assertInstanceOf(TimeoutException.class, e.getCause());
         verify(mockWebSocketListener).removeExpectedResponse(TEST_REQUEST_ID);
     }
 
@@ -250,9 +253,9 @@ public class AgentWebSocketTest {
         doAnswer(new Answer<Object>() {
             @Override
             public Object answer(InvocationOnMock invocation) {
-                // This delay configures when the CompletableFuture is available for polling from the DelayQueue
-                // This is the way in which we are mocking an amount of time passing before a future completes
-                // Once we poll a value from the DelayQueue we complete the future
+                // This delay configures when the CompletableFuture is available for polling from the DelayQueue.
+                // Mocking an amount of time passing before a future completes in this manner.
+                // Polling a value from the DelayQueue completes the future.
                 final long delay = random.nextInt(6);
                 final CompletableFuture<WebSocket> future = new CompletableFuture<>();
                 dq.add(new DelayFuture(future, delay));
@@ -260,8 +263,8 @@ public class AgentWebSocketTest {
             }
         }).when(mockWebSocketSender).sendText(any(), eq(true));
 
-        // The DelayQueue is full of futures waiting to be completed, each coming from a sendText call.
-        // We will poll the queue to fetch them as their delays come available and complete the future.
+        // The DelayQueue is full of futures from sendText calls, waiting for completion.
+        // Polling the queue fetches them as their delays become available to complete the future.
         final AtomicInteger counter = new AtomicInteger(0);
         executorService.execute(() -> {
             final Instant timeout = Instant.now().plus(Duration.ofSeconds(15));
@@ -295,9 +298,9 @@ public class AgentWebSocketTest {
             }
         }
 
-        // Wait for the CountDownLatch to confirm we've mocked completion of `messageCount` futures. This is decremented
-        // when the DelayQueue polled and we "complete" the `sendText` futures, which triggers the callback that will
-        // either send the next queued message or release the `messageInFlight` boolean if there are no pending messages
+        // Wait for the CountDownLatch to confirm mocked completion of messageCount futures, decremented when the
+        // DelayQueue is polled and sendText futures are "completed." This triggers the callback to either send the
+        // next queued message or release the messageInFlight boolean if no messages are pending.
         try {
             doneSignal.await(15, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
@@ -305,7 +308,7 @@ public class AgentWebSocketTest {
         }
 
         /**
-         *  Things we need to verify here:
+         *  To verify:
          *  1. `sendText` is called 1000 times - Indicates all messages eventually sent (many should've been queued)
          *  2. Futures placed in the DelayQueue are completed 1000 times - Indicates all `sendText` calls completed
          *  3. The DelayQueue is empty
@@ -378,9 +381,9 @@ public class AgentWebSocketTest {
         // THEN - swallows exception;
     }
 
-    public class DelayFuture implements Delayed {
-        private CompletableFuture<WebSocket> future;
-        private long startTime;
+    public static class DelayFuture implements Delayed {
+        private final CompletableFuture<WebSocket> future;
+        private final long startTime;
 
         public DelayFuture(CompletableFuture<WebSocket> future, long delayInMilliseconds) {
             this.future = future;

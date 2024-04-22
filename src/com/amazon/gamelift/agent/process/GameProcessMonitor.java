@@ -106,8 +106,8 @@ public class GameProcessMonitor {
 
         // 1. Check if any processes have timed out while waiting for the process to register through the GameLift SDK.
         //    Any timed out processes will be terminated forcefully to make room for new processes.
-        Set<String> processesToTerminate = gameProcessManager.getInitializationTimedOutProcessUUIDs();
-        if (processesToTerminate.size() > 0) {
+        final Set<String> processesToTerminate = gameProcessManager.getInitializationTimedOutProcessUUIDs();
+        if (!processesToTerminate.isEmpty()) {
             log.info("Terminating processes due to reaching the SDK Initialization timeout: {}", processesToTerminate);
 
             for (final String processUUID : processesToTerminate) {
@@ -116,48 +116,48 @@ public class GameProcessMonitor {
             }
         }
 
-        RuntimeConfiguration config = runtimeConfigurationManager.getRuntimeConfiguration();
-        Map<GameProcessConfiguration, Long> activeProcessesByConfig =
+        final RuntimeConfiguration config = runtimeConfigurationManager.getRuntimeConfiguration();
+        final Map<GameProcessConfiguration, Long> activeProcessesByConfig =
                 gameProcessManager.getProcessCountsByConfiguration();
 
         // 2. Calculate the number of new processes to spin up.
         //    Don't allow more processes to spin up on the Compute than the total number defined by the current runtime
-        //    config. This ensures that if changes are made to the configuration, we don't overwhelm
-        //    the compute by spinning up more processes than what is configured because of pre-existing processes
-        int currentConfigTotalProcessCount = config.getServerProcesses().stream()
+        //    config. This ensures that changes to the configuration do not overwhelm the compute by spinning up more
+        //    processes than configured due to pre-existing processes.
+        final int currentConfigTotalProcessCount = config.getServerProcesses().stream()
                 .mapToInt(GameProcessConfiguration::getConcurrentExecutions).sum();
         if (currentConfigTotalProcessCount < 1) {
             log.debug("Current runtime configuration has no processes configured, no new processes will be started");
             return;
         }
 
-        int currentRunningProcessCount = activeProcessesByConfig.values().stream()
+        final int currentRunningProcessCount = activeProcessesByConfig.values().stream()
                 .mapToInt(Long::intValue).sum();
         int totalProcessVacancies = currentConfigTotalProcessCount - currentRunningProcessCount;
 
         // 3. For each process configuration, spin up new processes to match the concurrent execution count in the config
-        for (GameProcessConfiguration processConfig : config.getServerProcesses()) {
+        for (final GameProcessConfiguration processConfig : config.getServerProcesses()) {
             if (totalProcessVacancies <= 0) {
                 log.debug("Active process count is greater or equal to total number of processes "
                         + "defined in Runtime Config - not launching any more processes");
                 break;
             }
 
-            int maxNumberProcessesToLaunch =
+            final int maxNumberProcessesToLaunch =
                     processConfig.getConcurrentExecutions() - activeProcessesByConfig.getOrDefault(processConfig, 0L).intValue();
             if (maxNumberProcessesToLaunch <= 0) {
                 log.debug("No additional processes needed for configuration: {}", processConfig);
                 continue;
             }
 
-            int numberOfProcessesToLaunch = Math.min(totalProcessVacancies, maxNumberProcessesToLaunch);
+            final int numberOfProcessesToLaunch = Math.min(totalProcessVacancies, maxNumberProcessesToLaunch);
             for (int i = 0; i < numberOfProcessesToLaunch; i++) {
                 // A process start delay is introduced here to ensure processes do not crash before they are managed.
                 // If successive processes start nominally, the delay will be reduced. Otherwise, the delay will be reset.
                 try {
-                    String launchedProcessUuid = startProcessWithDelay(processConfig, processStartDelay);
+                    final String launchedProcessUuid = startProcessWithDelay(processConfig, processStartDelay);
                     processStartDelay = getNextDelay(processStartDelay, isProcessAlive(launchedProcessUuid));
-                } catch (RuntimeException e) {
+                } catch (final RuntimeException e) {
                     processStartDelay = MAX_SECONDS_BETWEEN_PROCESS_LAUNCHES;
                     log.error("Failed to launch game server process; "
                             + "resetting delay between process launches to {} seconds", processStartDelay, e);
@@ -175,7 +175,7 @@ public class GameProcessMonitor {
     private boolean isProcessAlive(final String launchedProcessUuid) {
         try {
             return gameProcessManager.isProcessAlive(launchedProcessUuid);
-        } catch (NotFoundException e) {
+        } catch (final NotFoundException e) {
             // process is no longer alive
             return false;
         }
@@ -188,17 +188,17 @@ public class GameProcessMonitor {
      * the system an opportunity to properly handle errors.
      */
     @VisibleForTesting
-    String startProcessWithDelay(final GameProcessConfiguration gameProcessConfiguration,
+    protected String startProcessWithDelay(final GameProcessConfiguration gameProcessConfiguration,
                                  final long processLaunchDelaySeconds) {
         String processUuid = null;
         Exception exceptionReceivedDuringCall = null;
-        long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
         try {
             processUuid = gameProcessManager.startProcessFromConfiguration(gameProcessConfiguration);
-        } catch (BadExecutablePathException e) {
+        } catch (final BadExecutablePathException e) {
             log.error("Caught exception attempting to run {}", gameProcessConfiguration, e);
             exceptionReceivedDuringCall = e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Unexpected error starting process", e);
             exceptionReceivedDuringCall = new RuntimeException(e);
         }
@@ -206,7 +206,7 @@ public class GameProcessMonitor {
         try {
             Thread.sleep(Math.max(0, TimeUnit.SECONDS.toMillis(processLaunchDelaySeconds)
                     - (System.currentTimeMillis() - startTime)));
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             log.error("Process launch job interrupted");
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);

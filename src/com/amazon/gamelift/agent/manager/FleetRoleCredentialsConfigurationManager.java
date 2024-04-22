@@ -47,7 +47,7 @@ public class FleetRoleCredentialsConfigurationManager {
      */
     public synchronized FleetRoleCredentialsConfiguration getFleetRoleCredentialsConfiguration() {
         try {
-            FleetRoleCredentialsConfiguration inCache = fleetRoleCredentialsConfigurationCache
+            final FleetRoleCredentialsConfiguration inCache = fleetRoleCredentialsConfigurationCache
                     .get(FLEET_ROLE_CREDENTIALS_CONFIGURATION_CACHE_KEY);
             if (System.currentTimeMillis() + CACHE_FORCE_REFRESH_MILLIS >= inCache.getExpiration()) {
                 // Force-reload cached credentials are within a minute or passed expired
@@ -57,7 +57,7 @@ public class FleetRoleCredentialsConfigurationManager {
             }
             return inCache;
 
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             log.error("Caught an exception while loading FleetRoleCredentials from cache", e);
             throw new RuntimeException("Caught an exception while loading FleetRoleCredentials from cache", e);
         }

@@ -7,7 +7,6 @@ import com.amazon.gamelift.agent.logging.GameLiftAgentLogUploader;
 import com.amazon.gamelift.agent.manager.HeartbeatSender;
 import com.amazon.gamelift.agent.manager.InstanceTerminationMonitor;
 import com.amazon.gamelift.agent.manager.ShutdownOrchestrator;
-import com.amazon.gamelift.agent.manager.StateManager;
 import com.amazon.gamelift.agent.process.GameProcessMonitor;
 import com.amazon.gamelift.agent.websocket.WebSocketConnectionManager;
 import org.junit.jupiter.api.Test;
@@ -26,8 +25,6 @@ public class AgentTest {
     private WebSocketConnectionManager webSocketConnectionManager;
     @Mock
     private GameProcessMonitor gameProcessMonitor;
-    @Mock
-    private StateManager stateManager;
     @Mock
     private HeartbeatSender heartbeatSender;
     @Mock
@@ -54,7 +51,7 @@ public class AgentTest {
     }
 
     @Test
-    public void GIVEN_exceptionThrown_WHEN_start_THEN_reraisesException() throws Exception {
+    public void GIVEN_exceptionThrown_WHEN_start_THEN_reraisesException() {
         // GIVEN
         doThrow(RuntimeException.class).when(webSocketConnectionManager).connect();
 
@@ -72,7 +69,7 @@ public class AgentTest {
     }
 
     @Test
-    public void GIVEN_exceptionThrown_WHEN_shutdown_THEN_reraisesException() throws InterruptedException {
+    public void GIVEN_exceptionThrown_WHEN_shutdown_THEN_reraisesException() {
         // GIVEN
         doThrow(RuntimeException.class).when(shutdownOrchestrator).completeTermination();
 

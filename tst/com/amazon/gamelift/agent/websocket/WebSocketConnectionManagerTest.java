@@ -3,6 +3,7 @@
  */
 package com.amazon.gamelift.agent.websocket;
 
+import com.amazon.gamelift.agent.manager.StateManager;
 import com.amazon.gamelift.agent.model.exception.ConflictException;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
@@ -30,16 +31,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.WebSocket;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -47,17 +53,21 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class WebSocketConnectionManagerTest {
     private static final String FLEET_ID = "fleetId";
     private static final String COMPUTE_NAME = "computeName";
+    private static final String WEBSOCKET_IDENTIFIER = "webSocketId";
     private static final String REFRESH_WEB_SOCKET_ENDPOINT = "http://newlocalhost:8080";
+    private static final String RECONNECT_WEB_SOCKET_ENDPOINT = "http://previous.localhost:8080";
     private static final String SDK_WEB_SOCKET_ENDPOINT = "http://some.endpoint:8080";
     private static final String AGENT_WEB_SOCKET_ENDPOINT = "wss://us-west-2.process-manager-api.amazongamelift.com";
     private static final String AGENT_WEB_SOCKET_ENDPOINT_OVERRIDE = "wss://alpha.us-west-2.process-manager-api.amazongamelift.com";
     private static final String REFRESH_WEB_SOCKET_AUTH_TOKEN = "newAuthToken";
+    private static final String RECONNECT_WEB_SOCKET_AUTH_TOKEN = "newAuthToken";
     private static final String REGION = "us-west-2";
     private static final String LOCATION = "ap-south-1";
     private static final String IP_ADDRESS = "1.2.3.4";
@@ -66,14 +76,17 @@ public class WebSocketConnectionManagerTest {
     private static final String COMPUTE_AUTH_TOKEN = "computeAuthToken";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    @Mock private GetComputeAuthTokenResponse getComputeAuthTokenResponse;
     @Mock private AmazonGameLiftClientWrapper gameLift;
     @Mock private WebSocketConnectionProvider webSocketConnectionProvider;
     @Mock private WebSocketExceptionProvider mockWebSocketExceptionProvider;
     @Mock private Map<String, MessageHandler<?>> messageHandlers;
     @Mock private WebSocket.Builder mockWebSocketBuilder;
     @Mock private WebSocket mockJavaWebSocket;
+    @Mock private AgentWebSocket mockAgentWebSocket;
     @Mock private ComputeAuthTokenManager computeAuthTokenManager;
     @Mock private SdkWebsocketEndpointProvider sdkWebsocketEndpointProvider;
+    @Mock private StateManager stateManager;
     @Captor private ArgumentCaptor<AgentWebSocket> connectionCaptor;
     @Captor private ArgumentCaptor<URI> uriCaptor;
 
@@ -96,14 +109,14 @@ public class WebSocketConnectionManagerTest {
         connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME, AGENT_WEB_SOCKET_ENDPOINT_OVERRIDE,
                 webSocketConnectionProvider, sdkWebsocketEndpointProvider, mockWebSocketExceptionProvider,
-                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager);
+                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager);
         lenient().when(mockWebSocketBuilder.buildAsync(any(URI.class), any(GameLiftAgentWebSocketListener.class)))
                 .thenReturn(CompletableFuture.completedFuture(mockJavaWebSocket));
         RetryHelper.disableBackoff();
     }
 
     @Test
-    public void GIVEN_validInputWithWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws InterruptedException, RuntimeException, AgentException {
+    public void GIVEN_validInputWithWebSocketEndPointOverride_WHEN_connect_THEN_connects() throws RuntimeException, AgentException {
         // GIVEN
         when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(COMPUTE_AUTH_TOKEN);
 
@@ -114,7 +127,6 @@ public class WebSocketConnectionManagerTest {
         verify(gameLift).registerCompute(any());
         verify(sdkWebsocketEndpointProvider).setSdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT);
         verify(computeAuthTokenManager).getComputeAuthToken();
-        verify(webSocketConnectionProvider).setCurrentAuthToken(COMPUTE_AUTH_TOKEN);
 
         verify(mockWebSocketBuilder).buildAsync(uriCaptor.capture(), any(GameLiftAgentWebSocketListener.class));
 
@@ -128,12 +140,12 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_validInputWithoutWebSocketEndPointOverride_WHEN_connect_THEN_handshakesAndConnects() throws InterruptedException, RuntimeException, AgentException {
+    public void GIVEN_validInputWithoutWebSocketEndPointOverride_WHEN_connect_THEN_connects() throws RuntimeException, AgentException {
         // GIVEN
         final WebSocketConnectionManager connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME, null,
                 webSocketConnectionProvider, sdkWebsocketEndpointProvider, mockWebSocketExceptionProvider,
-                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager);
+                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager);
 
         when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(COMPUTE_AUTH_TOKEN);
 
@@ -144,7 +156,6 @@ public class WebSocketConnectionManagerTest {
         verify(gameLift).registerCompute(any());
         verify(sdkWebsocketEndpointProvider).setSdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT);
         verify(computeAuthTokenManager).getComputeAuthToken();
-        verify(webSocketConnectionProvider).setCurrentAuthToken(COMPUTE_AUTH_TOKEN);
 
         verify(mockWebSocketBuilder).buildAsync(uriCaptor.capture(), any(GameLiftAgentWebSocketListener.class));
 
@@ -177,7 +188,6 @@ public class WebSocketConnectionManagerTest {
         verify(gameLift, times(2)).registerCompute(any());
         verify(sdkWebsocketEndpointProvider).setSdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT);
         verify(computeAuthTokenManager).getComputeAuthToken();
-        verify(webSocketConnectionProvider).setCurrentAuthToken(COMPUTE_AUTH_TOKEN);
         verify(webSocketConnectionProvider).updateConnection(any());
     }
 
@@ -192,7 +202,6 @@ public class WebSocketConnectionManagerTest {
         verify(gameLift).registerCompute(any());
         verify(sdkWebsocketEndpointProvider, never()).setSdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT);
         verify(computeAuthTokenManager, never()).getComputeAuthToken();
-        verify(webSocketConnectionProvider, never()).setCurrentAuthToken(COMPUTE_AUTH_TOKEN);
         verify(webSocketConnectionProvider, never()).updateConnection(any());
     }
 
@@ -208,8 +217,7 @@ public class WebSocketConnectionManagerTest {
     }
 
     @Test
-    public void GIVEN_getComputeAuthTokenFails_WHEN_connect_THEN_throws() throws RuntimeException,
-            InvalidRequestException, InternalServiceException, NotFoundException {
+    public void GIVEN_getComputeAuthTokenFails_WHEN_connect_THEN_throws() throws RuntimeException {
         // GIVEN
         doThrow(RuntimeException.class).when(computeAuthTokenManager).getComputeAuthToken();
 
@@ -238,7 +246,7 @@ public class WebSocketConnectionManagerTest {
 
         // WHEN / THEN
         final RuntimeException e = assertThrows(RuntimeException.class, () -> connectionManager.connect());
-        assertTrue(e.getCause() instanceof InterruptedException);
+        assertInstanceOf(InterruptedException.class, e.getCause());
     }
 
     @Test
@@ -249,7 +257,7 @@ public class WebSocketConnectionManagerTest {
         when(mockFuture.get(anyLong(), any())).thenThrow(TimeoutException.class);
         // WHEN / THEN
         final RuntimeException e = assertThrows(RuntimeException.class, () -> connectionManager.connect());
-        assertTrue(e.getCause() instanceof TimeoutException);
+        assertInstanceOf(TimeoutException.class, e.getCause());
     }
 
     @Test
@@ -261,11 +269,11 @@ public class WebSocketConnectionManagerTest {
 
         // WHEN / THEN
         final RuntimeException e = assertThrows(RuntimeException.class, () -> connectionManager.connect());
-        assertTrue(e.getCause() instanceof ExecutionException);
+        assertInstanceOf(ExecutionException.class, e.getCause());
     }
 
     @Test
-    public void GIVEN_validInput_WHEN_reconnect_THEN_handshakesAndConnects() throws ConflictException,
+    public void GIVEN_validInput_WHEN_refreshWebSocketConnection_THEN_connects() throws ConflictException,
             UnauthorizedException, InvalidRequestException, InternalServiceException, NotFoundException {
         // GIVEN
         final RefreshConnectionMessage refreshConnectionMessage = new RefreshConnectionMessage();
@@ -273,7 +281,7 @@ public class WebSocketConnectionManagerTest {
         refreshConnectionMessage.setRefreshConnectionEndpoint(REFRESH_WEB_SOCKET_ENDPOINT);
 
         // WHEN
-        connectionManager.reconnect(refreshConnectionMessage);
+        connectionManager.refreshWebSocketConnection(refreshConnectionMessage);
 
         // THEN
         verify(gameLift, never()).registerCompute(any());
@@ -288,5 +296,119 @@ public class WebSocketConnectionManagerTest {
 
         verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
     }
+
+    @Test
+    public void GIVEN_activeWebSocketDisconnected_WHEN_handleWebSocketDisconnect_THEN_reconnectsWebSocket() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(false);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+        when(mockAgentWebSocket.getWebSocketIdentifier()).thenReturn(WEBSOCKET_IDENTIFIER);
+        when(mockAgentWebSocket.getWebSocketEndpoint()).thenReturn(RECONNECT_WEB_SOCKET_ENDPOINT);
+
+        when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(RECONNECT_WEB_SOCKET_AUTH_TOKEN);
+
+        try (final MockedConstruction<AgentWebSocket> constructions = mockConstruction(
+                AgentWebSocket.class, this::setupGetComputeAuthTokenResponseMock)) {
+            // WHEN
+            connectionManager.handleWebSocketDisconnect(WEBSOCKET_IDENTIFIER);
+
+            // THEN
+            verify(gameLift, never()).registerCompute(any());
+            verify(gameLift, never()).getComputeAuthToken(any());
+
+            verify(mockWebSocketBuilder).buildAsync(uriCaptor.capture(), any(GameLiftAgentWebSocketListener.class));
+            final String newUri = uriCaptor.getValue().toString();
+            assertTrue(newUri.contains(RECONNECT_WEB_SOCKET_ENDPOINT));
+            assertTrue(newUri.contains(FLEET_ID));
+            assertTrue(newUri.contains(COMPUTE_NAME));
+            assertTrue(newUri.contains(RECONNECT_WEB_SOCKET_AUTH_TOKEN));
+
+            verify(computeAuthTokenManager).getComputeAuthToken();
+
+            final AgentWebSocket client = constructions.constructed().get(0);
+            verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
+            assertEquals(connectionCaptor.getValue(), client);
+        }
+    }
+
+    @Test
+    public void GIVEN_errorWhenEstablishingNewConnection_WHEN_handleWebSocketDisconnect_THEN_retriesAndReconnectsWebSocket() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(false);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+        when(mockAgentWebSocket.getWebSocketIdentifier()).thenReturn(WEBSOCKET_IDENTIFIER);
+        when(mockAgentWebSocket.getWebSocketEndpoint()).thenReturn(RECONNECT_WEB_SOCKET_ENDPOINT);
+        when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(RECONNECT_WEB_SOCKET_AUTH_TOKEN);
+
+        when(mockWebSocketBuilder.buildAsync(any(URI.class), any(GameLiftAgentWebSocketListener.class)))
+                .thenThrow(new RuntimeException("Test Error 1"))
+                .thenThrow(new RuntimeException("Test Error 2"))
+                .thenReturn(CompletableFuture.completedFuture(mockJavaWebSocket));
+
+        try (final MockedConstruction<AgentWebSocket> constructions = mockConstruction(
+                AgentWebSocket.class, this::setupGetComputeAuthTokenResponseMock)) {
+            // WHEN
+            connectionManager.handleWebSocketDisconnect(WEBSOCKET_IDENTIFIER);
+
+            // THEN
+            verify(gameLift, never()).registerCompute(any());
+            verify(gameLift, never()).getComputeAuthToken(any());
+
+            verify(mockWebSocketBuilder, times(3)).buildAsync(uriCaptor.capture(), any(GameLiftAgentWebSocketListener.class));
+            for (URI capturedUri : uriCaptor.getAllValues()) {
+                final String capturedUriString = capturedUri.toString();
+                assertTrue(capturedUriString.contains(RECONNECT_WEB_SOCKET_ENDPOINT));
+                assertTrue(capturedUriString.contains(FLEET_ID));
+                assertTrue(capturedUriString.contains(COMPUTE_NAME));
+                assertTrue(capturedUriString.contains(RECONNECT_WEB_SOCKET_AUTH_TOKEN));
+            }
+
+            verify(computeAuthTokenManager, times(3)).getComputeAuthToken();
+            final AgentWebSocket client = constructions.constructed().get(0);
+            verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
+            assertEquals(connectionCaptor.getValue(), client);
+        }
+    }
+
+    @Test
+    public void GIVEN_webSocketIdThatIsntTheActiveConnection_handleWebSocketDisconnect_THEN_doesNothing() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(false);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+        when(mockAgentWebSocket.getWebSocketIdentifier()).thenReturn(WEBSOCKET_IDENTIFIER);
+
+        // WHEN
+        connectionManager.handleWebSocketDisconnect("otherId");
+
+        // THEN
+        verify(webSocketConnectionProvider).getCurrentConnection();
+        verifyNoMoreInteractions(gameLift, computeAuthTokenManager, webSocketConnectionProvider,
+                mockWebSocketBuilder);
+    }
+
+    @Test
+    public void GIVEN_statusIsTerminated_handleWebSocketDisconnect_THEN_doesNothing() throws Exception {
+        // GIVEN
+        when(stateManager.isComputeTerminated()).thenReturn(true);
+        when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(mockAgentWebSocket);
+
+        // WHEN
+        connectionManager.handleWebSocketDisconnect("otherId");
+
+        // THEN
+        verify(webSocketConnectionProvider).getCurrentConnection();
+        verifyNoMoreInteractions(gameLift, computeAuthTokenManager, webSocketConnectionProvider,
+                mockWebSocketBuilder, mockAgentWebSocket);
+    }
+
+    private void setupGetComputeAuthTokenResponseMock(
+            final AgentWebSocket mock,
+            final MockedConstruction.Context context
+    ) throws AgentException {
+        when(mock.sendRequest(any(), eq(GetComputeAuthTokenResponse.class), any()))
+                .thenReturn(getComputeAuthTokenResponse);
+        doNothing().when(mock).closeConnection(any(Duration.class));
+    }
+
 
 }

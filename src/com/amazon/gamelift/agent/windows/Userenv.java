@@ -1,7 +1,6 @@
 /*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
-
 package com.amazon.gamelift.agent.windows;
 
 import com.sun.jna.Native;
@@ -16,9 +15,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public interface Userenv extends StdCallLibrary  {
-    Userenv INSTANCE = Userenv.class.cast(Native.loadLibrary("Userenv",
-                                                             Userenv.class,
-                                                             W32APIOptions.UNICODE_OPTIONS));
+    Userenv INSTANCE = Native.load("Userenv",
+            Userenv.class,
+            W32APIOptions.UNICODE_OPTIONS);
 
     int PI_NOUI = 1;
     int PI_APPLYPOLICY = 2;
@@ -39,7 +38,9 @@ public interface Userenv extends StdCallLibrary  {
      * @return TRUE if successful; otherwise, FALSE.
      * @see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb762270(v=vs.85).aspx">CreateEnvironmentBlock</a>
      */
-    boolean CreateEnvironmentBlock(PointerByReference lpEnvironment, WinNT.HANDLE hToken, boolean bInherit);
+    boolean CreateEnvironmentBlock(final PointerByReference lpEnvironment,
+                                   final WinNT.HANDLE hToken,
+                                   final boolean bInherit);
 
     /**
      * Frees environment variables created by the CreateEnvironmentBlock function.
@@ -49,7 +50,7 @@ public interface Userenv extends StdCallLibrary  {
      * @return TRUE if successful; otherwise, FALSE.
      * @see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb762274(v=vs.85).aspx">DestroyEnvironmentBlock</a>
      */
-    boolean DestroyEnvironmentBlock(Pointer lpEnvironment);
+    boolean DestroyEnvironmentBlock(final Pointer lpEnvironment);
 
     /**
      * Loads the specified user's profile. The profile can be a local user profile or a roaming user profile.
@@ -63,7 +64,7 @@ public interface Userenv extends StdCallLibrary  {
      * @return TRUE if successful; otherwise, FALSE.
      * @see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb762281(v=vs.85).aspx">LoadUserProfile</a>
      */
-    boolean LoadUserProfile(WinNT.HANDLE hToken, PROFILEINFO lpProfileInfo);
+    boolean LoadUserProfile(final WinNT.HANDLE hToken, final PROFILEINFO lpProfileInfo);
 
     /**
      * Contains information used when loading or unloading a user profile.
@@ -83,22 +84,20 @@ public interface Userenv extends StdCallLibrary  {
         public PROFILEINFO() {
         }
 
-        public PROFILEINFO(Pointer memory) {
+        public PROFILEINFO(final Pointer memory) {
             super(memory);
             this.read();
         }
 
-        protected List getFieldOrder() {
-            return Arrays.asList(new String[]{
-                "dwSize",
-                "dwFlags",
-                "lpUserName",
-                "lpProfilePath",
-                "lpDefaultPath",
-                "lpServerName",
-                "lpPolicyPath",
-                "hProfile"
-            });
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("dwSize",
+                    "dwFlags",
+                    "lpUserName",
+                    "lpProfilePath",
+                    "lpDefaultPath",
+                    "lpServerName",
+                    "lpPolicyPath",
+                    "hProfile");
         }
     }
 }

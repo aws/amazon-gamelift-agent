@@ -14,21 +14,15 @@ public class ProcessBuilderFactory {
      * @param operatingSystem
      * @return
      */
-    public static final ProcessBuilderWrapper getProcessBuilder(final GameProcessConfiguration processConfiguration,
-                                                                final OperatingSystem operatingSystem) {
-        switch(operatingSystem) {
-            case AMAZON_LINUX_2:
-            case AMAZON_LINUX_2023:
-                return new LinuxProcessBuilderWrapper(processConfiguration, operatingSystem);
-            case WIN_2012:
-            case WINDOWS_2016:
-            case WINDOWS_2019:
-            case WINDOWS_2022:
-                return new WindowsProcessBuilderWrapper(processConfiguration, operatingSystem);
-            case INVALID:
-            default:
-                throw new IllegalArgumentException("Failed to find underlying process builder for OS "
-                        + operatingSystem);
-        }
+    public static ProcessBuilderWrapper getProcessBuilder(final GameProcessConfiguration processConfiguration,
+                                                          final OperatingSystem operatingSystem) {
+        return switch (operatingSystem) {
+            case AMAZON_LINUX_2, AMAZON_LINUX_2023 ->
+                    new LinuxProcessBuilderWrapper(processConfiguration, operatingSystem);
+            case WIN_2012, WINDOWS_2016, WINDOWS_2019, WINDOWS_2022 ->
+                    new WindowsProcessBuilderWrapper(processConfiguration, operatingSystem);
+            default -> throw new IllegalArgumentException("Failed to find underlying process builder for OS "
+                    + operatingSystem);
+        };
     }
 }

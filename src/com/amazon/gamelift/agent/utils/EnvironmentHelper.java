@@ -1,7 +1,6 @@
 /*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
-
 package com.amazon.gamelift.agent.utils;
 
 import com.amazon.gamelift.agent.model.constants.EnvironmentConstants;
@@ -29,7 +28,7 @@ public class EnvironmentHelper {
      */
     public static void logEC2Metadata() {
         try {
-            Map<String, String> hostInfo = getHostInfoFromEC2Metadata();
+            final Map<String, String> hostInfo = getHostInfoFromEC2Metadata();
             log.info("EC2 metadata: "
                             + "instanceId: {}, "
                             + "instanceType: {}, "
@@ -42,7 +41,7 @@ public class EnvironmentHelper {
                     hostInfo.get(EnvironmentConstants.HOST_NAME_KEY),
                     hostInfo.get(EnvironmentConstants.AMI_ID)
             );
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.warn("EC2 metadata could not be logged. ", e);
         }
     }

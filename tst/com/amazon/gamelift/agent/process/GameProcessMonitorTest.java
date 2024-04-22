@@ -75,12 +75,12 @@ public class GameProcessMonitorTest {
 
     @Test
     public void GIVEN_multipleProcessConfigsToLaunch_WHEN_runProcessMonitor_THEN_launchesAllProcesses()
-            throws BadExecutablePathException, AgentException {
+            throws AgentException {
         // GIVEN
         int concurrentExecutionsForConfig1 = 5;
         int concurrentExecutionsForConfig2 = 10;
-        Long currentRunningProcessesForConfig1 = 3L;
-        Long currentRunningProcessesForConfig2 = 6L;
+        long currentRunningProcessesForConfig1 = 3L;
+        long currentRunningProcessesForConfig2 = 6L;
         int expectedNewProcessesForConfig1 = (int) (concurrentExecutionsForConfig1 - currentRunningProcessesForConfig1);
         int expectedNewProcessesForConfig2 = (int) (concurrentExecutionsForConfig2 - currentRunningProcessesForConfig2);
 
@@ -121,12 +121,12 @@ public class GameProcessMonitorTest {
 
     @Test
     public void GIVEN_onlyOneConfigNeedsProcesses_WHEN_runTask_THEN_launchesProcessesForConfig()
-            throws BadExecutablePathException, AgentException {
+            throws AgentException {
         // GIVEN
         int concurrentExecutionsForConfig1 = 5;
         int concurrentExecutionsForConfig2 = 10;
         Long currentRunningProcessesForConfig1 = 5L;
-        Long currentRunningProcessesForConfig2 = 6L;
+        long currentRunningProcessesForConfig2 = 6L;
         int expectedNewProcessesForConfig2 = (int) (concurrentExecutionsForConfig2 - currentRunningProcessesForConfig2);
 
         GameProcessConfiguration testProcessConfig1 = GameProcessConfiguration.builder()
@@ -165,11 +165,11 @@ public class GameProcessMonitorTest {
 
     @Test
     public void GIVEN_notEnoughTotalProcessVacancies_WHEN_runTask_THEN_onlyScalesUpToVacantProcesses()
-            throws BadExecutablePathException, AgentException {
+            throws AgentException {
         // GIVEN
         int concurrentExecutionsForCurrentConfig = 9;
         int concurrentExecutionsForNewConfig = 10;
-        Long currentRunningProcessesForCurrentConfig = 8L;
+        long currentRunningProcessesForCurrentConfig = 8L;
         int expectedNewProcesses = (int) (concurrentExecutionsForNewConfig - currentRunningProcessesForCurrentConfig);
 
         GameProcessConfiguration currentProcessConfig = GameProcessConfiguration.builder()
@@ -284,10 +284,10 @@ public class GameProcessMonitorTest {
     }
 
     @Test
-    public void GIVEN_InvalidLaunchPath_WHEN_runProcessMonitor_THEN_handleException() throws BadExecutablePathException, AgentException {
+    public void GIVEN_InvalidLaunchPath_WHEN_runProcessMonitor_THEN_handleException() throws AgentException {
         // GIVEN
         int concurrentExecutionsForConfig = 5;
-        Long currentRunningProcessesForConfig = 3L;
+        long currentRunningProcessesForConfig = 3L;
         int expectedNewProcessesForConfig = (int) (concurrentExecutionsForConfig - currentRunningProcessesForConfig);
 
         GameProcessConfiguration testProcessConfig = GameProcessConfiguration.builder()
@@ -319,10 +319,10 @@ public class GameProcessMonitorTest {
     }
 
     @Test
-    public void GIVEN_processThrowsRuntimeException_WHEN_runProcessMonitor_THEN_handleException() throws BadExecutablePathException, AgentException {
+    public void GIVEN_processThrowsRuntimeException_WHEN_runProcessMonitor_THEN_handleException() throws AgentException {
         // GIVEN
         int concurrentExecutionsForConfig = 5;
-        Long currentRunningProcessesForConfig = 3L;
+        long currentRunningProcessesForConfig = 3L;
         int expectedNewProcessesForConfig = (int) (concurrentExecutionsForConfig - currentRunningProcessesForConfig);
 
         GameProcessConfiguration testProcessConfig = GameProcessConfiguration.builder()
@@ -348,17 +348,17 @@ public class GameProcessMonitorTest {
         verify(gameProcessMonitor, times(expectedNewProcessesForConfig))
                 .startProcessWithDelay(eq(testProcessConfig), anyLong());
         verify(mockGameProcessManager, times(expectedNewProcessesForConfig)).startProcessFromConfiguration(any());
-        // next 2 calls are never invoked because we never get a successful execution
+        // next 2 calls are never invoked because a successful execution was never received
         verify(gameProcessMonitor, never()).getNextDelay(anyLong(), anyBoolean());
         verify(mockGameProcessManager, never()).isProcessAlive(anyString());
         verifyNoMoreInteractions(mockGameProcessManager, mockRuntimeConfigurationManager);
     }
 
     @Test
-    public void GIVEN_processThrowsBadExecutablePathException_WHEN_runProcessMonitor_THEN_handleException() throws BadExecutablePathException, AgentException {
+    public void GIVEN_processThrowsBadExecutablePathException_WHEN_runProcessMonitor_THEN_handleException() throws AgentException {
         // GIVEN
         int concurrentExecutionsForConfig = 5;
-        Long currentRunningProcessesForConfig = 3L;
+        long currentRunningProcessesForConfig = 3L;
         int expectedNewProcessesForConfig = (int) (concurrentExecutionsForConfig - currentRunningProcessesForConfig); //2
 
         GameProcessConfiguration testProcessConfig = GameProcessConfiguration.builder()
@@ -385,19 +385,19 @@ public class GameProcessMonitorTest {
         verify(gameProcessMonitor, times(expectedNewProcessesForConfig))
                 .startProcessWithDelay(eq(testProcessConfig), anyLong());
         verify(mockGameProcessManager, times(expectedNewProcessesForConfig)).startProcessFromConfiguration(any());
-        // next 2 calls are never invoked because we never get a successful execution
+        // next 2 calls are never invoked because a successful execution was never received
         verify(gameProcessMonitor, never()).getNextDelay(anyLong(), anyBoolean());
         verify(mockGameProcessManager, never()).isProcessAlive(anyString());
         verifyNoMoreInteractions(mockGameProcessManager, mockRuntimeConfigurationManager);
     }
 
     @Test
-    public void GIVEN_processfailsToStartSilently_WHEN_runProcessMonitor_THEN_handleException() throws BadExecutablePathException,
+    public void GIVEN_processfailsToStartSilently_WHEN_runProcessMonitor_THEN_handleException() throws
             AgentException {
         // GIVEN
         final String testProcessId = "testProcessId";
         int concurrentExecutionsForConfig = 5;
-        Long currentRunningProcessesForConfig = 3L;
+        long currentRunningProcessesForConfig = 3L;
         int expectedNewProcessesForConfig = (int) (concurrentExecutionsForConfig - currentRunningProcessesForConfig);
 
         GameProcessConfiguration testProcessConfig = GameProcessConfiguration.builder()
@@ -429,12 +429,12 @@ public class GameProcessMonitorTest {
     }
 
     @Test
-    public void GIVEN_processfailsToStartWithNfe_WHEN_runProcessMonitor_THEN_handleException() throws BadExecutablePathException,
+    public void GIVEN_processfailsToStartWithNfe_WHEN_runProcessMonitor_THEN_handleException() throws
             AgentException {
         // GIVEN
         final String testProcessId = "testProcessId";
         int concurrentExecutionsForConfig = 5;
-        Long currentRunningProcessesForConfig = 3L;
+        long currentRunningProcessesForConfig = 3L;
         int expectedNewProcessesForConfig = (int) (concurrentExecutionsForConfig - currentRunningProcessesForConfig);
 
         GameProcessConfiguration testProcessConfig = GameProcessConfiguration.builder()
@@ -466,11 +466,10 @@ public class GameProcessMonitorTest {
     }
 
     @Test
-    public void GIVEN_processesTimedOutForInitialization_WHEN_runProcessMonitor_THEN_terminatesProcesses()
-            throws BadExecutablePathException, AgentException {
+    public void GIVEN_processesTimedOutForInitialization_WHEN_runProcessMonitor_THEN_terminatesProcesses() {
         // GIVEN
-        String testProcessId1 = "test!";
-        String testProcessId2 = "tessssst";
+        final String testProcessId1 = "test1";
+        final String testProcessId2 = "test2";
         int concurrentExecutionsForConfig = 5;
         Long currentRunningProcessesForConfig = 5L;
 

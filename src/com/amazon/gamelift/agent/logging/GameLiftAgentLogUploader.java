@@ -91,7 +91,7 @@ public class GameLiftAgentLogUploader {
             final long jitterSeconds = ThreadLocalRandom.current().nextLong(0, FIFTEEN_MINUTES_IN_SECONDS);
             final long initialDelaySeconds = Duration.ofMinutes(minuteToFiveAfterHour).toSeconds() + jitterSeconds;
 
-            LocalTime firstLogUploadTime = LocalTime.now().plusSeconds(initialDelaySeconds);
+            final LocalTime firstLogUploadTime = LocalTime.now().plusSeconds(initialDelaySeconds);
             log.info("Scheduling GameLiftAgent log upload with initialDelay of {} seconds to run at: {}.",
                     initialDelaySeconds, firstLogUploadTime);
             executorService.scheduleWithFixedDelay(new ExecutorServiceSafeRunnable(this::runScheduledLogUpload),
@@ -109,10 +109,10 @@ public class GameLiftAgentLogUploader {
         if (isStarted.compareAndSet(true, false)) {
             log.info("Stopping scheduled GameLiftAgent log upload manager and uploading all logs on host.");
             executorServiceManager.shutdownScheduledThreadPoolExecutorServiceByName(this.getClass().getSimpleName());
-            for (File logFile : logFileHelper.getArchivedGameLiftAgentLogs()) {
+            for (final File logFile : logFileHelper.getArchivedGameLiftAgentLogs()) {
                 try {
                     uploadLogFile(logFile);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     log.error("Unable to upload log file at path {}; swallowing exception to unblock other log uploads",
                             logFile.getAbsolutePath(), e);
                 }
@@ -122,11 +122,11 @@ public class GameLiftAgentLogUploader {
             // shutdown hook, but that executes in parallel and will start to cut off logs from our shutdown hook.
             LogFileHelper.flushLogBuffers();
 
-            Optional<File> activeLogFile = logFileHelper.getActiveGameLiftAgentLog();
+            final Optional<File> activeLogFile = logFileHelper.getActiveGameLiftAgentLog();
             if (activeLogFile.isPresent()) {
                 try {
                     uploadLogFile(activeLogFile.get());
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     log.error("Unable to upload active GameLiftAgent log file at path {}; swallowing exception",
                             activeLogFile.get().getAbsolutePath(), e);
                 }
@@ -143,10 +143,10 @@ public class GameLiftAgentLogUploader {
         log.info("Starting scheduled hourly GameLiftAgent log upload");
         int failedUploadCount = 0;
         int failedDeletionCount = 0;
-        for (File logFile : logFileHelper.getArchivedGameLiftAgentLogs()) {
+        for (final File logFile : logFileHelper.getArchivedGameLiftAgentLogs()) {
             try {
                 uploadLogFile(logFile);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 failedUploadCount++;
                 log.error("Unable to upload log file at path {}; swallowing exception and "
                         + "retrying on the next scheduled upload", logFile.getAbsolutePath(), e);
@@ -154,7 +154,7 @@ public class GameLiftAgentLogUploader {
             }
             try {
                 deleteLogFile(logFile);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 failedDeletionCount++;
                 log.error("Unable to delete GameLiftAgent log file: " + logFile.getAbsolutePath(), e);
             }

@@ -29,7 +29,6 @@ public class FleetRoleCredentialsConfigurationManagerTest {
 
     @Mock private AgentWebSocket client;
     @Mock private WebSocketConnectionProvider webSocketConnectionProvider;
-    @Mock private LoadingCache<String, FleetRoleCredentialsConfiguration> fleetRoleCredentialsConfigurationCache;
 
     private FleetRoleCredentialsConfigurationManager fleetRoleCredentialsConfigurationManager;
     private static final String TEST_ASSUMED_ROLE_USER_ARN = "TestAssumedRoleUserArn";
@@ -63,7 +62,7 @@ public class FleetRoleCredentialsConfigurationManagerTest {
             TEST_EXPIRATION);
 
     @BeforeEach
-    public void setup() throws AgentException {
+    public void setup() {
         // GIVEN
         when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(client);
         fleetRoleCredentialsConfigurationManager = new FleetRoleCredentialsConfigurationManager(webSocketConnectionProvider);
@@ -119,15 +118,14 @@ public class FleetRoleCredentialsConfigurationManagerTest {
                 .thenReturn(RESPONSE); // Second time the client is called, return the long expiration response
 
         // WHEN
-        FleetRoleCredentialsConfiguration fleetRoleCredentialsConfiguration = fleetRoleCredentialsConfigurationManager
-                .getFleetRoleCredentialsConfiguration();
+        fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
         // Perform some calls right away while the value is still cached
-        fleetRoleCredentialsConfiguration = fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
-        fleetRoleCredentialsConfiguration = fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
+        fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
+        fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
         // Sleep until the expiration has passed, but still within cached time
         Thread.sleep(Duration.ofSeconds(16).toMillis());
-        // Now we're past the expiration time, this will invalidate and update the cache with a new value.
-        fleetRoleCredentialsConfiguration = fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
+        // When past the expiration time, this will invalidate and update the cache with a new value.
+        fleetRoleCredentialsConfigurationManager.getFleetRoleCredentialsConfiguration();
 
         // THEN
         // The client should be called once to prime the cache and a second time to refresh the cache due to expiration.

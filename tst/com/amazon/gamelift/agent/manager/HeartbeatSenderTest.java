@@ -5,7 +5,6 @@ package com.amazon.gamelift.agent.manager;
 
 import com.amazon.gamelift.agent.model.ComputeStatus;
 import com.amazon.gamelift.agent.model.websocket.SendHeartbeatRequest;
-import com.amazon.gamelift.agent.process.GameProcess;
 import com.amazon.gamelift.agent.model.websocket.base.WebsocketRequest;
 import com.amazon.gamelift.agent.process.GameProcessManager;
 import com.amazon.gamelift.agent.websocket.AgentWebSocket;
@@ -13,15 +12,13 @@ import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.concurrent.ScheduledExecutorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.concurrent.ScheduledExecutorService;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -46,9 +43,6 @@ public class HeartbeatSenderTest {
     private AgentWebSocket client;
     @Mock
     private ScheduledExecutorService executorService;
-
-    @Mock
-    private GameProcess gameProcess;
 
     @InjectMocks
     private HeartbeatSender heartbeatSender;

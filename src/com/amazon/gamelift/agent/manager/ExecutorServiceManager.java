@@ -36,16 +36,14 @@ public class ExecutorServiceManager {
      * @param setDaemon
      * @return ScheduledThreadPoolExecuterService
      */
-    public ScheduledExecutorService getOrCreateScheduledThreadPoolExecutorService(final int threadCount, final String name,
+    public ScheduledExecutorService getOrCreateScheduledThreadPoolExecutorService(final int threadCount,
+                                                                                  final String name,
                                                                                   final boolean setDaemon) {
-        return scheduledThreadPoolExecutorServiceMap.computeIfAbsent(name, (key) -> {
-            final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(threadCount,
-                    new ThreadFactoryBuilder()
-                            .setNameFormat(name + THREAD_NAME_SUFFIX)
-                            .setDaemon(setDaemon)
-                            .build());
-            return executorService;
-        });
+        return scheduledThreadPoolExecutorServiceMap.computeIfAbsent(name, (key) ->
+                Executors.newScheduledThreadPool(threadCount, new ThreadFactoryBuilder()
+                        .setNameFormat(name + THREAD_NAME_SUFFIX)
+                        .setDaemon(setDaemon)
+                        .build()));
     }
 
     /**
@@ -55,16 +53,14 @@ public class ExecutorServiceManager {
      * @param setDaemon
      * @return FixedThreadPoolExecuterService
      */
-    public ExecutorService getOrCreateFixedThreadPoolExecutorService(final int threadCount, final String name,
+    public ExecutorService getOrCreateFixedThreadPoolExecutorService(final int threadCount,
+                                                                     final String name,
                                                                      final boolean setDaemon) {
-        return fixedThreadPoolExecutorServiceMap.computeIfAbsent(name, (key) -> {
-            final ExecutorService executorService = Executors.newFixedThreadPool(threadCount,
-                    new ThreadFactoryBuilder()
-                            .setNameFormat(name + THREAD_NAME_SUFFIX)
-                            .setDaemon(setDaemon)
-                            .build());
-            return executorService;
-        });
+        return fixedThreadPoolExecutorServiceMap.computeIfAbsent(name, (key) ->
+                Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder()
+                        .setNameFormat(name + THREAD_NAME_SUFFIX)
+                        .setDaemon(setDaemon)
+                        .build()));
     }
 
     /**
@@ -102,7 +98,7 @@ public class ExecutorServiceManager {
 
         try {
             completed = executorService.awaitTermination(deadlineMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             // Do Nothing
         }
 
@@ -118,16 +114,14 @@ public class ExecutorServiceManager {
      * Shutdown all tracked executor services
      */
     public void shutdownExecutorServices() {
-        scheduledThreadPoolExecutorServiceMap.entrySet().stream()
-                .forEach(entry -> {
-                    log.info("Shutting down ScheduledThreadPoolExecutorService: {}", entry.getKey());
-                    entry.getValue().shutdown();
-                });
-        fixedThreadPoolExecutorServiceMap.entrySet().stream()
-                .forEach(entry -> {
-                    log.info("Shutting down FixedThreadPoolExecutorService: {}", entry.getKey());
-                    entry.getValue().shutdown();
-                });
+        scheduledThreadPoolExecutorServiceMap.forEach((key, value) -> {
+            log.info("Shutting down ScheduledThreadPoolExecutorService: {}", key);
+            value.shutdown();
+        });
+        fixedThreadPoolExecutorServiceMap.forEach((key, value) -> {
+            log.info("Shutting down FixedThreadPoolExecutorService: {}", key);
+            value.shutdown();
+        });
         scheduledThreadPoolExecutorServiceMap.clear();
         fixedThreadPoolExecutorServiceMap.clear();
     }
