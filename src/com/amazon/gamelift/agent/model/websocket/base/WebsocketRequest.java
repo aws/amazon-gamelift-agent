@@ -12,11 +12,11 @@ import lombok.ToString;
 
 import java.util.UUID;
 
+@Setter
+@Getter
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class WebsocketRequest extends WebsocketMessage {
-    @Setter
-    @Getter
     @NonNull
     @JsonProperty(value = "RequestId")
     private String requestId;

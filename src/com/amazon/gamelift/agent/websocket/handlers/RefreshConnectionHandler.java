@@ -12,6 +12,7 @@ import javax.inject.Inject;
 
 @Slf4j
 public class RefreshConnectionHandler extends MessageHandler<RefreshConnectionMessage> {
+    public static final String ACTION = "RefreshConnection";
 
     // Why Lazy? WebSocketConnectionManager depends on Map<String, MessageHandler<?>>, and
     // Map<String, MessageHandler<?>> depends on this class. To get around this, Dagger allows
@@ -34,7 +35,7 @@ public class RefreshConnectionHandler extends MessageHandler<RefreshConnectionMe
     @Override
     public void handle(RefreshConnectionMessage message) {
         try {
-            connectionManager.get().reconnect(message);
+            connectionManager.get().refreshWebSocketConnection(message);
         } catch (final Exception e) {
             log.error("Failed to process refresh connection message. Will retry on the next heartbeat", e);
         }

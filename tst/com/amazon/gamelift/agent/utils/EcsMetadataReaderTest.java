@@ -1,10 +1,8 @@
 /*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
-
 package com.amazon.gamelift.agent.utils;
 
-import com.amazon.gamelift.agent.model.exception.AgentException;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +33,7 @@ public class EcsMetadataReaderTest {
     private EcsMetadataReader ecsMetadataReader;
 
     @BeforeEach
-    public void setup() throws AgentException {
+    public void setup() {
         ecsMetadataReader = new EcsMetadataReader(
                 new Gson(),
                 mockHttpClient,

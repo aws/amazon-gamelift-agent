@@ -19,7 +19,7 @@ public class NotifyProcessRegisteredHandler extends MessageHandler<NotifyProcess
 
     /**
      * Constructor for NotifyProcessRegisteredHandler
-     * See ProcessManagerWebSocketListener for message routing by Action
+     * See GameLiftAgentWebSocketListener for message routing by Action
      * @param objectMapper
      */
     @Inject
@@ -38,7 +38,7 @@ public class NotifyProcessRegisteredHandler extends MessageHandler<NotifyProcess
                 log.info("Recording log paths for process {}: {}", message.getProcessId(), message.getLogPaths());
                 gameProcessManager.updateProcessOnRegistration(message.getProcessId(), message.getLogPaths());
             }
-        } catch (NotFoundException nfe) {
+        } catch (final NotFoundException nfe) {
             log.info("Swallowing NotFoundException when saving log paths: {}", nfe.getMessage());
         }
     }

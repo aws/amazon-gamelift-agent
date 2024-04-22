@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * This instance of the RuntimeConfigurationManager obtains runtime config from Amazon GameLift over the
  * websocket connection.  It is periodically refreshed in the background to be able to pick
- * up changes to process count, etc on the fly.
+ * up changes to process count, etc. on the fly.
  */
 @Slf4j
 public class DynamicRuntimeConfigurationManager implements RuntimeConfigurationManager {
-    private LoadingCache<String, RuntimeConfiguration> runtimeConfigCache;
+    private final LoadingCache<String, RuntimeConfiguration> runtimeConfigCache;
     private static final String RUNTIME_CONFIG_CACHE_KEY = "runtimeConfiguration";
     private static final int MAX_CACHE_ENTRIES = 1;
     private static final Duration CACHE_EXPIRATION_TIME = Duration.ofMinutes(5);
@@ -42,7 +42,7 @@ public class DynamicRuntimeConfigurationManager implements RuntimeConfigurationM
     public synchronized RuntimeConfiguration getRuntimeConfiguration() {
         try {
             return runtimeConfigCache.get(RUNTIME_CONFIG_CACHE_KEY);
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             log.error("Caught an exception while loading runtimeConfiguration from cache", e);
             throw new RuntimeException("Caught an exception while loading runtimeConfiguration from cache", e);
         }

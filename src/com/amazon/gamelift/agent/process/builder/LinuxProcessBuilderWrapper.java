@@ -81,9 +81,9 @@ public class LinuxProcessBuilderWrapper implements ProcessBuilderWrapper {
             throw new BadExecutablePathException(String.format("Executable path (%s) is invalid.",
                                                                 processConfiguration.getLaunchPath()));
         }
-        // Mostly for testing, but if operating system could not be detected, we use GameLiftAgent running directory
+        // Mostly for testing, but if operating system could not be detected, use GameLiftAgent running directory
         // Otherwise, use launch path prefix as our running directory
-        File directory = new File(operatingSystem.getLaunchPathPrefix());
+        final File directory = new File(operatingSystem.getLaunchPathPrefix());
         if (directory.exists()) {
             processBuilder.directory(directory);
         }
@@ -101,8 +101,8 @@ public class LinuxProcessBuilderWrapper implements ProcessBuilderWrapper {
 
         try {
             return processBuilder.start();
-        } catch (IOException e) {
-            String errorMessage =
+        } catch (final IOException e) {
+            final String errorMessage =
                     String.format("Failed to start process from configuration [%s]", processConfiguration.toString());
             log.error(errorMessage, e);
             throw new RuntimeException(errorMessage, e);
@@ -114,7 +114,7 @@ public class LinuxProcessBuilderWrapper implements ProcessBuilderWrapper {
      * @return true if the file exists false otherwise
      */
     public boolean verifyLaunchFileExists() {
-        File launchFile = new File(processConfiguration.getLaunchPath());
+        final File launchFile = new File(processConfiguration.getLaunchPath());
         return launchFile.isFile();
     }
 }

@@ -62,7 +62,7 @@ public class WebSocketConnectionProviderTest {
     }
 
     @Test
-    public void GIVEN_agentShutsDown_WHEN_updateConnection_THEN_closesAllConnections() throws InterruptedException {
+    public void GIVEN_agentShutsDown_WHEN_updateConnection_THEN_closesAllConnections() {
         // GIVEN
         final AgentWebSocket oldConnection = mock(AgentWebSocket.class);
         final AgentWebSocket newConnection = mock(AgentWebSocket.class);

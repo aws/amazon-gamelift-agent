@@ -4,10 +4,6 @@
 package com.amazon.gamelift.agent.model;
 
 import com.amazon.gamelift.agent.logging.GameSessionLogPath;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -16,7 +12,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Getter
@@ -46,7 +46,7 @@ public class ConfiguredLogPaths {
      * @return List<String>
      */
     public List<String> getValidLogPaths() {
-        return validLogPaths.stream().collect(Collectors.toList());
+        return new ArrayList<>(validLogPaths);
     }
 
     /**
@@ -54,7 +54,7 @@ public class ConfiguredLogPaths {
      * @return List<String>
      */
     public List<String> getInvalidLogPaths() {
-        return invalidLogPaths.stream().collect(Collectors.toList());
+        return new ArrayList<>(invalidLogPaths);
     }
 
     /**
@@ -66,7 +66,7 @@ public class ConfiguredLogPaths {
      */
     public static List<GameSessionLogPath> convertToGameSessionLogPaths(final List<String> logPaths) {
         final List<GameSessionLogPath> gameSessionLogPaths = new ArrayList<>();
-        for (String path: logPaths) {
+        for (final String path: logPaths) {
             try {
                 /*
                  * /Removes C:\ from the log path but maintains all the parent folders for destination path So
@@ -74,9 +74,9 @@ public class ConfiguredLogPaths {
                  */
                 final Path drivePath = Paths.get(FilenameUtils.getPrefix(path));
 
-                String fileName = FilenameUtils.getName(path);
-                if (fileName.indexOf("*") >= 0 || fileName.indexOf("?") >= 0) {
-                    String fullPath = FilenameUtils.getFullPath(path);
+                final String fileName = FilenameUtils.getName(path);
+                if (fileName.contains("*") || fileName.contains("?")) {
+                    final String fullPath = FilenameUtils.getFullPath(path);
                     Path relativeLogPath = Paths.get(fullPath);
                     relativeLogPath = drivePath.relativize(relativeLogPath);
                     gameSessionLogPaths.add(new GameSessionLogPath(fullPath, relativeLogPath.toString(), fileName));
@@ -85,7 +85,7 @@ public class ConfiguredLogPaths {
                     relativeLogPath = drivePath.relativize(relativeLogPath);
                     gameSessionLogPaths.add(new GameSessionLogPath(path, relativeLogPath.toString()));
                 }
-            } catch (InvalidPathException ipe) {
+            } catch (final InvalidPathException ipe) {
                 log.error("Error getting path for " + path, ipe);
             }
         }

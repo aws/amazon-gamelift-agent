@@ -1,10 +1,10 @@
 /*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
-
 package com.amazon.gamelift.agent.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -19,6 +19,6 @@ public class ProcessTerminationReasonTest {
 
     @Test
     public void GIVEN_reasonWithoutEventCode_WHEN_getEventCode_THEN_returnsNull() {
-        assertEquals(null, ProcessTerminationReason.COMPUTE_SHUTTING_DOWN.getEventCode());
+        assertNull(ProcessTerminationReason.COMPUTE_SHUTTING_DOWN.getEventCode());
     }
 }

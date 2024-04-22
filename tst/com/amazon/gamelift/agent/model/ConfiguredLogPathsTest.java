@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -74,11 +75,11 @@ public class ConfiguredLogPathsTest {
                         actualGameSessionLogPaths.size(), expectedGameSessionLogPaths.size()));
 
         int validatedActualLogPaths = 0;
-        for (GameSessionLogPath expectedLogPath : expectedGameSessionLogPaths) {
-            for (GameSessionLogPath actualLogPath : actualGameSessionLogPaths) {
-                if (expectedLogPath.getSourcePath() == actualLogPath.getSourcePath()
-                        && expectedLogPath.getRelativePathInZip() == actualLogPath.getRelativePathInZip()
-                        && expectedLogPath.getWildcardToGet() == actualLogPath.getWildcardToGet()) {
+        for (final GameSessionLogPath expectedLogPath : expectedGameSessionLogPaths) {
+            for (final GameSessionLogPath actualLogPath : actualGameSessionLogPaths) {
+                if (Objects.equals(expectedLogPath.getSourcePath(), actualLogPath.getSourcePath())
+                        && Objects.equals(expectedLogPath.getRelativePathInZip(), actualLogPath.getRelativePathInZip())
+                        && Objects.equals(expectedLogPath.getWildcardToGet(), actualLogPath.getWildcardToGet())) {
                     validatedActualLogPaths++;
                 }
             }

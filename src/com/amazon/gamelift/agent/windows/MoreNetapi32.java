@@ -13,9 +13,12 @@ import com.sun.jna.win32.W32APIOptions;
  * Interface for More Netapi32
  */
 public interface MoreNetapi32 extends Netapi32 {
-    MoreNetapi32 INSTANCE = MoreNetapi32.class.cast(Native.loadLibrary("Netapi32",
-                                                                       MoreNetapi32.class,
-                                                                       W32APIOptions.UNICODE_OPTIONS));
+    MoreNetapi32 INSTANCE = Native.load("Netapi32",
+            MoreNetapi32.class,
+            W32APIOptions.UNICODE_OPTIONS);
 
-    int NetUserSetInfo(String serverName, String userName, int level, Structure buffer, IntByReference error);
+    int NetUserSetInfo(final String serverName,
+                       final String userName,
+                       final int level, Structure buffer,
+                       final IntByReference error);
 }

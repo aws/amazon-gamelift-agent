@@ -11,12 +11,13 @@ import lombok.RequiredArgsConstructor;
  *  The values of this enum specify which source to use for credentials when creating an Amazon GameLift client.
  *  The selection is provided via CLI input, with a default of INSTANCE_PROFILE.
  */
+@Getter
 @RequiredArgsConstructor
 public enum GameLiftCredentials {
     INSTANCE_PROFILE("instance-profile"),
     ENVIRONMENT_VARIABLE("environment-variable"),
     CONTAINER("container");
 
-    @Getter @NonNull
+    @NonNull
     private final String value;
 }

@@ -29,14 +29,14 @@ public class WindowsProcessCommons {
         final List<ProcessHandle> output = new ArrayList<>();
 
         /*
-        We make a call to the Win32 kernel to snapshot the current list of processes on the machine. Then iterate over them, and if a given process's
-        parent is the passed 'processId', then store and return it. There is almost no documentation for the JNA library in Java, so instead it's best
+        Function makes a call to the Win32 kernel to snapshot the current list of processes on the machine. Then iterate over them, and if a given process's
+        parent is the passed 'processUuid', then store and return it. There is almost no documentation for the JNA library in Java, so instead it's best
         to look up C++ documentation, and adapt the code to Java. This code is adapted from:
         https://stackoverflow.com/questions/1173342/terminate-a-process-tree-c-for-windows
          */
 
-        WinNT.HANDLE handleSnapshot = Kernel32.INSTANCE.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
-        Tlhelp32.PROCESSENTRY32.ByReference processEntry32Ref = new Tlhelp32.PROCESSENTRY32.ByReference();
+        final WinNT.HANDLE handleSnapshot = Kernel32.INSTANCE.CreateToolhelp32Snapshot(Tlhelp32.TH32CS_SNAPPROCESS, new WinDef.DWORD(0));
+        final Tlhelp32.PROCESSENTRY32.ByReference processEntry32Ref = new Tlhelp32.PROCESSENTRY32.ByReference();
 
         if (!Kernel32.INSTANCE.Process32First(handleSnapshot, processEntry32Ref)) {
             return Stream.empty();

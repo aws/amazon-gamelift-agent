@@ -61,7 +61,7 @@ public class Agent {
      */
     public void start() throws Exception {
         try {
-            // Get a snaphshot of the host metadata to assist with debugging
+            // Get a snapshot of the host metadata to assist with debugging
             EnvironmentHelper.logEC2Metadata();
 
             log.info("Initializing Websocket connection and starting async threads");
@@ -75,20 +75,20 @@ public class Agent {
             gameProcessMonitor.start();
 
             log.info("Finished initializing Websocket connection and async threads");
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Encountered exception when starting up the GameLiftAgent", e);
             throw e;
         }
     }
 
     /**
-     * Method for invoking any necessary shutdown logic. This is mostly a passthrough helper method for the
+     * Method for invoking any necessary shutdown logic. This is mostly a pass through helper method for the
      * shutdown hook in the Application main thread
      */
     public void shutdown() {
         try {
             shutdownOrchestrator.completeTermination();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Encountered exception when shutting down the GameLiftAgent", e);
             throw e;
         }

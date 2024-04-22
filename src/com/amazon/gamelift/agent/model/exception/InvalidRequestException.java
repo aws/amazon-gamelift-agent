@@ -11,14 +11,14 @@ public class InvalidRequestException extends AgentException {
     /**
      * Creates InvalidRequestException with message and throwable
      */
-    public InvalidRequestException(String message, Throwable exception) {
+    public InvalidRequestException(final String message, final Throwable exception) {
         super(message, exception, false);
     }
 
     /**
      * Creates InvalidRequestException with message
      */
-    public InvalidRequestException(String message) {
+    public InvalidRequestException(final String message) {
         super(message, false);
     }
 }

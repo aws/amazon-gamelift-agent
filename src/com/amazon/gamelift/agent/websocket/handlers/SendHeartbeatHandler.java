@@ -93,12 +93,12 @@ public class SendHeartbeatHandler extends MessageHandler<SendHeartbeatResponse> 
     }
 
     /**
-     * Aligns the ProcessManager's internal status with whatever is returned in the Heartbeat response.
-     * This allows the ProcessManager to stay in sync with updates to Compute status performed server-side.
+     * Aligns the Agent's internal status with whatever is returned in the Heartbeat response.
+     * This allows the Agent to stay in sync with updates to Compute status performed server-side.
      */
     private void processComputeStatus(final String computeStatusFromResponse) {
         if (stateManager.isComputeTerminatingOrTerminated()) {
-            // If the Compute is terminating, do update the ProcessManager internal state.
+            // If the Compute is terminating, update the Agent's internal state.
             // State should get updated automatically during the normal shutdown flow.
             return;
         }
@@ -117,7 +117,7 @@ public class SendHeartbeatHandler extends MessageHandler<SendHeartbeatResponse> 
                 stateManager.reportComputeActive();
             }
         } else if (ComputeStatus.Initializing.name().equalsIgnoreCase(computeStatusFromResponse)) {
-            // Wait to transition to Activating until we receive Initializing from the server
+            // Wait to transition to Activating until Initializing is received from the server
             log.info("Received Initializing status from Heartbeat. Updating internal status to Activating");
             stateManager.reportComputeActivating();
         }

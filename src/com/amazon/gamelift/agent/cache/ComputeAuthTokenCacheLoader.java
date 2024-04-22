@@ -11,6 +11,8 @@ import com.amazon.gamelift.agent.model.exception.NotFoundException;
 import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
 import com.amazonaws.services.gamelift.model.GetComputeAuthTokenRequest;
 import com.google.common.cache.CacheLoader;
+
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,7 +36,7 @@ public class ComputeAuthTokenCacheLoader extends CacheLoader<String, GetComputeA
     }
 
     @Override
-    public GetComputeAuthTokenResponse load(final String key) throws RuntimeException {
+    public @NonNull GetComputeAuthTokenResponse load(final @NonNull String key) throws RuntimeException {
         log.info("Loading ComputeAuthToken into cache via Amazon GameLift GetComputeAuthToken call.");
         try {
             final GetComputeAuthTokenRequest getComputeAuthTokenRequest = new GetComputeAuthTokenRequest()

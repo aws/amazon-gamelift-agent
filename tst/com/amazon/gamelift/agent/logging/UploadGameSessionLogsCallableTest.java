@@ -3,8 +3,6 @@
  */
 package com.amazon.gamelift.agent.logging;
 
-import com.amazon.gamelift.agent.model.exception.InternalServiceException;
-import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,9 +14,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 import static org.mockito.Mockito.doThrow;
@@ -34,7 +30,6 @@ public class UploadGameSessionLogsCallableTest {
     @Mock private S3FileUploader mockS3FileUploader;
     @Mock private GameSessionLogsCollector mockGameSessionLogsCollector;
     @Mock private File mockFile;
-    @Mock private Path mockPath;
 
     private static final String GS_LOG_BUCKET = "game-session-log-bucket";
     private static final String FLEET_ID = "fleet-123abc";
@@ -47,13 +42,13 @@ public class UploadGameSessionLogsCallableTest {
     private UploadGameSessionLogsCallable callable;
 
     @BeforeEach
-    public void setup() throws IOException, InternalServiceException, InterruptedException, InvalidRequestException {
+    public void setup() {
         callable = new UploadGameSessionLogsCallable(GS_LOG_BUCKET, FLEET_ID, COMPUTE_NAME, PROCESS_ID, LOG_PATHS,
                 GAME_SESSION_ID, mockS3FileUploader, mockGameSessionLogsCollector);
     }
 
     @Test
-    public void GIVEN_noGameSessionLogBucket_WHEN_call_THEN_skipUpload() throws Exception {
+    public void GIVEN_noGameSessionLogBucket_WHEN_call_THEN_skipUpload() {
         callable = new UploadGameSessionLogsCallable(null, FLEET_ID, COMPUTE_NAME, PROCESS_ID,
                 LOG_PATHS, GAME_SESSION_ID, mockS3FileUploader, mockGameSessionLogsCollector);
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
@@ -109,7 +104,7 @@ public class UploadGameSessionLogsCallableTest {
         final UploadGameSessionLogsCallable nullGameSessionCallable =
                 new UploadGameSessionLogsCallable(GS_LOG_BUCKET, FLEET_ID, COMPUTE_NAME, PROCESS_ID, LOG_PATHS,
                         null, mockS3FileUploader, mockGameSessionLogsCollector);
-        // When GameSession is null then we expect the process ID to be used instead
+        // When GameSession is null then expect the process ID to be used instead
         final String s3Key = FLEET_ID + "/" + COMPUTE_NAME + "/" + PROCESS_ID + ".zip";
 
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {

@@ -31,20 +31,12 @@ public class WebSocketExceptionProvider {
         final ErrorWebsocketResponse testErrorResponse =
                 objectMapper.readValue(webSocketMessage, ErrorWebsocketResponse.class);
 
-        switch (testErrorResponse.getStatusCode()) {
-            case HttpStatus.SC_OK:
-                // If message is not an error response, return null
-                return null;
-            case HttpStatus.SC_BAD_REQUEST:
-                return new InvalidRequestException(testErrorResponse.getErrorMessage());
-            case HttpStatus.SC_UNAUTHORIZED:
-                return new UnauthorizedException(testErrorResponse.getErrorMessage());
-            case HttpStatus.SC_NOT_FOUND:
-                return new NotFoundException(testErrorResponse.getErrorMessage());
-            case HttpStatus.SC_INTERNAL_SERVER_ERROR:
-                return new InternalServiceException(testErrorResponse.getErrorMessage());
-            default:
-                return new InternalServiceException(testErrorResponse.getErrorMessage());
-        }
+        return switch (testErrorResponse.getStatusCode()) {
+            case HttpStatus.SC_OK -> null; // If message is not an error response, return null
+            case HttpStatus.SC_BAD_REQUEST -> new InvalidRequestException(testErrorResponse.getErrorMessage());
+            case HttpStatus.SC_UNAUTHORIZED -> new UnauthorizedException(testErrorResponse.getErrorMessage());
+            case HttpStatus.SC_NOT_FOUND -> new NotFoundException(testErrorResponse.getErrorMessage());
+            default -> new InternalServiceException(testErrorResponse.getErrorMessage());
+        };
     }
 }

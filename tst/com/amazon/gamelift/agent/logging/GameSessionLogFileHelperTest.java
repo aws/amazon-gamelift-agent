@@ -39,8 +39,8 @@ public class GameSessionLogFileHelperTest {
             tooLongPathsLinux
     );
 
-    final String validLogPathOneWindows = "C:\\Game\\logs\\";
-    final String validLogPathTwoWindows = "C:\\Game\\other\\";
+    private final String validLogPathOneWindows = "C:\\Game\\logs\\";
+    private final String validLogPathTwoWindows = "C:\\Game\\other\\";
     private final List<String> validLogsPathsWindows = ImmutableList.of(
             validLogPathOneWindows,
             validLogPathTwoWindows
@@ -48,8 +48,8 @@ public class GameSessionLogFileHelperTest {
 
     private final String tooLongPathsWindows = "C:\\Game\\logs\\"
             + RandomStringUtils.randomAlphanumeric(GameSessionLogFileHelper.MAXIMUM_WINDOWS_PATH_LENGTH) + "/";
-    final String invalidLogPathOneWindows = "C:\\InvalidDir\\logs\\";
-    final String invalidLogPathTwoWindows = "C:\\Game\\logs<>\\";
+    private final String invalidLogPathOneWindows = "C:\\InvalidDir\\logs\\";
+    private final String invalidLogPathTwoWindows = "C:\\Game\\logs<>\\";
     private final List<String> invalidLogsPathsWindows = ImmutableList.of(
             invalidLogPathOneWindows,
             invalidLogPathTwoWindows,
@@ -59,14 +59,13 @@ public class GameSessionLogFileHelperTest {
     private final String linuxLaunchPath = "/local/game/server.exe";
     private final String windowsLaunchPath = "C:\\Game\\GameFolder\\server.exe";
 
-    @Mock Path mockPath;
-    @Mock Path mockPathParent;
+    @Mock private Path mockPath;
+    @Mock private Path mockPathParent;
 
     @Test
     public void GIVEN_validWindowsLogPaths_WHEN_configureLogPaths_THEN_pathsConfigured() {
         // GIVEN
-        final List<String> logPaths = new ArrayList<>();
-        logPaths.addAll(validLogsPathsWindows);
+        final List<String> logPaths = new ArrayList<>(validLogsPathsWindows);
         final GameSessionLogFileHelper gameSessionLogFileHelper =
                 new GameSessionLogFileHelper(OperatingSystem.WINDOWS_2019);
         when(mockPath.getParent()).thenReturn(mockPathParent);
@@ -99,8 +98,7 @@ public class GameSessionLogFileHelperTest {
     @Test
     public void GIVEN_validLinuxLogPaths_WHEN_configureLogPaths_THEN_pathsConfigured() {
         // GIVEN
-        final List<String> logPaths = new ArrayList<>();
-        logPaths.addAll(validLogsPathsLinux);
+        final List<String> logPaths = new ArrayList<>(validLogsPathsLinux);
         final GameSessionLogFileHelper gameSessionLogFileHelper =
                 new GameSessionLogFileHelper(OperatingSystem.AMAZON_LINUX_2);
 
@@ -118,8 +116,7 @@ public class GameSessionLogFileHelperTest {
     @Test
     public void GIVEN_invalidCharacterWindowsLogPath_WHEN_configureLogPaths_THEN_pathsConfigured() {
         // GIVEN
-        final List<String> logPaths = new ArrayList<>();
-        logPaths.addAll(invalidLogsPathsWindows);
+        final List<String> logPaths = new ArrayList<>(invalidLogsPathsWindows);
         final GameSessionLogFileHelper gameSessionLogFileHelper =
                 new GameSessionLogFileHelper(OperatingSystem.WINDOWS_2019);
         when(mockPath.getParent()).thenReturn(mockPathParent);
@@ -154,8 +151,7 @@ public class GameSessionLogFileHelperTest {
     @Test
     public void GIVEN_invalidLinuxLogPaths_WHEN_configureLogPaths_THEN_pathsConfigured() {
         // GIVEN
-        final List<String> logPaths = new ArrayList<>();
-        logPaths.addAll(invalidLogsPathsLinux);
+        final List<String> logPaths = new ArrayList<>(invalidLogsPathsLinux);
         final GameSessionLogFileHelper gameSessionLogFileHelper =
                 new GameSessionLogFileHelper(OperatingSystem.AMAZON_LINUX_2);
 
