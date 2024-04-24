@@ -11,7 +11,7 @@ public class MalformedRequestException extends AgentException {
     /**
      * Creates MalformedRequestException with message and throwable
      */
-    public MalformedRequestException(String message, Throwable exception) {
+    public MalformedRequestException(final String message, final Throwable exception) {
         super(message, exception, false);
     }
 }

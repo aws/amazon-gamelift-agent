@@ -82,7 +82,7 @@ public class S3FileUploader {
             final PutObjectRequest request = new PutObjectRequest(bucketName, fileKey, logFile);
             final PutObjectResult result = amazonS3.putObject(request);
             log.info("File uploaded successfully: {}", result);
-        } catch (AmazonS3Exception e) {
+        } catch (final AmazonS3Exception e) {
             throw new InternalServiceException(e.getMessage());
         }
         // Retryable will retry unless something is returned
@@ -100,7 +100,7 @@ public class S3FileUploader {
                                 final String bucketName,
                                 final String fileKey,
                                 final File logFile) throws IOException, AgentException {
-        File tempZipFile = File.createTempFile(logFile.getName(), GZ_SUFFIX);
+        final File tempZipFile = File.createTempFile(logFile.getName(), GZ_SUFFIX);
         try (InputStream inputStream = new FileInputStream(logFile);
              GZIPOutputStream outputStream = new GZIPOutputStream(new FileOutputStream(tempZipFile))) {
             // Copy the FileInputStream to the GZIP/FileOutputStream
@@ -108,7 +108,7 @@ public class S3FileUploader {
             outputStream.close();
             // Perform the S3 PutObject operation, append zip suffix to fileKey
             attemptPutObject(amazonS3, bucketName, fileKey + GZ_SUFFIX, tempZipFile);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log.error("Failed to zip file: {}", logFile.getName());
             throw e;
         } finally {

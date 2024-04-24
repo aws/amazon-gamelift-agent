@@ -232,7 +232,7 @@ public class ConfigModule {
     @Singleton
     @Named(GAMELIFT_CREDENTIALS)
     public AWSCredentialsProvider provideGameLiftCredentials() {
-        AWSCredentialsProvider specifiedProvider;
+        final AWSCredentialsProvider specifiedProvider;
         if (GameLiftCredentials.INSTANCE_PROFILE.equals(gameLiftCredentials)) {
             log.info("Retrieving credentials from the instance metadata");
             specifiedProvider = InstanceProfileCredentialsProvider.getInstance();
@@ -290,7 +290,7 @@ public class ConfigModule {
     @Named(GAMELIFT_AGENT_LOG_PATH)
     public String provideAgentLogPath(@Named(OPERATING_SYSTEM) final OperatingSystem operatingSystem) {
         if (StringUtils.isBlank(gameliftAgentLogPath)) {
-            // When no log path provided we will use a GameLift-defined default based on OperatingSystem
+            // When no log path provided use a GameLift-defined default based on OperatingSystem
             return operatingSystem.getAgentLogsFolder();
         } else {
             return gameliftAgentLogPath;

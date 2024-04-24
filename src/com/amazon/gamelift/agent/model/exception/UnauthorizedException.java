@@ -11,14 +11,14 @@ public class UnauthorizedException extends AgentException {
     /**
      * Creates UnauthorizedException with message and throwable
      */
-    public UnauthorizedException(String message, Throwable exception) {
+    public UnauthorizedException(final String message, final Throwable exception) {
         super(message, exception, false);
     }
 
     /**
      * Creates UnauthorizedException with message
      */
-    public UnauthorizedException(String message) {
+    public UnauthorizedException(final String message) {
         super(message, false);
     }
 }

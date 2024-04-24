@@ -44,7 +44,7 @@ public class WindowsProcessDestroyer implements ProcessDestroyer {
             // Destroy the root process. This should be the "powershell" process on Windows.
             log.info("Destroying parent process with PID {}", internalProcess.pid());
             internalProcess.destroyForcibly();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Failure terminating process: {}", internalProcess.pid());
         }
     }

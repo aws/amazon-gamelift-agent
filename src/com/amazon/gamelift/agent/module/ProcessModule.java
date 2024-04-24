@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *  Module to provide dependency injection of process-related dependencies (handlers, GameLiftAgent etc)
+ *  Module to provide dependency injection of process-related dependencies (handlers, GameLiftAgent etc.)
  */
 @Module
 @Slf4j
@@ -142,7 +142,7 @@ public class ProcessModule {
     @Provides
     @Singleton
     public ComputeAuthTokenManager provideComputeAuthTokenManager(
-            LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache) {
+            final LoadingCache<String, GetComputeAuthTokenResponse> computeAuthTokenCache) {
             return new ComputeAuthTokenManager(computeAuthTokenCache);
     }
 

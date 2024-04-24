@@ -38,22 +38,22 @@ public class GameSessionLogFileHelper {
      * '/' are part of file paths and so should be allowed.
      * http://www.dwheeler.com/secure-programs/Secure-Programs-HOWTO/file-names.html
      */
-    private static final String INVALID_LINUX_CHARS = "<>\"\'|*?[]\n\r\\\0";
+    private static final String INVALID_LINUX_CHARS = "<>\"'|*?[]\n\r\\\0";
 
     /**
      * Configures log paths based on launch path
      * @param logPaths
      * @param launchPath
      */
-    public ConfiguredLogPaths configureLogPaths(List<String> logPaths, String launchPath) {
+    public ConfiguredLogPaths configureLogPaths(final List<String> logPaths, final String launchPath) {
         final ConfiguredLogPaths configuredLogPaths = new ConfiguredLogPaths();
 
         if (CollectionUtils.isNotEmpty(logPaths)) {
-            for (String logPath : makePathsAbsolute(logPaths, launchPath)) {
+            for (final String logPath : makePathsAbsolute(logPaths, launchPath)) {
                 try {
                     validateLogPath(logPath);
                     configuredLogPaths.addValidLogPath(logPath);
-                } catch (InvalidRequestException e) {
+                } catch (final InvalidRequestException e) {
                     log.error("Invalid GameServer log detected: {}", logPath, e);
                     configuredLogPaths.addInvalidLogPath(logPath);
                 }
@@ -65,7 +65,7 @@ public class GameSessionLogFileHelper {
     /**
      * Processes and validates the given log paths based on the given OperatingSystem.
      *
-     * @param path - Customer provided game session log path
+     * @param path - Game session log path
      * @return String for validated log path with proper slashes and endings
      * @throws InvalidRequestException
      */
@@ -88,7 +88,7 @@ public class GameSessionLogFileHelper {
      *
      * <p>
      *     In the context of GameLift relative paths are relative to the directory where the server executable is.
-     *     This means we have to turn the relative log paths to absolute using the executables path.
+     *     This means relative log paths need to be converted to absolute using the executables path.
      *
      *     Otherwise, relative log paths would be relative to where GameLiftAgent is running, which is wrong.
      * </p>
@@ -151,21 +151,21 @@ public class GameSessionLogFileHelper {
     }
 
     private static boolean isSmallerThanMaxPath(final String path,
-                                                int maxPathLength) {
+                                                final int maxPathLength) {
         return StringUtils.length(path) <= maxPathLength;
     }
 
     /**
      * Returns true iff the log file path is valid for Windows.
      */
-    private static boolean hasValidWindowsChars(String logPath) {
+    private static boolean hasValidWindowsChars(final String logPath) {
         return StringUtils.containsNone(logPath, INVALID_WINDOWS_CHARS);
     }
 
     /**
      * Returns true iff the log file path is valid for Linux.
      */
-    private static boolean hasValidLinuxChars(String logPath) {
+    private static boolean hasValidLinuxChars(final String logPath) {
         return StringUtils.containsNone(logPath, INVALID_LINUX_CHARS);
     }
 }

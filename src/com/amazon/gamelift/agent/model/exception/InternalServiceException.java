@@ -11,14 +11,14 @@ public class InternalServiceException extends AgentException {
     /**
      * Creates InternalServiceException with message and throwable
      */
-    public InternalServiceException(String message, Throwable exception) {
+    public InternalServiceException(final String message, final Throwable exception) {
         super(message, exception, true);
     }
 
     /**
      * Creates InternalServiceException with message
      */
-    public InternalServiceException(String message) {
+    public InternalServiceException(final String message) {
         super(message, true);
     }
 

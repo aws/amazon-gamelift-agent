@@ -6,15 +6,14 @@ package com.amazon.gamelift.agent.process.builder;
 import com.amazon.gamelift.agent.model.GameProcessConfiguration;
 import com.amazon.gamelift.agent.model.OperatingSystem;
 import com.amazon.gamelift.agent.model.exception.BadExecutablePathException;
+
+import java.io.IOException;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.spy;
@@ -30,7 +29,6 @@ public class LinuxProcessBuilderTest {
             .parameters("--parameter1 --parameter2")
             .build();
     private static final OperatingSystem OPERATING_SYSTEM = OperatingSystem.DEFAULT_OS;
-    private static final String USER = "TEST_USER";
 
     @Mock private ProcessBuilder mockProcessBuilder;
     @Mock private Process mockProcess;

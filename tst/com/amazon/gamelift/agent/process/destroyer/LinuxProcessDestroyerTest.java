@@ -12,12 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -31,10 +29,8 @@ import static org.mockito.Mockito.when;
 public class LinuxProcessDestroyerTest {
 
     private static final OperatingSystem OPERATING_SYSTEM = OperatingSystem.DEFAULT_OS;
-    private static final Path PARENT_PROCESS = Paths.get(Objects
-            .requireNonNull(LinuxProcessDestroyerTest.class.getResource("parent_process.sh")).getPath());
-    private static final Path CHILD_PROCESS = Paths.get(Objects
-            .requireNonNull(LinuxProcessDestroyerTest.class.getResource("child_process.sh")).getPath());
+    private static final Path PARENT_PROCESS = new File("tst/resources/parent_process.sh").toPath();
+    private static final Path CHILD_PROCESS = new File("tst/resources/child_process.sh").toPath();
 
     @Mock private Process mockInternalProcess;
     @Mock private Process mockDestroyerProcess;
@@ -93,7 +89,7 @@ public class LinuxProcessDestroyerTest {
      * This test creates actual processes, without child processes, destroys one, and verifies that the other is
      * still running correctly.
      */
-    @Disabled // Disabled since we cannot run sudo on builder tools hosts.  Remove to test locally.
+    @Disabled // Disabled in case sudo is not available. Remove annotation to test.
     @Test
     public void GIVEN_processesWithoutChildren_WHEN_destroyProcess_THEN_onlyKillsOneProcess()
             throws IOException, InterruptedException {
@@ -121,7 +117,7 @@ public class LinuxProcessDestroyerTest {
      * This test uses actual processes, which each create a child process, to verify that the child process is
      * killed when the parent is killed.  And also that the child of the second process is not killed accidentally.
      */
-    @Disabled // Disabled since we cannot run sudo on builder tools hosts.  Remove to test locally.
+    @Disabled // Disabled in case sudo is not available. Remove annotation to test.
     @Test
     public void GIVEN_processesWithChildren_WHEN_destroyProcess_THEN_onlyKillsOneProcessAndChild()
             throws IOException, InterruptedException {

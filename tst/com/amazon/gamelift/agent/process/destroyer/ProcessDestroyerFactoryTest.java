@@ -4,13 +4,13 @@
 package com.amazon.gamelift.agent.process.destroyer;
 
 import com.amazon.gamelift.agent.model.OperatingSystem;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,7 +23,7 @@ public class ProcessDestroyerFactoryTest {
         // WHEN
         ProcessDestroyer processDestroyer = ProcessDestroyerFactory.getProcessDestroyer(operatingSystem);
         // THEN
-        assertTrue(processDestroyer instanceof WindowsProcessDestroyer);
+        assertInstanceOf(WindowsProcessDestroyer.class, processDestroyer);
     }
 
     @ParameterizedTest
@@ -34,7 +34,7 @@ public class ProcessDestroyerFactoryTest {
         // WHEN
         ProcessDestroyer processDestroyer = ProcessDestroyerFactory.getProcessDestroyer(operatingSystem);
         // THEN
-        assertTrue(processDestroyer instanceof LinuxProcessDestroyer);
+        assertInstanceOf(LinuxProcessDestroyer.class, processDestroyer);
     }
 
     @Test

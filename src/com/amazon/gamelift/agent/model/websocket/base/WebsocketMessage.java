@@ -10,11 +10,11 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+@Setter
+@Getter
 @ToString
 @EqualsAndHashCode
 public abstract class WebsocketMessage {
-    @Setter
-    @Getter
     @NonNull
     @JsonProperty(value = "Action")
     private String action;

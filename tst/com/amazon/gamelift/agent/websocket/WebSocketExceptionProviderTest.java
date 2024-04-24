@@ -100,7 +100,7 @@ public class WebSocketExceptionProviderTest {
 
         // THEN
         assertTrue(exceptionClass.isInstance(exception),
-                String.format("Exception returned was not a {}: {}", exceptionClass.getSimpleName(), exception));
+                String.format("Exception returned was not a %s: %s", exceptionClass.getSimpleName(), exception));
         assertEquals(response.getErrorMessage(), exception.getMessage());
     }
 }

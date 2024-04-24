@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
  */
 package com.amazon.gamelift.agent.model;
@@ -10,14 +10,15 @@ import lombok.Getter;
  *  GameLiftAgent is running.
  *
  */
+@Getter
 public enum OperatingSystemFamily {
     WINDOWS("Windows"),
     LINUX("Unix"),
     INVALID("Invalid");
 
-    @Getter private final String osFamilyName;
+    private final String osFamilyName;
 
-    OperatingSystemFamily(String osFamilyName) {
+    OperatingSystemFamily(final String osFamilyName) {
         this.osFamilyName = osFamilyName;
     }
 
@@ -26,8 +27,8 @@ public enum OperatingSystemFamily {
      * @param osFamilyName The name to convert
      * @return a {@link OperatingSystemFamily}
      */
-    public static OperatingSystemFamily fromOsFamilyName(String osFamilyName) {
-        for (OperatingSystemFamily family : values()) {
+    public static OperatingSystemFamily fromOsFamilyName(final String osFamilyName) {
+        for (final OperatingSystemFamily family : values()) {
             if (family.osFamilyName.equals(osFamilyName)) {
                 return family;
             }

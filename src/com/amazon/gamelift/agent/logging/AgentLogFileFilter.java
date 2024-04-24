@@ -12,7 +12,7 @@ import com.amazon.gamelift.agent.manager.LogConfigurationManager;
 
 /**
  * A basic log file filter that helps the GameLift agent filter out undesirable files in the agent Log directory,
- * so that only files we think are actual logs get uploaded
+ * so that only actual log files get uploaded
  */
 public class AgentLogFileFilter implements FileFilter {
 
@@ -23,8 +23,8 @@ public class AgentLogFileFilter implements FileFilter {
     public AgentLogFileFilter() { }
 
     @Override
-    public boolean accept(File file) {
-        boolean baseNameMatchesExpected =
+    public boolean accept(final File file) {
+        final boolean baseNameMatchesExpected =
                 file.getName().startsWith(LogConfigurationManager.APPLICATION_LOG_FILE_BASENAME);
 
         return (file.isFile()

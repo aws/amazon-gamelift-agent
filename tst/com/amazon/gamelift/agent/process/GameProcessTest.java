@@ -3,34 +3,28 @@
  */
 package com.amazon.gamelift.agent.process;
 
+import com.amazon.gamelift.agent.manager.ProcessEnvironmentManager;
 import com.amazon.gamelift.agent.model.GameProcessConfiguration;
 import com.amazon.gamelift.agent.model.OperatingSystem;
 import com.amazon.gamelift.agent.model.ProcessStatus;
 import com.amazon.gamelift.agent.model.exception.BadExecutablePathException;
 import com.amazon.gamelift.agent.process.builder.ProcessBuilderWrapper;
-import com.amazon.gamelift.agent.manager.ProcessEnvironmentManager;
 import com.amazon.gamelift.agent.process.destroyer.ProcessDestroyer;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.File;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
-import java.util.stream.Stream;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -47,19 +41,12 @@ public class GameProcessTest {
 
     @Mock private ProcessBuilderWrapper mockProcessBuilder;
     @Mock private Process mockProcess;
-    @Mock private ProcessHandle mockChildProcessHandle;
     @Mock private Map<String, String> mockEnvironmentVariableMap;
     @Mock private BiConsumer<Process, GameProcess> mockExitHandleFunction;
     @Mock private ProcessEnvironmentManager mockProcessEnvironmentManager;
     @Mock private ProcessDestroyer mockProcessDestroyer;
-    @Mock private CompletableFuture<Process> mockCompletableFuture;
 
     private GameProcess processUnderTest;
-
-    private static final String user = "TEST_USER";
-
-    @Captor
-    ArgumentCaptor<File> fileCaptor;
 
     @BeforeEach
     public void setup() {

@@ -71,7 +71,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_requiredArgs_WHEN_parsing_THEN_returnValues() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -82,10 +82,10 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -103,7 +103,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_blankGLC_WHEN_parsing_THEN_error() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -125,7 +125,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_instance_profile_WHEN_parsing_THEN_returnValues() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -137,10 +137,10 @@ public class AgentCliParserTest {
                 "-dns", DNS_NAME_TEST,
                 "-glc", GameLiftCredentials.INSTANCE_PROFILE.getValue()
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -158,7 +158,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_environment_variable_WHEN_parsing_THEN_returnValues() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -170,10 +170,10 @@ public class AgentCliParserTest {
                 "-dns", DNS_NAME_TEST,
                 "-glc", GameLiftCredentials.ENVIRONMENT_VARIABLE.getValue()
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -191,7 +191,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_container_WHEN_parsing_THEN_returnValues() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -203,10 +203,10 @@ public class AgentCliParserTest {
                 "-dns", DNS_NAME_TEST,
                 "-glc", GameLiftCredentials.CONTAINER.getValue()
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -223,7 +223,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_fleetIdEnvArgNotAvailable_WHEN_parsingAndNotOnCliInput_THEN_illegalArgumentException() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-c", COMPUTE_NAME_TEST,
                 "-gleo", GAMELIFT_ENDPOINT_OVERRIDE,
@@ -233,7 +233,7 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -244,7 +244,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_computeNameEnvArgNotAvailable_WHEN_parsingAndNotOnCliInput_THEN_illegalArgumentException() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-gleo", GAMELIFT_ENDPOINT_OVERRIDE,
@@ -254,7 +254,7 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -265,7 +265,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_regionEnvArgNotAvailable_WHEN_parsingAndNotOnCliInput_THEN_illegalArgumentException() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -275,7 +275,7 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -286,7 +286,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_locationEnvArgNotAvailable_WHEN_parsingAndNotOnCliInput_THEN_illegalArgumentException() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -296,7 +296,7 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -307,7 +307,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_requiredArgsWithTestConfiguration_WHEN_parsing_THEN_returnValues() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -318,10 +318,10 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -338,7 +338,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_s3LogBuckets_WHEN_parsing_THEN_returnValues() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -348,10 +348,10 @@ public class AgentCliParserTest {
                 "-gslb", GAME_SESSION_LOG_BUCKET,
                 "-galb", GAMELIFT_AGENT_LOG_BUCKET
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -367,8 +367,8 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_missingRequiredArg_WHEN_parsing_THEN_failure() {
         // GIVEN
-        String[] args = new String[0];
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final String[] args = new String[0];
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -377,7 +377,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_malformedJsonForRuntimeConfig_WHEN_parsing_THEN_failure() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", "{\"Not Proper JSON\"[]}",
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -386,7 +386,7 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -395,7 +395,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_missingRuntimeConfigRequiredFields_WHEN_parsing_THEN_failure() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", "{\"GameSessionActivationTimeoutSeconds\": 1}",
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -404,7 +404,7 @@ public class AgentCliParserTest {
                 "-ip", IP_ADDRESS_TEST,
                 "-dns", DNS_NAME_TEST
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
@@ -413,14 +413,14 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_helpOption_WHEN_parsing_THEN_systemExit() {
         // GIVEN
-        String[] args = new String[]{"--help"};
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final String[] args = new String[]{"--help"};
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
         try {
             parser.parse(args);
             fail("HelpRequested Exception should be thrown when requesting help.");
-        } catch (HelpRequestedException e) {
+        } catch (final HelpRequestedException e) {
             // THEN
         }
     }
@@ -428,7 +428,7 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_emptyOptionalArgs_WHEN_parsing_THEN_returnValuesWithNulls() {
         // GIVEN
-        String[] args = new String[]{
+        final String[] args = new String[]{
                 "-rc", RUNTIME_CONFIG_TEST_JSON,
                 "-f", FLEET_ID_FROM_CLI_OPTION,
                 "-c", COMPUTE_NAME_TEST,
@@ -441,10 +441,10 @@ public class AgentCliParserTest {
                 "-gslb", "",
                 "-galb", ""
         };
-        AgentCliParser parser = cliComponent.buildCliParser();
+        final AgentCliParser parser = cliComponent.buildCliParser();
 
         // WHEN
-        AgentArgs parsedArgs =  parser.parse(args);
+        final AgentArgs parsedArgs =  parser.parse(args);
 
         // THEN
         assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
@@ -465,8 +465,8 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_systemEnvironmentVariables_WHEN_parsing_THEN_returnSystemEnvironmentValues() throws ParseException {
         // GIVEN
-        CommandLine mockCommandLine = mock(CommandLine.class);
-        AgentCliParser parser = new AgentCliParser(
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
@@ -485,7 +485,7 @@ public class AgentCliParserTest {
                 .thenReturn(REGION_TEST);
 
         // WHEN
-        AgentArgs parsedArgs = parser.parse(new String[]{});
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
 
         // THEN
         assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
@@ -498,8 +498,8 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_environmentVariablesNoComputeNameWithContainerFleet_WHEN_parsing_THEN_returnNullComputeName() throws ParseException {
         // GIVEN
-        CommandLine mockCommandLine = mock(CommandLine.class);
-        AgentCliParser parser = new AgentCliParser(
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
@@ -518,7 +518,7 @@ public class AgentCliParserTest {
                 .thenReturn(REGION_TEST);
 
         // WHEN
-        AgentArgs parsedArgs = parser.parse(new String[]{});
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
 
         // THEN
         assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
@@ -531,8 +531,8 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_environmentVariablesNoLocation_WHEN_parsing_THEN_returnRegionAsLocation() throws ParseException {
         // GIVEN
-        CommandLine mockCommandLine = mock(CommandLine.class);
-        AgentCliParser parser = new AgentCliParser(
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
@@ -551,7 +551,7 @@ public class AgentCliParserTest {
                 .thenReturn(REGION_TEST);
 
         // WHEN
-        AgentArgs parsedArgs = parser.parse(new String[]{});
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
 
         // THEN
         assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
@@ -564,8 +564,8 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_cliComputeNameWithContainerFleet_WHEN_parsing_THEN_failure() throws ParseException {
         // GIVEN
-        CommandLine mockCommandLine = mock(CommandLine.class);
-        AgentCliParser parser = new AgentCliParser(
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
@@ -595,8 +595,8 @@ public class AgentCliParserTest {
     @Test
     public void GIVEN_webSocketOverride_WHEN_parsing_THEN_returnSystemEnvironmentValues() throws ParseException {
         // GIVEN
-        CommandLine mockCommandLine = mock(CommandLine.class);
-        AgentCliParser parser = new AgentCliParser(
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
                 mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
         when(mockCommandLineParser.parse(any(), any()))
                 .thenReturn(mockCommandLine);
@@ -617,7 +617,7 @@ public class AgentCliParserTest {
                 .thenReturn(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE);
 
         // WHEN
-        AgentArgs parsedArgs = parser.parse(new String[]{});
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
 
         // THEN
         assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);

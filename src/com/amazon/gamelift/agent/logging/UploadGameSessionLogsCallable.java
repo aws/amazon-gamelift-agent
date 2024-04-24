@@ -44,14 +44,14 @@ public class UploadGameSessionLogsCallable implements Callable<Void> {
      * If any of the steps fail, an exception is thrown and following steps are not executed.
      */
     @Override
-    public Void call() throws Exception {
+    public Void call() {
         try {
             if (StringUtils.isNotBlank(gameSessionLogBucket)) {
                 return performUpload();
             } else if (SKIP_UPLOAD_LOGGED.compareAndSet(false, true)) {
                 log.warn("GameSessionLogBucket not specified, skipping GameSession log uploads.");
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Don't re-throw exceptions to avoid potentially impacted scheduled ExecutorServices using this callable
             log.error("Suppressing unexpected exception encountered when uploading GameSession logs", e);
         }
@@ -67,8 +67,14 @@ public class UploadGameSessionLogsCallable implements Callable<Void> {
         log.info("Collecting logs for processUUID {}, GameSession {}", processUUID, gameSessionId);
         final File logFile = gameSessionLogsCollector.collectGameSessionLogs(logPaths, logUploadId);
 
-        // Upload log files to S3
+        // Upload the zip to the S3 bucket provided
         uploadLogFile(logUploadId, logFile);
+
+        // Delete the zip File that was created
+        deleteLogFile(logFile);
+
+        // Delete the original game session logs so disk space doesn't continue filling up
+        gameSessionLogsCollector.deleteGameSessionLogs(logPaths);
 
         return null;
     }
@@ -79,7 +85,7 @@ public class UploadGameSessionLogsCallable implements Callable<Void> {
             // FleetId/ComputeName/<process-id>.zip (when game session ID is not present)
             final String logFileKey = String.format(S3_FILE_KEY_FORMAT, fleetId, computeName, logUploadId);
             s3FileUploader.uploadFile(gameSessionLogBucket, logFileKey, logFile, false);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Unable to upload GameSession log file at path: {}", logFile.getAbsolutePath(), e);
             throw e;
         }
@@ -89,7 +95,7 @@ public class UploadGameSessionLogsCallable implements Callable<Void> {
         try {
             log.info("Deleting GameSession log zip file after successful S3 upload: {}", logFile.getAbsolutePath());
             Files.deleteIfExists(logFile.toPath());
-        }  catch (IOException e) {
+        }  catch (final IOException e) {
             log.error("Unable to delete GameSession log zip file: {}", logFile.getAbsolutePath(), e);
             throw e;
         }

@@ -34,7 +34,7 @@ public class NotifyGameSessionActivatedHandler extends MessageHandler<NotifyGame
 
         try {
             gameProcessManager.updateProcessOnGameSessionActivation(message.getProcessId(), message.getGameSessionId());
-        } catch (NotFoundException nfe) {
+        } catch (final NotFoundException nfe) {
             log.info("Swallowing NotFoundException when saving log paths: {}", nfe.getMessage());
         }
     }

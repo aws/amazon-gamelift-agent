@@ -3,7 +3,11 @@
  */
 package com.amazon.gamelift.agent.module;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dagger.Module;
 import dagger.Provides;
 import org.apache.commons.cli.CommandLineParser;
@@ -39,6 +43,10 @@ public class CliModule {
      */
     @Provides
     public ObjectMapper provideObjectMapper() {
-        return new ObjectMapper();
+        return new ObjectMapper()
+                .configure(JsonGenerator.Feature.IGNORE_UNKNOWN, true)
+                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .registerModule(new JavaTimeModule());
     }
 }

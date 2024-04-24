@@ -41,7 +41,7 @@ public class ComputeAuthTokenManagerTest {
                 .authToken(COMPUTE_AUTH_TOKEN)
                 .computeName(COMPUTE_NAME)
                 .fleetId(FLEET_ID)
-                .expirationTimeEpochMillis(Instant.now().plus(Duration.ofMinutes(15)))
+                .expirationTimeEpochMillis(Instant.now().plus(Duration.ofMinutes(20)))
                 .build();
         lenient().when(mockComputeAuthTokenCache.get(eq(COMPUTE_AUTH_TOKEN_CACHE_KEY))).thenReturn(authTokenResponse);
         computeAuthTokenManager = new ComputeAuthTokenManager(mockComputeAuthTokenCache);

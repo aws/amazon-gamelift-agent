@@ -6,6 +6,7 @@ package com.amazon.gamelift.agent.model;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,7 +43,7 @@ public class RuntimeConfigurationTest {
         // GIVEN
         final GameProcessConfiguration process = GameProcessConfiguration.builder().concurrentExecutions(1).launchPath("test").build();
         // WHEN
-        final RuntimeConfiguration config = RuntimeConfiguration.builder().serverProcesses(Arrays.asList(process)).build();
+        final RuntimeConfiguration config = RuntimeConfiguration.builder().serverProcesses(Collections.singletonList(process)).build();
         // THEN
         assertEquals(process, config.getServerProcesses().get(0));
     }
@@ -52,9 +53,9 @@ public class RuntimeConfigurationTest {
         // GIVEN
         // WHEN
         try {
-            final RuntimeConfiguration config = RuntimeConfiguration.builder().build();
+            RuntimeConfiguration.builder().build();
             fail("RuntimeConfiguration must have non null server processes.");
-        } catch (NullPointerException e) {
+        } catch (final NullPointerException e) {
             // THEN
         }
     }
