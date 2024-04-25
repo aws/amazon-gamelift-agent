@@ -35,8 +35,6 @@ public class ConfigModule {
     public static final String REGION = "region";
     public static final String LOCATION = "location";
     public static final String GAMELIFT_ENDPOINT_OVERRIDE = "gameLiftEndpointOverride";
-    public static final String GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE =
-            "gameLiftAgentWebSocketEndpointOverride";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String CERTIFICATE_PATH = "certificatePath";
     public static final String DNS_NAME = "dnsName";
@@ -53,7 +51,6 @@ public class ConfigModule {
     private final String region;
     private final String location;
     private final String gameLiftEndpointOverride;
-    private final String gameLiftAgentWebSocketEndpointOverride;
     private final String ipAddress;
     private final String certificatePath;
     private final String dnsName;
@@ -79,7 +76,6 @@ public class ConfigModule {
                 new RealSystemEnvironmentProvider());
         this.fleetId = args.getFleetId();
         this.gameLiftEndpointOverride = args.getGameLiftEndpointOverride();
-        this.gameLiftAgentWebSocketEndpointOverride = args.getGameLiftAgentWebSocketEndpointOverride();
         this.region = args.getRegion();
         this.location = args.getLocation();
         this.ipAddress = args.getIpAddress();
@@ -147,17 +143,6 @@ public class ConfigModule {
     @Named(GAMELIFT_ENDPOINT_OVERRIDE)
     public String provideGameLiftEndpointOverride() {
         return gameLiftEndpointOverride;
-    }
-
-    /**
-     * Provides override for WebSocket endpoint
-     * @return String | Null
-     */
-    @Provides
-    @Nullable
-    @Named(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE)
-    public String provideGameLiftAgentWebSocketEndpointOverride() {
-        return gameLiftAgentWebSocketEndpointOverride;
     }
 
     /**
