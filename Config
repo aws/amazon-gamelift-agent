@@ -58,10 +58,14 @@ package.GameLiftAgent = {
         };
     };
 
+    resolves-conflict-dependencies = {
+        1.0 = {
+            JakartaCommons-cli = 1.x;
+        };
+    };
+
     remove-dependencies = {
         1.0 = {
-            JakartaCommons-cli = 1.2;
-
             # Removing Maven log4j dependencies which bring in Slf4j-1.8 transitively and break our logging
             Maven-org-slf4j_slf4j-api = 1.x;
             Maven-org-slf4j_slf4j-parent = 1.x;
