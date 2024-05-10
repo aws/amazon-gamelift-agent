@@ -17,14 +17,12 @@ brazil ws --create --name GameLiftAgent \
 ## Development
 ### General Process
 
-NOTE: This section is likely inaccurate for GameLiftAgent - it is an import from IPM (GLIFT-20131)
-
 1. Build the mainline branch of GameLiftAgent
-1. Execute the output jar with `brazil-build run` and check logs to verify correctness
-1. Make changes to desired resources
-1. Execute the output jar and check logs to verify correctness
-1. Post a CR with `gamelift-devs (TEAM)` as a required approver
-1. Push changes to mainline and monitor deployment until it reaches the end of the pipeline
+2. Execute the output jar with `brazil-build run` and check logs to verify correctness
+3. Make changes to desired resources
+4. Execute the output jar with `brazil-build run` and `mvn clean compile assembly:single` and check logs to verify correctness
+5. Post a CR with `gamelift-devs (TEAM)` and `gamelift-orchestration-cr-br (TEAM)` as required approvers
+6. Push changes to mainline and monitor deployment until it reaches the end of the pipeline
 
 ### Open Source Considerations
 Open source docs have guidance for a different copyright than we have rules for in GameScaleCheckstyle:
@@ -34,20 +32,14 @@ https://w.amazon.com/bin/view/Open_Source/LicensingForGitHubProjects#HCopyrightD
   * Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
   */
  ```
-
+GameLiftAgent repo on GitHub: https://github.com/aws/amazon-gamelift-agent
 ## Test GameLiftAgent with GameLift Anywhere Container Compute
 
 Reference this Quip document to generate the Container Image and test it on an Anywhere Fleet
 before using the image to create a Container Fleet.
 
-https://quip-amazon.com/6Sq7AoVnvNvO/Using-Containers-with-GameLift-Anywhere-Fleets
-
+https://quip-amazon.com/HkNyA8lJdJiH/Create-Container-Image-for-Anywhere-and-Container-Fleets
 ## Test GameLiftAgent with GameLift Anywhere
-
-Note: There is currently a bug with Heartbeat logic for Anywhere (GLIFT-20132). Attempting to heartbeat with a
-ComputeName that's the same as a previously terminated Anywhere Compute will result in a
-reponse that the Compute is terminated and will crash GameLiftAgent. Until fixed you must either always
-use new ComputeNames OR manually delete (in preprod) the corresponding TerminatedHost record.
 
 ### Set up your dev AWS Account
 
@@ -58,13 +50,41 @@ https://code.amazon.com/packages/GameScaleServiceFacConfig/blobs/mainline/--/fea
 If you want to capture GameLiftAgent and/or GameSession logs, create 1 or 2 S3 buckets in the AWS console.
 Create 2 buckets if you want GameLiftAgent and GameSession logs stored separately.
 1. Navigate to the S3 Console and click Create Bucket.
-1. Enter a bucket name:  `<user>-test-logs`
-1. Choose AWS region:  `us-west-2`
-1. Use recommended/secure options to disable ACLs, block public access, and encrypt at rest.
+2. Enter a bucket name:  `<user>-test-logs`
+3. Choose AWS region:  `us-west-2`
+4. Use recommended/secure options to disable ACLs, block public access, and encrypt at rest.
+
+Create a policy to attach to an IAM role to allow Agent to upload logs
+1. Navigate to the Policies tab in the IAM Console and click Create policy.
+2. Click the JSON tab and use the following:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::<AWS Account ID>:role/GameLiftAgentInstanceRole"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+3. Continue and Name the policy:  `GameLiftAgentInstancePolicy`
 
 Create an IAM Role to use with instanceRoleCredentials in the AWS console
-1. Navigate to the IAM Console and click Create Role.
-1. Choose custom trust policy and use the following:
+1. Navigate to the Roles tab in the IAM Console and click Create role.
+2. Choose custom trust policy and use the following:
 ```
 {
     "Version": "2012-10-17",
@@ -83,24 +103,8 @@ Create an IAM Role to use with instanceRoleCredentials in the AWS console
     ]
 }
 ```
-3. Click CreatePolicy to open a new dialogue, switch to the JSON tab and enter:
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-4. Continue and Name the policy:  `GameLiftAgentInstancePolicy`
-5. Go back to the Create Role window, refresh, and choose GameLiftAgentInstancePolicy and continue.
-6. Name the role: `GameLiftAgentInstanceRole` and click Create Role
+3. Click next and select the `GameLiftAgentInstancePolicy` on the Add permissions page
+5. Click next and name the role: `GameLiftAgentInstanceRole` and click Create Role
 
 ### Create GameLift Resources in your dev AWS Account
 
@@ -111,107 +115,13 @@ aws gamelift create-location --region us-west-2 --endpoint-url https://gamelift-
 
 2. Create a GameLift Anywhere Fleet with your dev AWS account:
 ```
-aws gamelift create-fleet --region us-west-2 --endpoint-url https://gamelift-alpha.us-west-2.amazonaws.com --name test-fleet --compute-type ANYWHERE --locations Location=custom-location
-```
-
-3. (GLIFT-20024) If not possible via Fleet creation yet, manually create a RuntimeConfiguration DDB record:
-
-Linux:
-```
-{
-  "fleetId": {
-    "S": "fleet-<id>"
-  },
-  "awsAccountId": {
-    "S": "<account-id>"
-  },
-  "gameServers": {
-    "L": [
-      {
-        "M": {
-          "concurrentExecutions": {
-            "N": "1"
-          },
-          "launchPath": {
-            "S": "/local/game/TestApplicationServer"
-          },
-          "parameters": {
-            "S": "-p 1984 -l 15000"
-          }
-        }
-      }
-    ]
-  },
-  "gameSessionActivationTimeoutSeconds": {
-    "N": "30"
-  },
-  "maxConcurrentGameSessionActivations": {
-    "N": "2147483647"
-  },
-  "updateTime": {
-    "N": "1503225032394"
-  }
-}
-```
-Windows:
-```
-{
-  "fleetId": {
-    "S": "fleet-<id>"
-  },
-  "awsAccountId": {
-    "S": "<account-id>"
-  },
-  "gameServers": {
-    "L": [
-      {
-        "M": {
-          "concurrentExecutions": {
-            "N": "1"
-          },
-          "launchPath": {
-            "S": "C:\\Game\\TestApplicationServer.exe"
-          },
-          "parameters": {
-            "S": "-p 1984 -l 15000"
-          }
-        }
-      },
-      {
-        "M": {
-          "concurrentExecutions": {
-            "N": "1"
-          },
-          "launchPath": {
-            "S": "C:\\Game\\TestApplicationServer.exe"
-          },
-          "parameters": {
-            "S": "-p 4245 -l 15000"
-          }
-        }
-      }
-    ]
-  },
-  "gameSessionActivationTimeoutSeconds": {
-    "N": "30"
-  },
-  "maxConcurrentGameSessionActivations": {
-    "N": "2147483647"
-  },
-  "updateTime": {
-    "N": "1503225032394"
-  }
-}
-```
-
-4. (GLIFT-20101) If not possible via Fleet creation yet, set an `instanceRoleArn` on the Fleet:
-    1. Login to WW via Isengard:  https://isengard.amazon.com/federate?account=985706097632&role=RestrictedAccess
-    1. Navigate to DDB Console, Explore Items, select Fleet table, and query your FleetId.
-    1. Open the item to edit and insert:
-```
-"instanceRoleArn": {
-  "S": "arn:aws:iam::<account-id>:role/GameLiftAgentInstanceRole"
-},
+aws gamelift create-fleet --region us-west-2 \
+--endpoint-url https://gamelift-alpha.us-west-2.amazonaws.com \
+--name test-fleet \
+--compute-type ANYWHERE \
+--locations Location=custom-location \
+--instance-role-arn <Role Arn created above> \
+--runtime-configuration "ServerProcesses=[{LaunchPath=/local/game/TestApplicationServer,ConcurrentExecutions=1,Parameters=-p 1984 -l 15000},{LaunchPath=/local/game/TestApplicationServer,ConcurrentExecutions=1,Parameters=-p 1985 -l 15000}]"
 ```
 
 ### Set up the TestApp Locally (Linux)
@@ -337,6 +247,7 @@ aws gamelift create-fleet \
  --compute-type ANYWHERE \
  --locations Location=custom-anywhere-fleet-location \
  --anywhere-configuration Cost=0.2 \
+ --instance-role-arn <Instance Role Arn>
  --operating-system AMAZON_LINUX_2
 ```
 1. RegisterCompute
@@ -366,10 +277,9 @@ and at `/local/whitewater/Logs` for GameLiftAgent.
 
 ### Deploying
 
-NOTE: This section is likely inaccurate for GameLiftAgent - it is an import from IPM (GLIFT-20131)
-
 The GameLiftAgent is configured in `build.xml` to generate a standalone JAR when it builds, which packages the GameLiftAgent along with all the necessary dependencies into a single JAR that can be downloaded to the compute instance. When GameLiftAgent deploys to the pipeline, BATS is configured to upload this standalone JAR as an artifact to the BARS artifact S3 bucket through the configuration located under `configuration/aws_lambda/lambda-transform.yml`. When a region deploys, it will use the ID of the deployment to get the BARS S3 artifact and copy this standalone JAR to the destination S3 bucket in the WhiteWater service account.
 
+GameLiftAgent Pipeline: https://pipelines.amazon.com/pipelines/GameLiftAgent
 #### Testing BATS
 
 NOTE: This section is likely inaccurate for GameLiftAgent - it is an import from IPM (GLIFT-20131)
@@ -381,9 +291,6 @@ You can test the BATS configuration using the BATS CLI. After running the BATS C
 This should produce a ZIP file that only contains the standalone JAR (as well as some empty directories potentially, but no other files)
 
 ### Logs
-
-NOTE: This section is likely inaccurate for GameLiftAgent - it is an import from IPM (GLIFT-20131)
-
 The application is configured to create a `logs` directory with a time-specific application log file (eg. GameLiftAgent.log.2021-10-16-00). The `logs` directory will be created in the location the launch command originated. Most of the time this will be the package root (same location as this README), but when launching the application from IntelliJ, the directory was created in the workspace root (two levels up from here).
 
 The application log is configured to rotate every hour and be shared between the application and its subprocesses.
