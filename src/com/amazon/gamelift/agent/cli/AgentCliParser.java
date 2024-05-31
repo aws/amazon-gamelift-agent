@@ -51,7 +51,7 @@ public class AgentCliParser {
     private static final String IP_ADDRESS_SHORT = "ip";
     private static final String LOCATION = "location";
     private static final String LOCATION_SHORT = "loc";
-    private static final String GAMELIFT_AGENT_LOG_BUCKET = "gamelift-agent--log-bucket";
+    private static final String GAMELIFT_AGENT_LOG_BUCKET = "gamelift-agent-log-bucket";
     private static final String GAMELIFT_AGENT_LOG_BUCKET_SHORT = "galb";
     private static final String GAMELIFT_AGENT_LOG_PATH = "gamelift-agent-log-path";
     private static final String GAMELIFT_AGENT_LOG_PATH_SHORT = "galp";
