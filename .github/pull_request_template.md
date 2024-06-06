@@ -11,3 +11,6 @@ Please verify the following
 
 ## Steps to test or reproduce
 Outline the steps to test or reproduce the PR here.
+
+## License
+By submitting this pull request, I confirm that you can use, modify, copy, and redistribute this contribution, under the terms of your choice.
