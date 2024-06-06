@@ -75,6 +75,12 @@ public class WebSocketConnectionManagerTest {
     private static final String DNS_NAME = "abc.aws";
     private static final String COMPUTE_AUTH_TOKEN = "computeAuthToken";
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final RegisterComputeResponse REGISTER_COMPUTE_OUTPUT = RegisterComputeResponse.builder()
+            .fleetId(FLEET_ID)
+            .computeName(COMPUTE_NAME)
+            .sdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT)
+            .agentWebsocketEndpoint(AGENT_WEB_SOCKET_ENDPOINT)
+            .build();
 
     @Mock private GetComputeAuthTokenResponse getComputeAuthTokenResponse;
     @Mock private AmazonGameLiftClientWrapper gameLift;
@@ -93,20 +99,14 @@ public class WebSocketConnectionManagerTest {
     private WebSocketConnectionManager connectionManager;
 
     @BeforeEach
-    public void setup() throws UnauthorizedException, NotFoundException, InvalidRequestException,
-            InternalServiceException, ConflictException, NotReadyException {
+    public void setup() throws AgentException {
         lenient().when(gameLift.getComputeAuthToken(any())).thenReturn(GetComputeAuthTokenResponse.builder()
                 .fleetId(FLEET_ID)
                 .computeName(COMPUTE_NAME)
                 .authToken(COMPUTE_AUTH_TOKEN)
                 .expirationTimeEpochMillis(Instant.now())
                 .build());
-        lenient().when(gameLift.registerCompute(any())).thenReturn(RegisterComputeResponse.builder()
-                .fleetId(FLEET_ID)
-                .computeName(COMPUTE_NAME)
-                .sdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT)
-                .agentWebsocketEndpoint(AGENT_WEB_SOCKET_ENDPOINT)
-                .build());
+        lenient().when(gameLift.registerCompute(any())).thenReturn(REGISTER_COMPUTE_OUTPUT);
         connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME,
                 webSocketConnectionProvider, sdkWebsocketEndpointProvider, mockWebSocketExceptionProvider,
@@ -150,12 +150,7 @@ public class WebSocketConnectionManagerTest {
         // GIVEN
         when(gameLift.registerCompute(any()))
                 .thenThrow(RuntimeException.class)
-                .thenReturn(RegisterComputeResponse.builder()
-                        .fleetId(FLEET_ID)
-                        .computeName(COMPUTE_NAME)
-                        .sdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT)
-                        .agentWebsocketEndpoint(AGENT_WEB_SOCKET_ENDPOINT)
-                        .build());
+                .thenReturn(REGISTER_COMPUTE_OUTPUT);
         when(computeAuthTokenManager.getComputeAuthToken())
                 .thenReturn(COMPUTE_AUTH_TOKEN);
 
@@ -174,12 +169,7 @@ public class WebSocketConnectionManagerTest {
         // GIVEN
         when(gameLift.registerCompute(any()))
                 .thenThrow(new NotReadyException())
-                .thenReturn(RegisterComputeResponse.builder()
-                        .fleetId(FLEET_ID)
-                        .computeName(COMPUTE_NAME)
-                        .sdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT)
-                        .agentWebsocketEndpoint(AGENT_WEB_SOCKET_ENDPOINT)
-                        .build());
+                .thenReturn(REGISTER_COMPUTE_OUTPUT);
         when(computeAuthTokenManager.getComputeAuthToken())
                 .thenReturn(COMPUTE_AUTH_TOKEN);
 

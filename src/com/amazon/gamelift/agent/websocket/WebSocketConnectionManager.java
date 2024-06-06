@@ -6,10 +6,8 @@ package com.amazon.gamelift.agent.websocket;
 import com.amazon.gamelift.agent.manager.StateManager;
 import com.amazon.gamelift.agent.model.exception.ConflictException;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
-import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.amazon.gamelift.agent.model.exception.AgentException;
 import com.amazon.gamelift.agent.model.exception.NotReadyException;
-import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
 import com.amazon.gamelift.agent.model.gamelift.RegisterComputeResponse;
 import com.amazon.gamelift.agent.model.websocket.RefreshConnectionMessage;
 import com.amazon.gamelift.agent.client.AmazonGameLiftClientWrapper;
@@ -42,7 +40,6 @@ import java.util.concurrent.TimeoutException;
 @Singleton
 public class WebSocketConnectionManager {
     private static final Duration WEBSOCKET_CONNECT_TIMEOUT = Duration.ofSeconds(60);
-    private static final Duration WEBSOCKET_CLOSE_TIMEOUT = Duration.ofSeconds(5);
     private static final int MAX_REGISTER_COMPUTE_RETRIES = 8;
 
     // A maximum number of times GameLift Agent will attempt to reconnect the WebSocket in the event of an unexpected
@@ -201,8 +198,7 @@ public class WebSocketConnectionManager {
         } catch (final ConflictException e) {
             log.error("Attempted to register a compute that is already registered", e);
             throw e;
-        } catch (final UnauthorizedException | InvalidRequestException
-                       | InternalServiceException e) {
+        } catch (final AgentException e) {
             log.error("Failed to register compute", e);
             throw e;
         }
