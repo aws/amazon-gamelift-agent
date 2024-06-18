@@ -16,10 +16,10 @@ public class ProcessBuilderFactory {
      */
     public static ProcessBuilderWrapper getProcessBuilder(final GameProcessConfiguration processConfiguration,
                                                           final OperatingSystem operatingSystem) {
-        return switch (operatingSystem) {
-            case AMAZON_LINUX_2, AMAZON_LINUX_2023 ->
+        return switch (operatingSystem.getOperatingSystemFamily()) {
+            case LINUX ->
                     new LinuxProcessBuilderWrapper(processConfiguration, operatingSystem);
-            case WIN_2012, WINDOWS_2016, WINDOWS_2019, WINDOWS_2022 ->
+            case WINDOWS ->
                     new WindowsProcessBuilderWrapper(processConfiguration, operatingSystem);
             default -> throw new IllegalArgumentException("Failed to find underlying process builder for OS "
                     + operatingSystem);
