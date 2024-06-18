@@ -30,7 +30,7 @@ public class ProcessDestroyerFactoryTest {
     @ValueSource(strings = {"AMAZON_LINUX_2", "AMAZON_LINUX_2023", "UNKNOWN_LINUX"})
     public void GIVEN_linuxOs_WHEN_getProcessDestroyer_THEN_returnsLinuxProcessDestroyer(String os) {
         // GIVEN
-        OperatingSystem operatingSystem = OperatingSystem.AMAZON_LINUX_2023;
+        OperatingSystem operatingSystem = OperatingSystem.fromString(os);
         // WHEN
         ProcessDestroyer processDestroyer = ProcessDestroyerFactory.getProcessDestroyer(operatingSystem);
         // THEN
