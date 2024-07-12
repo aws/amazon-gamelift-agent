@@ -77,6 +77,7 @@ public class AgentCliParser {
     public static final String GAMELIFT_REGION = "GAMELIFT_REGION";
     public static final String INSTANCE_PROFILE_INPUT = "instance-profile";
     public static final String RUNTIME_CONFIGURATION_OPTION = "runtime-configuration";
+    public static final String ENABLE_COMPUTE_REGISTRATION_VIA_AGENT = "GAMELIFT_ENABLE_COMPUTE_REGISTRATION_VIA_AGENT";
 
     /**
      * Constructor for AgentCliParser
@@ -231,6 +232,9 @@ public class AgentCliParser {
         final String gameliftAgentLogBucket = getOptionValueOrNull(commandLine, GAMELIFT_AGENT_LOG_BUCKET);
 
         final String gameliftAgentLogPath = getOptionValueOrNull(commandLine, GAMELIFT_AGENT_LOG_PATH);
+        final Boolean enabledComputeRegistrationViaAgent = StringUtils.isNotBlank(systemEnvironmentProvider
+                .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) ? Boolean.valueOf(systemEnvironmentProvider
+                .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) : false;
 
         return AgentArgs.builder()
                 .runtimeConfiguration(runtimeConfiguration)
@@ -247,6 +251,7 @@ public class AgentCliParser {
                 .agentLogBucket(gameliftAgentLogBucket)
                 .agentLogPath(gameliftAgentLogPath)
                 .isContainerFleet(isContainerFleet)
+                .enableComputeRegistrationViaAgent(enabledComputeRegistrationViaAgent)
                 .build();
     }
 
