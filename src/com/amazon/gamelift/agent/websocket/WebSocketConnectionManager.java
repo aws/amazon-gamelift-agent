@@ -36,8 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.amazon.gamelift.agent.module.ConfigModule.ENABLED_COMPUTE_REGISTRATION_VIA_AGENT;
-
 @Slf4j
 @Singleton
 public class WebSocketConnectionManager {
@@ -65,7 +63,6 @@ public class WebSocketConnectionManager {
     private final WebSocket.Builder webSocketBuilder;
     private final ComputeAuthTokenManager computeAuthTokenManager;
     private final StateManager stateManager;
-    private final boolean enableComputeRegistrationViaAgent;
 
     /**
      * Constructor for WebSocketConnectionManager
@@ -87,8 +84,7 @@ public class WebSocketConnectionManager {
             final ObjectMapper objectMapper,
             final WebSocket.Builder webSocketBuilder,
             final ComputeAuthTokenManager computeAuthTokenManager,
-            final StateManager stateManager,
-            @Named(ENABLED_COMPUTE_REGISTRATION_VIA_AGENT) final boolean enableComputeRegistrationViaAgent) {
+            final StateManager stateManager) {
         this.amazonGameLift = amazonGameLift;
         this.fleetId = fleetId;
         this.computeName = computeName;
@@ -105,7 +101,6 @@ public class WebSocketConnectionManager {
         this.webSocketBuilder = webSocketBuilder;
         this.computeAuthTokenManager = computeAuthTokenManager;
         this.stateManager = stateManager;
-        this.enableComputeRegistrationViaAgent = enableComputeRegistrationViaAgent;
     }
 
     /**
@@ -114,9 +109,6 @@ public class WebSocketConnectionManager {
      * called once when GameLift Agent starts.
      */
     public void connect() {
-        if (!this.enableComputeRegistrationViaAgent) {
-            return;
-        }
         RegisterComputeResponse response;
         try {
             response = RetryHelper.runRetryable(MAX_REGISTER_COMPUTE_RETRIES, true, this::registerCompute);

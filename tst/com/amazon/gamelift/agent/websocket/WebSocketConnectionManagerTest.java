@@ -54,7 +54,6 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -82,8 +81,6 @@ public class WebSocketConnectionManagerTest {
             .sdkWebsocketEndpoint(SDK_WEB_SOCKET_ENDPOINT)
             .agentWebsocketEndpoint(AGENT_WEB_SOCKET_ENDPOINT)
             .build();
-    private static final boolean ENABLED_COMPUTE_REGISTRATION = true;
-
 
     @Mock private GetComputeAuthTokenResponse getComputeAuthTokenResponse;
     @Mock private AmazonGameLiftClientWrapper gameLift;
@@ -113,8 +110,7 @@ public class WebSocketConnectionManagerTest {
         connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME,
                 webSocketConnectionProvider, sdkWebsocketEndpointProvider, mockWebSocketExceptionProvider,
-                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager,
-                ENABLED_COMPUTE_REGISTRATION);
+                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager);
         lenient().when(mockWebSocketBuilder.buildAsync(any(URI.class), any(GameLiftAgentWebSocketListener.class)))
                 .thenReturn(CompletableFuture.completedFuture(mockJavaWebSocket));
         RetryHelper.disableBackoff();
@@ -126,8 +122,7 @@ public class WebSocketConnectionManagerTest {
         final WebSocketConnectionManager connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
                 REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME,
                 webSocketConnectionProvider, sdkWebsocketEndpointProvider, mockWebSocketExceptionProvider,
-                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager,
-                ENABLED_COMPUTE_REGISTRATION);
+                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager);
 
         when(computeAuthTokenManager.getComputeAuthToken()).thenReturn(COMPUTE_AUTH_TOKEN);
 
@@ -148,24 +143,6 @@ public class WebSocketConnectionManagerTest {
         assertTrue(agentClientUri.contains(COMPUTE_AUTH_TOKEN));
 
         verify(webSocketConnectionProvider).updateConnection(connectionCaptor.capture());
-    }
-
-    @Test
-    public void GIVEN_disableComputeRegistration_WHEN_connect_THEN_skip() throws RuntimeException, AgentException {
-        // GIVEN
-        final WebSocketConnectionManager connectionManager = new WebSocketConnectionManager(gameLift, FLEET_ID, COMPUTE_NAME,
-                REGION, LOCATION, IP_ADDRESS, CERTIFICATE_PATH, DNS_NAME,
-                webSocketConnectionProvider, sdkWebsocketEndpointProvider, mockWebSocketExceptionProvider,
-                messageHandlers, OBJECT_MAPPER, mockWebSocketBuilder, computeAuthTokenManager, stateManager,
-                false);
-
-        // WHEN
-        connectionManager.connect();
-
-        // THEN
-        verifyNoInteractions(gameLift);
-        verifyNoInteractions(sdkWebsocketEndpointProvider);
-        verifyNoInteractions(computeAuthTokenManager);
     }
 
     @Test

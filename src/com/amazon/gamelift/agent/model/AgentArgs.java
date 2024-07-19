@@ -30,5 +30,4 @@ public class AgentArgs {
     private String agentLogBucket;
     private String agentLogPath;
     private Boolean isContainerFleet;
-    private Boolean enableComputeRegistrationViaAgent;
 }

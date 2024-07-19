@@ -45,7 +45,6 @@ public class ConfigModule {
     public static final String GAMELIFT_AGENT_LOG_BUCKET = "gameliftAgentLogBucket";
     public static final String GAMELIFT_AGENT_LOG_PATH = "gameliftAgentLogPath";
     public static final String GAMELIFT_AGENT_LOGS_DIRECTORY = "gameliftAgentLogDirectory";
-    public static final String ENABLED_COMPUTE_REGISTRATION_VIA_AGENT = "enableComputeRegistrationViaAgent";
 
     private final String fleetId;
     private final String computeName;
@@ -63,7 +62,6 @@ public class ConfigModule {
     private final String containerId;
     private final String taskId;
     private final boolean isContainerFleet;
-    private final boolean enableComputeRegistrationViaAgent;
 
     private final EcsMetadataReader ecsMetadataReader;
 
@@ -93,7 +91,6 @@ public class ConfigModule {
         this.computeName =
                 args.getIsContainerFleet() ? String.format("%s/%s", taskId, containerId) : args.getComputeName();
         this.isContainerFleet = args.getIsContainerFleet();
-        this.enableComputeRegistrationViaAgent = args.getEnableComputeRegistrationViaAgent();
     }
 
     /**
@@ -210,17 +207,6 @@ public class ConfigModule {
     @Named(IS_CONTAINER_FLEET)
     public boolean provideIsContainerFleet() {
         return this.isContainerFleet;
-    }
-
-    /**
-     * Provides enableComputeRegistrationViaAgent
-     * @return true | false
-     */
-    @Provides
-    @Singleton
-    @Named(ENABLED_COMPUTE_REGISTRATION_VIA_AGENT)
-    public boolean provideEnableComputeRegistrationViaAgent() {
-        return this.enableComputeRegistrationViaAgent;
     }
 
     /**

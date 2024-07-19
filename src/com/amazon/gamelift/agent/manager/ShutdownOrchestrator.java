@@ -32,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.amazon.gamelift.agent.module.ConfigModule.COMPUTE_NAME;
 import static com.amazon.gamelift.agent.module.ConfigModule.FLEET_ID;
-import static com.amazon.gamelift.agent.module.ConfigModule.ENABLED_COMPUTE_REGISTRATION_VIA_AGENT;
 import static com.amazon.gamelift.agent.module.ThreadingModule.GAME_SESSION_LOGS_UPLOAD_EXECUTOR;
 import static com.amazon.gamelift.agent.module.ThreadingModule.SHUTDOWN_ORCHESTRATOR_EXECUTOR;
 import static com.amazon.gamelift.agent.module.ConfigModule.IS_CONTAINER_FLEET;
@@ -66,7 +65,6 @@ public class ShutdownOrchestrator {
     private final boolean isContainerFleet;
     private final String fleetId;
     private final String computeName;
-    private final boolean enableComputeRegistrationViaAgent;
 
     /**
      * Constructor for Shutdown Orchestrator
@@ -96,8 +94,7 @@ public class ShutdownOrchestrator {
             @Named(ThreadingModule.EXECUTOR_SERVICE_MANAGER) final ExecutorServiceManager executorServiceManager,
             @Named(IS_CONTAINER_FLEET) final boolean isContainerFleet,
             @Named(FLEET_ID) final String fleetId,
-            @Named(COMPUTE_NAME) final String computeName,
-            @Named(ENABLED_COMPUTE_REGISTRATION_VIA_AGENT) final boolean enableComputeRegistrationViaAgent) {
+            @Named(COMPUTE_NAME) final String computeName) {
         this.stateManager = stateManager;
         this.heartbeatSender = heartbeatSender;
         this.gameProcessManager = gameProcessManager;
@@ -110,7 +107,6 @@ public class ShutdownOrchestrator {
         this.isContainerFleet = isContainerFleet;
         this.fleetId = fleetId;
         this.computeName = computeName;
-        this.enableComputeRegistrationViaAgent = enableComputeRegistrationViaAgent;
     }
 
     /**
@@ -119,7 +115,7 @@ public class ShutdownOrchestrator {
      * @param terminationDeadline The deadline by which Agent must be shut down
      */
     public synchronized void startTermination(final Instant terminationDeadline, final boolean spotInterrupted) {
-        if (this.isContainerFleet && this.enableComputeRegistrationViaAgent) {
+        if (this.isContainerFleet) {
             deregisterCompute();
         }
 
@@ -180,7 +176,7 @@ public class ShutdownOrchestrator {
      * Finishes the Agent shutdown process. After this method gets called, the Agent should exit.
      */
     public synchronized void completeTermination() {
-        if (this.isContainerFleet && this.enableComputeRegistrationViaAgent) {
+        if (this.isContainerFleet) {
             deregisterCompute();
         }
 

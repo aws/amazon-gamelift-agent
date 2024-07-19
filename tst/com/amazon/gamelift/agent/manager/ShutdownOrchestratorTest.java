@@ -60,8 +60,6 @@ class ShutdownOrchestratorTest {
     private ExecutorServiceManager mockExecutorServiceManager;
 
     private static final boolean IS_NOT_CONTAINER_FLEET = false;
-    private static final boolean ENABLED_REGISTRATION_FALSE = false;
-    private static final boolean ENABLED_REGISTRATION = true;
     private static final boolean IS_CONTAINER_FLEET = true;
     private static final String FLEET_ID = "testFleetId";
     private static final String COMPUTE_ID = "testComputeName";
@@ -80,7 +78,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -102,7 +100,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), true);
 
         // THEN
@@ -125,7 +123,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().minus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -145,7 +143,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -164,7 +162,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.validateSafeTermination();
 
         // THEN
@@ -185,7 +183,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.validateSafeTermination();
 
         // THEN
@@ -209,7 +207,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -235,7 +233,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -259,7 +257,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_NOT_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -276,26 +274,6 @@ class ShutdownOrchestratorTest {
     @Test
     public void GIVEN_ContainerFleet_WHEN_startTermination_THEN_success() throws Exception{
         // GIVEN
-        when(stateManager.getComputeStatus()).thenReturn(ComputeStatus.Active);
-
-        // WHEN
-        this.shutdownOrchestrator = new ShutdownOrchestrator(
-                stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
-                gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
-        shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
-
-        // THEN
-        verify(amazonGameLift, never()).deregisterCompute(any());
-        verify(stateManager).reportComputeTerminating();
-        verify(gameProcessMonitor).shutdown();
-        verify(executorService).schedule(any(Runnable.class), anyLong(), any());
-        verify(executorService).scheduleWithFixedDelay(any(Runnable.class), anyLong(), anyLong(), any());
-    }
-
-    @Test
-    public void GIVEN_ContainerFleetShouldEnableRegistration_WHEN_startTermination_THEN_enableDeregistration() throws Exception{
-        // GIVEN
         when(amazonGameLift.deregisterCompute(expectedDeregisterComputeRequest)).thenReturn(testDeregisterComputeResult);
         when(stateManager.getComputeStatus()).thenReturn(ComputeStatus.Active);
 
@@ -303,7 +281,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -317,28 +295,6 @@ class ShutdownOrchestratorTest {
     @Test
     public void GIVEN_ContainerFleet_WHEN_completeTermination_THEN_success() throws Exception{
         // GIVEN
-        when(stateManager.getComputeStatus()).thenReturn(ComputeStatus.Active);
-
-        // WHEN
-        this.shutdownOrchestrator = new ShutdownOrchestrator(
-                stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
-                gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION_FALSE);
-        shutdownOrchestrator.completeTermination();
-
-        // THEN
-        verify(amazonGameLift, never()).deregisterCompute(any());
-        verify(stateManager).reportComputeTerminated();
-        verify(gameProcessManager).terminateAllProcessesForShutdown(anyLong(), anyLong());
-        verify(heartbeatSender).sendHeartbeat();
-        verify(webSocketConnectionProvider).closeAllConnections();
-        verify(mockExecutorServiceManager).shutdownExecutorServices();
-        verify(gameLiftAgentLogUploader).shutdownAndUploadLogs();
-    }
-
-    @Test
-    public void GIVEN_ContainerFleetShouldEnableRegistration_WHEN_completeTermination_THEN_success() throws Exception{
-        // GIVEN
         when(amazonGameLift.deregisterCompute(expectedDeregisterComputeRequest)).thenReturn(testDeregisterComputeResult);
         when(stateManager.getComputeStatus()).thenReturn(ComputeStatus.Active);
 
@@ -346,7 +302,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -369,7 +325,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -390,7 +346,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -413,7 +369,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -434,7 +390,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -457,7 +413,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -478,7 +434,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
@@ -501,7 +457,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.startTermination(Instant.now().plus(Duration.ofMinutes(1)), false);
 
         // THEN
@@ -522,7 +478,7 @@ class ShutdownOrchestratorTest {
         this.shutdownOrchestrator = new ShutdownOrchestrator(
                 stateManager, heartbeatSender, gameProcessManager, gameProcessMonitor, webSocketConnectionProvider,
                 gameLiftAgentLogUploader, amazonGameLift, executorService, mockExecutorServiceManager, IS_CONTAINER_FLEET,
-                FLEET_ID, COMPUTE_ID, ENABLED_REGISTRATION);
+                FLEET_ID, COMPUTE_ID);
         shutdownOrchestrator.completeTermination();
 
         // THEN
