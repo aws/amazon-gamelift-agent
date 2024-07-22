@@ -3,10 +3,13 @@
  */
 package com.amazon.gamelift.agent.module;
 
+import com.amazon.gamelift.agent.utils.AmazonGameLiftRetryCondition;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.PredefinedClientConfigurations;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.retry.PredefinedRetryPolicies;
+import com.amazonaws.retry.RetryPolicy;
 import com.amazonaws.services.gamelift.AmazonGameLift;
 import com.amazonaws.services.gamelift.AmazonGameLiftClientBuilder;
 import dagger.Module;
@@ -35,9 +38,12 @@ public class ClientModule {
     public AmazonGameLift provideAmazonGameLift(
             @Named(ConfigModule.REGION) final String region,
             @Named(ConfigModule.GAMELIFT_ENDPOINT_OVERRIDE) @Nullable final String gameLiftEndpointOverride,
-            @Named(ConfigModule.GAMELIFT_CREDENTIALS) final AWSCredentialsProvider credentialsProvider
-    ) {
-        final ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig();
+            @Named(ConfigModule.GAMELIFT_CREDENTIALS) final AWSCredentialsProvider credentialsProvider) {
+        final ClientConfiguration clientConfiguration = PredefinedClientConfigurations.defaultConfig()
+                .withRetryPolicy(new RetryPolicy(new AmazonGameLiftRetryCondition(),
+                        PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY,
+                        PredefinedRetryPolicies.DEFAULT_MAX_ERROR_RETRY,
+                        true, true, true));
 
         final AmazonGameLiftClientBuilder amazonGameLiftClientBuilder = AmazonGameLiftClientBuilder.standard()
                 .withCredentials(credentialsProvider)

@@ -16,8 +16,10 @@ public enum OperatingSystem {
     WINDOWS_2016("Windows Server 2016", OperatingSystemFamily.WINDOWS),
     WINDOWS_2019("Windows Server 2019", OperatingSystemFamily.WINDOWS),
     WINDOWS_2022("Windows Server 2022", OperatingSystemFamily.WINDOWS),
+    UNKNOWN_WINDOWS("Unknown Windows", OperatingSystemFamily.WINDOWS),
     AMAZON_LINUX_2("Amazon Linux 2", OperatingSystemFamily.LINUX),
     AMAZON_LINUX_2023("Amazon Linux 2023", OperatingSystemFamily.LINUX),
+    UNKNOWN_LINUX("Unknown Linux", OperatingSystemFamily.LINUX),
     INVALID("Invalid OperatingSystem", OperatingSystemFamily.INVALID);
 
     public static final OperatingSystem DEFAULT_OS = AMAZON_LINUX_2;
@@ -104,10 +106,14 @@ public enum OperatingSystem {
         } else if (WINDOWS_SERVER_2022_NAME.equals(System.getProperty(OS_NAME_SYSTEM_PROPERTY))) {
             // similar method doesn't exist in SystemUtils
             operatingSystem = WINDOWS_2022;
-        } else if (SystemUtils.IS_OS_LINUX && SystemUtils.OS_VERSION.contains(AMAZON_LINUX_2_VERSION)) {
-            operatingSystem = AMAZON_LINUX_2;
+        } else if (SystemUtils.IS_OS_WINDOWS) {
+            operatingSystem = UNKNOWN_WINDOWS;
         } else if (SystemUtils.IS_OS_LINUX && SystemUtils.OS_VERSION.contains(AMAZON_LINUX_2023_VERSION)) {
             operatingSystem = AMAZON_LINUX_2023;
+        } else if (SystemUtils.IS_OS_LINUX && SystemUtils.OS_VERSION.contains(AMAZON_LINUX_2_VERSION)) {
+            operatingSystem = AMAZON_LINUX_2;
+        } else if (SystemUtils.IS_OS_LINUX) {
+            operatingSystem = UNKNOWN_LINUX;
         } else {
             operatingSystem = INVALID;
         }

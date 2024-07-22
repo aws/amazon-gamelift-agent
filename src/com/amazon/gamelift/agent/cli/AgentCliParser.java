@@ -51,7 +51,7 @@ public class AgentCliParser {
     private static final String IP_ADDRESS_SHORT = "ip";
     private static final String LOCATION = "location";
     private static final String LOCATION_SHORT = "loc";
-    private static final String GAMELIFT_AGENT_LOG_BUCKET = "gamelift-agent--log-bucket";
+    private static final String GAMELIFT_AGENT_LOG_BUCKET = "gamelift-agent-log-bucket";
     private static final String GAMELIFT_AGENT_LOG_BUCKET_SHORT = "galb";
     private static final String GAMELIFT_AGENT_LOG_PATH = "gamelift-agent-log-path";
     private static final String GAMELIFT_AGENT_LOG_PATH_SHORT = "galp";
@@ -75,7 +75,6 @@ public class AgentCliParser {
     public static final String GAMELIFT_FLEET_ID = "GAMELIFT_FLEET_ID";
     public static final String GAMELIFT_LOCATION = "GAMELIFT_LOCATION";
     public static final String GAMELIFT_REGION = "GAMELIFT_REGION";
-    public static final String GAMELIFT_AGENT_WEBSOCKET_ENDPOINT = "GAMELIFT_AGENT_WEBSOCKET_ENDPOINT";
     public static final String INSTANCE_PROFILE_INPUT = "instance-profile";
     public static final String RUNTIME_CONFIGURATION_OPTION = "runtime-configuration";
 
@@ -221,12 +220,6 @@ public class AgentCliParser {
             gameLiftEndpointOverride = null;
         }
 
-        String gameLiftAgentWebSocketEndpoint = systemEnvironmentProvider
-                .getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT);
-        if (StringUtils.isBlank(gameLiftAgentWebSocketEndpoint)) {
-            gameLiftAgentWebSocketEndpoint = null;
-        }
-
         final String certificatePath = getOptionValueOrNull(commandLine, CERTIFICATE_PATH);
 
         final String ipAddress = getOptionValueOrNull(commandLine, IP_ADDRESS);
@@ -246,7 +239,6 @@ public class AgentCliParser {
                 .region(region)
                 .location(location)
                 .gameLiftEndpointOverride(gameLiftEndpointOverride)
-                .gameLiftAgentWebSocketEndpointOverride(gameLiftAgentWebSocketEndpoint)
                 .certificatePath(certificatePath)
                 .ipAddress(ipAddress)
                 .dnsName(dnsName)

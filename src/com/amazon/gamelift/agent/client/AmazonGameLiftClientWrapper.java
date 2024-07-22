@@ -7,6 +7,7 @@ import com.amazon.gamelift.agent.model.exception.ConflictException;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.amazon.gamelift.agent.model.exception.NotFoundException;
+import com.amazon.gamelift.agent.model.exception.NotReadyException;
 import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
 import com.amazon.gamelift.agent.model.gamelift.GetComputeAuthTokenResponse;
 import com.amazon.gamelift.agent.model.gamelift.RegisterComputeResponse;
@@ -76,7 +77,7 @@ public class AmazonGameLiftClientWrapper {
      * @throws InternalServiceException
      */
     public RegisterComputeResponse registerCompute(final RegisterComputeRequest request) throws UnauthorizedException,
-            InvalidRequestException, ConflictException, InternalServiceException {
+            InvalidRequestException, ConflictException, NotReadyException, InternalServiceException {
         log.info("RegisterCompute request received. Processing...");
         try {
             final Compute computeResult = amazonGameLift.registerCompute(request).getCompute();
@@ -85,6 +86,7 @@ public class AmazonGameLiftClientWrapper {
                     .fleetId(computeResult.getFleetId())
                     .computeName(computeResult.getComputeName())
                     .sdkWebsocketEndpoint(computeResult.getGameLiftServiceSdkEndpoint())
+                    .agentWebsocketEndpoint(computeResult.getGameLiftAgentEndpoint())
                     .status(computeResult.getComputeStatus())
                     .location(computeResult.getLocation())
                     .creationTime(computeResult.getCreationTime())
@@ -95,6 +97,8 @@ public class AmazonGameLiftClientWrapper {
             throw new InvalidRequestException("Invalid request", e);
         } catch (final com.amazonaws.services.gamelift.model.ConflictException e) {
             throw new ConflictException("Resource already exists", e);
+        } catch (final com.amazonaws.services.gamelift.model.NotReadyException e) {
+            throw new NotReadyException("Resource not ready", e);
         } catch (final com.amazonaws.services.gamelift.model.InternalServiceException e) {
             throw new InternalServiceException("Internal Server Issue", e);
         }

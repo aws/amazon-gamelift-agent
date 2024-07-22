@@ -6,9 +6,8 @@ package com.amazon.gamelift.agent.websocket;
 import com.amazon.gamelift.agent.manager.StateManager;
 import com.amazon.gamelift.agent.model.exception.ConflictException;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
-import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.amazon.gamelift.agent.model.exception.AgentException;
-import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
+import com.amazon.gamelift.agent.model.exception.NotReadyException;
 import com.amazon.gamelift.agent.model.gamelift.RegisterComputeResponse;
 import com.amazon.gamelift.agent.model.websocket.RefreshConnectionMessage;
 import com.amazon.gamelift.agent.client.AmazonGameLiftClientWrapper;
@@ -20,7 +19,6 @@ import com.amazonaws.services.gamelift.model.RegisterComputeRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 
 import javax.annotation.Nullable;
@@ -42,7 +40,6 @@ import java.util.concurrent.TimeoutException;
 @Singleton
 public class WebSocketConnectionManager {
     private static final Duration WEBSOCKET_CONNECT_TIMEOUT = Duration.ofSeconds(60);
-    private static final Duration WEBSOCKET_CLOSE_TIMEOUT = Duration.ofSeconds(5);
     private static final int MAX_REGISTER_COMPUTE_RETRIES = 8;
 
     // A maximum number of times GameLift Agent will attempt to reconnect the WebSocket in the event of an unexpected
@@ -58,7 +55,6 @@ public class WebSocketConnectionManager {
     private final String ipAddress;
     private final String certificatePath;
     private final String dnsName;
-    private final String gameLiftAgentWebSocketEndpointOverride;
     private final WebSocketConnectionProvider webSocketConnectionProvider;
     private final SdkWebsocketEndpointProvider sdkWebSocketEndpointProvider;
     private final WebSocketExceptionProvider webSocketExceptionProvider;
@@ -81,8 +77,6 @@ public class WebSocketConnectionManager {
             @Named(ConfigModule.IP_ADDRESS) @Nullable final String ipAddress,
             @Named(ConfigModule.CERTIFICATE_PATH) @Nullable final String certificatePath,
             @Named(ConfigModule.DNS_NAME) @Nullable final String dnsName,
-            @Named(ConfigModule.GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE) @Nullable final String
-                    gameLiftAgentWebSocketEndpointOverride,
             final WebSocketConnectionProvider webSocketConnectionProvider,
             final SdkWebsocketEndpointProvider sdkWebSocketEndpointProvider,
             final WebSocketExceptionProvider webSocketExceptionProvider,
@@ -99,7 +93,6 @@ public class WebSocketConnectionManager {
         this.ipAddress = ipAddress;
         this.certificatePath = certificatePath;
         this.dnsName = dnsName;
-        this.gameLiftAgentWebSocketEndpointOverride = gameLiftAgentWebSocketEndpointOverride;
         this.webSocketConnectionProvider = webSocketConnectionProvider;
         this.sdkWebSocketEndpointProvider = sdkWebSocketEndpointProvider;
         this.webSocketExceptionProvider = webSocketExceptionProvider;
@@ -116,15 +109,20 @@ public class WebSocketConnectionManager {
      * called once when GameLift Agent starts.
      */
     public void connect() {
+        RegisterComputeResponse response;
         try {
-            RetryHelper.runRetryable(MAX_REGISTER_COMPUTE_RETRIES, true, this::registerCompute);
+            response = RetryHelper.runRetryable(MAX_REGISTER_COMPUTE_RETRIES, true, this::registerCompute);
         } catch (final AgentException e) {
             throw new RuntimeException(e);
         }
 
-        final String webSocketEndpoint = buildWebSocketEndpoint();
+        // Save the SDK Websocket Endpoint from the response for use when spinning up processes,
+        // and pass it via environment variables.
+        sdkWebSocketEndpointProvider.setSdkWebsocketEndpoint(response.getSdkWebsocketEndpoint());
+
+        final String agentWebSocketEndpoint = response.getAgentWebsocketEndpoint();
         final String computeAuthToken = computeAuthTokenManager.getComputeAuthToken();
-        final AgentWebSocket connection = connectToWebSocket(webSocketEndpoint, computeAuthToken);
+        final AgentWebSocket connection = connectToWebSocket(agentWebSocketEndpoint, computeAuthToken);
 
         webSocketConnectionProvider.setCurrentAuthToken(computeAuthToken);
         webSocketConnectionProvider.updateConnection(connection);
@@ -180,7 +178,7 @@ public class WebSocketConnectionManager {
         webSocketConnectionProvider.updateConnection(newConnection);
     }
 
-    private Void registerCompute() throws AgentException {
+    private RegisterComputeResponse registerCompute() throws AgentException {
         final RegisterComputeRequest registerComputeRequest = new RegisterComputeRequest()
                 .withFleetId(fleetId)
                 .withComputeName(computeName)
@@ -191,19 +189,19 @@ public class WebSocketConnectionManager {
 
         log.info("Registering compute: {}", registerComputeRequest);
         try {
-            // Save the SDK Websocket Endpoint from the response for use when spinning up processes.
-            // and pass it via environment variables
             final RegisterComputeResponse response = amazonGameLift.registerCompute(registerComputeRequest);
-            sdkWebSocketEndpointProvider.setSdkWebsocketEndpoint(response.getSdkWebsocketEndpoint());
             log.info("Successfully registered compute: {}", response);
+            return response;
+        } catch (final NotReadyException e) {
+            log.info("Compute is not ready to be registered yet", e);
+            throw e;
         } catch (final ConflictException e) {
-            log.info("Compute already registered. Treating as success due to likely occurrence of Cold Start.");
-        } catch (final UnauthorizedException | InvalidRequestException
-                       | InternalServiceException e) {
+            log.error("Attempted to register a compute that is already registered", e);
+            throw e;
+        } catch (final AgentException e) {
             log.error("Failed to register compute", e);
             throw e;
         }
-        return null;
     }
 
     private AgentWebSocket connectToWebSocket(final String webSocketEndpoint,
@@ -243,15 +241,5 @@ public class WebSocketConnectionManager {
             log.error("Failed to construct the GameLiftAgent's web socket URI", e);
             throw new RuntimeException("'" + webSocketEndpoint + "' endpoint is not a valid URL", e);
         }
-    }
-
-    private String buildWebSocketEndpoint() {
-        final String webSocketEndpoint;
-        if (StringUtils.isBlank(gameLiftAgentWebSocketEndpointOverride)) {
-            webSocketEndpoint = String.format("wss://%s.process-manager-api.amazongamelift.com", region);
-        } else {
-            webSocketEndpoint = gameLiftAgentWebSocketEndpointOverride;
-        }
-        return webSocketEndpoint;
     }
 }

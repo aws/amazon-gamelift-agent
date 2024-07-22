@@ -9,6 +9,7 @@ import com.amazon.gamelift.agent.model.exception.ConflictException;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.amazon.gamelift.agent.model.exception.NotFoundException;
+import com.amazon.gamelift.agent.model.exception.NotReadyException;
 import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
 import com.amazonaws.services.gamelift.AmazonGameLift;
 import com.amazonaws.services.gamelift.model.Compute;
@@ -46,6 +47,7 @@ public class AmazonGameLiftClientWrapperTest {
     private static final Instant NOW = Instant.now();
     private static final String AUTH_TOKEN = RandomStringUtils.randomAlphanumeric(12);
     private static final String SDK_ENDPOINT = RandomStringUtils.randomAlphanumeric(12);
+    private static final String AGENT_ENDPOINT = RandomStringUtils.randomAlphanumeric(12);
     private static final String COMPUTE_STATUS = RandomStringUtils.randomAlphanumeric(12);
     private static final Date COMPUTE_CREATION_TIME = new Date();
 
@@ -143,6 +145,7 @@ public class AmazonGameLiftClientWrapperTest {
         when(mockCompute.getFleetId()).thenReturn(FLEET_ID);
         when(mockCompute.getComputeName()).thenReturn(COMPUTE_NAME);
         when(mockCompute.getGameLiftServiceSdkEndpoint()).thenReturn(SDK_ENDPOINT);
+        when(mockCompute.getGameLiftAgentEndpoint()).thenReturn(AGENT_ENDPOINT);
         when(mockCompute.getLocation()).thenReturn(LOCATION);
         when(mockCompute.getComputeStatus()).thenReturn(COMPUTE_STATUS);
         when(mockCompute.getCreationTime()).thenReturn(COMPUTE_CREATION_TIME);
@@ -158,6 +161,7 @@ public class AmazonGameLiftClientWrapperTest {
         assertEquals(FLEET_ID, response.getFleetId());
         assertEquals(COMPUTE_NAME, response.getComputeName());
         assertEquals(SDK_ENDPOINT, response.getSdkWebsocketEndpoint());
+        assertEquals(AGENT_ENDPOINT, response.getAgentWebsocketEndpoint());
         assertEquals(LOCATION, response.getLocation());
         assertEquals(COMPUTE_STATUS, response.getStatus());
         assertEquals(COMPUTE_CREATION_TIME, response.getCreationTime());
@@ -188,6 +192,15 @@ public class AmazonGameLiftClientWrapperTest {
 
         // WHEN
         assertThrows(ConflictException.class, () -> amazonGameLiftClientWrapper.registerCompute(REGISTER_COMPUTE_REQUEST));
+    }
+
+    @Test
+    public void GIVEN_notReadyException_WHEN_registerCompute_THEN_notReadyException() {
+        when(mockAmazonGameLift.registerCompute(any()))
+                .thenThrow(new com.amazonaws.services.gamelift.model.NotReadyException("unit-test"));
+
+        // WHEN
+        assertThrows(NotReadyException.class, () -> amazonGameLiftClientWrapper.registerCompute(REGISTER_COMPUTE_REQUEST));
     }
 
     @Test

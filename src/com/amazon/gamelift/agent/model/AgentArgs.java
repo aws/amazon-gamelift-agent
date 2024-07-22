@@ -20,7 +20,6 @@ public class AgentArgs {
     private String computeName;
     @NonNull private String region;
     private String gameLiftEndpointOverride;
-    private String gameLiftAgentWebSocketEndpointOverride;
     private String ipAddress;
     private String certificatePath;
     private String dnsName;

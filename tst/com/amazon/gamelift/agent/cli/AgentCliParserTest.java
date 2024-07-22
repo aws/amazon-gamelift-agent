@@ -25,7 +25,6 @@ import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_ENDPOINT;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_FLEET_ID;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_LOCATION;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_REGION;
-import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_AGENT_WEBSOCKET_ENDPOINT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,8 +46,6 @@ public class AgentCliParserTest {
     private static final String COMPUTE_NAME_TEST = "i-1234567";
     private static final String GAMELIFT_ENDPOINT_OVERRIDE = "http://glendpointoverride:25565";
     private static final String GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT = "http://GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT";
-    private static final String GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE =
-            "wss://alpha.us-west-2.process-manager-api.amazongamelift.com";
     private static final String REGION_TEST = "us-west-2";
     private static final String LOCATION_TEST = "ap-south-1";
     private static final String CERTIFICATE_PATH_TEST = "/game/cert";
@@ -452,7 +449,6 @@ public class AgentCliParserTest {
         assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
         assertEquals(parsedArgs.getRegion(), REGION_TEST);
         assertNull(parsedArgs.getGameLiftEndpointOverride());
-        assertNull(parsedArgs.getGameLiftAgentWebSocketEndpointOverride());
         assertNull(parsedArgs.getCertificatePath());
         assertNull(parsedArgs.getIpAddress());
         assertNull(parsedArgs.getDnsName());
@@ -613,8 +609,6 @@ public class AgentCliParserTest {
                 .thenReturn(LOCATION_TEST);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_REGION)))
                 .thenReturn(REGION_TEST);
-        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT)))
-                .thenReturn(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE);
 
         // WHEN
         final AgentArgs parsedArgs = parser.parse(new String[]{});
@@ -625,7 +619,5 @@ public class AgentCliParserTest {
         assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
         assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
         assertEquals(parsedArgs.getRegion(), REGION_TEST);
-        assertEquals(parsedArgs.getGameLiftAgentWebSocketEndpointOverride(),
-                GAMELIFT_AGENT_WEBSOCKET_ENDPOINT_OVERRIDE);
     }
 }

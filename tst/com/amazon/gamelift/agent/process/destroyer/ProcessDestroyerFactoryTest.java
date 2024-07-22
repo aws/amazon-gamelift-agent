@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 public class ProcessDestroyerFactoryTest {
     @ParameterizedTest
-    @ValueSource(strings = {"WIN_2012", "WINDOWS_2016", "WINDOWS_2019", "WINDOWS_2022"})
+    @ValueSource(strings = {"WIN_2012", "WINDOWS_2016", "WINDOWS_2019", "WINDOWS_2022", "UNKNOWN_WINDOWS"})
     public void GIVEN_windowsOs_WHEN_getProcessDestroyer_THEN_returnsWindowsProcessDestroyer(String os) {
         // GIVEN
         OperatingSystem operatingSystem = OperatingSystem.fromString(os);
@@ -27,10 +27,10 @@ public class ProcessDestroyerFactoryTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"AMAZON_LINUX_2", "AMAZON_LINUX_2023"})
+    @ValueSource(strings = {"AMAZON_LINUX_2", "AMAZON_LINUX_2023", "UNKNOWN_LINUX"})
     public void GIVEN_linuxOs_WHEN_getProcessDestroyer_THEN_returnsLinuxProcessDestroyer(String os) {
         // GIVEN
-        OperatingSystem operatingSystem = OperatingSystem.AMAZON_LINUX_2023;
+        OperatingSystem operatingSystem = OperatingSystem.fromString(os);
         // WHEN
         ProcessDestroyer processDestroyer = ProcessDestroyerFactory.getProcessDestroyer(operatingSystem);
         // THEN
