@@ -3,6 +3,8 @@
  */
 package com.amazon.gamelift.agent.websocket;
 
+import com.amazon.gamelift.agent.model.exception.NotReadyException;
+import com.amazon.gamelift.agent.model.exception.ThrottlingException;
 import com.amazon.gamelift.agent.model.websocket.base.ErrorWebsocketResponse;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
@@ -36,6 +38,8 @@ public class WebSocketExceptionProvider {
             case HttpStatus.SC_BAD_REQUEST -> new InvalidRequestException(testErrorResponse.getErrorMessage());
             case HttpStatus.SC_UNAUTHORIZED -> new UnauthorizedException(testErrorResponse.getErrorMessage());
             case HttpStatus.SC_NOT_FOUND -> new NotFoundException(testErrorResponse.getErrorMessage());
+            case HttpStatus.SC_PRECONDITION_FAILED -> new NotReadyException(testErrorResponse.getErrorMessage());
+            case HttpStatus.SC_TOO_MANY_REQUESTS -> new ThrottlingException(testErrorResponse.getErrorMessage());
             default -> new InternalServiceException(testErrorResponse.getErrorMessage());
         };
     }

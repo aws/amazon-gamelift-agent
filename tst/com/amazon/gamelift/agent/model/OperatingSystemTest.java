@@ -25,6 +25,7 @@ public class OperatingSystemTest {
         assertSame(OperatingSystem.WINDOWS_2022, OperatingSystem.fromString("WINDOWS_2022"));
         assertSame(OperatingSystem.AMAZON_LINUX_2, OperatingSystem.fromString("AMAZON_LINUX_2"));
         assertSame(OperatingSystem.AMAZON_LINUX_2023, OperatingSystem.fromString("AMAZON_LINUX_2023"));
+        assertSame(OperatingSystem.UNKNOWN_LINUX, OperatingSystem.fromString("unknown_Linux"));
         assertSame(OperatingSystem.WIN_2012, OperatingSystem.fromString("win_2012"));
         assertSame(OperatingSystem.INVALID, OperatingSystem.fromString("BURRITO_2022"));
         assertSame(OperatingSystem.INVALID, OperatingSystem.fromString(null));
@@ -44,9 +45,11 @@ public class OperatingSystemTest {
     public void GIVEN_differentOSTypes_WHEN_getOperatingSystemFamily_THEN_correctOperatingSystemFamilyReturned() {
         assertEquals(OperatingSystem.AMAZON_LINUX_2.getOperatingSystemFamily().getOsFamilyName(), "Unix");
         assertEquals(OperatingSystem.AMAZON_LINUX_2023.getOperatingSystemFamily().getOsFamilyName(), "Unix");
+        assertEquals(OperatingSystem.UNKNOWN_LINUX.getOperatingSystemFamily().getOsFamilyName(), "Unix");
         assertEquals(OperatingSystem.WIN_2012.getOperatingSystemFamily().getOsFamilyName(), "Windows");
         assertEquals(OperatingSystem.WINDOWS_2019.getOperatingSystemFamily().getOsFamilyName(), "Windows");
         assertEquals(OperatingSystem.WINDOWS_2022.getOperatingSystemFamily().getOsFamilyName(), "Windows");
+        assertEquals(OperatingSystem.UNKNOWN_WINDOWS.getOperatingSystemFamily().getOsFamilyName(), "Windows");
     }
 
     @ParameterizedTest

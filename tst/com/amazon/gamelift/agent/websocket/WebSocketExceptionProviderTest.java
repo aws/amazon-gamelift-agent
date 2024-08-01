@@ -6,6 +6,8 @@ package com.amazon.gamelift.agent.websocket;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.amazon.gamelift.agent.model.exception.NotFoundException;
+import com.amazon.gamelift.agent.model.exception.NotReadyException;
+import com.amazon.gamelift.agent.model.exception.ThrottlingException;
 import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
 import com.amazon.gamelift.agent.model.websocket.base.ErrorWebsocketResponse;
 import com.amazon.gamelift.agent.model.websocket.base.WebsocketResponse;
@@ -71,6 +73,18 @@ public class WebSocketExceptionProviderTest {
     public void GIVEN_notFoundError_WHEN_getExceptionFromWebSocketMessage_THEN_returnsCorrectException()
             throws JsonProcessingException {
         testErrorType(HttpStatus.SC_NOT_FOUND, NotFoundException.class);
+    }
+
+    @Test
+    public void GIVEN_notReadyError_WHEN_getExceptionFromWebSocketMessage_THEN_returnsCorrectException()
+            throws JsonProcessingException {
+        testErrorType(HttpStatus.SC_PRECONDITION_FAILED, NotReadyException.class);
+    }
+
+    @Test
+    public void GIVEN_throttlingError_WHEN_getExceptionFromWebSocketMessage_THEN_returnsCorrectException()
+            throws JsonProcessingException {
+        testErrorType(HttpStatus.SC_TOO_MANY_REQUESTS, ThrottlingException.class);
     }
 
     @Test

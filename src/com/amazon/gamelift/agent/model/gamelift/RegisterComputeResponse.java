@@ -16,6 +16,7 @@ public class RegisterComputeResponse extends WebsocketResponse {
     @NonNull private final String fleetId;
     @NonNull private final String computeName;
     @NonNull private final String sdkWebsocketEndpoint;
+    @NonNull private final String agentWebsocketEndpoint;
     private final String status;
     private final String location;
     private final Date creationTime;
