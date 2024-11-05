@@ -18,4 +18,7 @@ public class ForceExitServerProcessMessage extends WebsocketResponse {
 
     @JsonProperty(value = "ProcessId")
     private String processId;
+
+    @JsonProperty(value = "TerminationReason")
+    private String terminationReason;
 }

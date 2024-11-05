@@ -8,7 +8,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,9 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
+import com.amazon.gamelift.agent.model.constants.LogCredentials;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
 import com.amazon.gamelift.agent.model.exception.AgentException;
@@ -63,9 +64,9 @@ public class S3FileUploaderTest {
     @BeforeEach
     public void init() {
         MockitoAnnotations.openMocks(this);
-        uploader = Mockito.spy(new S3FileUploader(Regions.US_WEST_2.getName(), mockCredManager));
-        when(mockCredManager.getFleetRoleCredentials()).thenReturn(CREDENTIALS);
-        doReturn(mockAmazonS3).when(uploader).getS3Client(any());
+        uploader = Mockito.spy(new S3FileUploader(Regions.US_WEST_2.getName(), mockCredManager, LogCredentials.FLEET_ROLE));
+        lenient().when(mockCredManager.getFleetRoleCredentials()).thenReturn(CREDENTIALS);
+        lenient().doReturn(mockAmazonS3).when(uploader).getS3Client(any());
     }
 
     @Test
@@ -75,6 +76,22 @@ public class S3FileUploaderTest {
 
         // THEN
         verify(mockCredManager).getFleetRoleCredentials();
+        verify(uploader).attemptPutObject(mockAmazonS3, BUCKET_NAME, FILE_KEY, mockFileToUpload);
+        verify(mockAmazonS3).putObject(any(PutObjectRequest.class));
+    }
+
+    @Test
+    public void GIVEN_noException_AND_defaultCredentials_WHEN_uploadFile_THEN_doesNotRetry() throws AgentException {
+        // GIVEN
+        uploader = Mockito.spy(new S3FileUploader(Regions.US_WEST_2.getName(), mockCredManager,
+                LogCredentials.DEFAULT_PROVIDER_CHAIN));
+        doReturn(mockAmazonS3).when(uploader).getS3Client(any());
+
+        // WHEN
+        uploader.uploadFile(BUCKET_NAME, FILE_KEY, mockFileToUpload, false);
+
+        // THEN
+        verify(mockCredManager, never()).getFleetRoleCredentials();
         verify(uploader).attemptPutObject(mockAmazonS3, BUCKET_NAME, FILE_KEY, mockFileToUpload);
         verify(mockAmazonS3).putObject(any(PutObjectRequest.class));
     }
@@ -143,6 +160,7 @@ public class S3FileUploaderTest {
 
     @Test
     public void GIVEN_failToCreateTempFile_WHEN_uploadFile_THEN_doesRetry() throws IOException, AgentException {
+        // GIVEN
         try (MockedStatic<File> mockedFile = mockStatic(File.class);
                 MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             // GIVEN
@@ -164,6 +182,7 @@ public class S3FileUploaderTest {
     @Test
     public void GIVEN_failToCopyToFile_WHEN_uploadFile_THEN_doesRetryAndDeleteTempFiles()
             throws IOException, AgentException {
+        // GIVEN
         try (MockedStatic<IOUtils> mockedIOUtils = mockStatic(IOUtils.class);
                 MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             // GIVEN - grab a local file to test with

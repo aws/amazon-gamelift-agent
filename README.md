@@ -116,6 +116,11 @@ java -jar ./target/GameLiftAgent-1.0.jar <Command Line Options>
 1. `gamelift-agent-log-path` / `galp`
     1. Optional - The file path where GameLiftAgent logs are stored locally. During launch, parent directories are created as required for this path.
     1. Defaults are `/local/gameliftagent/logs` for Linux and `C:\\GameLiftAgent\\Logs\\` for Windows.
+1. `log-credentials` / `lc`
+    1. Optional - The credentials used to upload agent or session logs.
+    1. Options are as follows (default is `fleet-role`)
+        1. `fleet-role` - Uses fleet role credentials.
+        1. `default-provider-chain` - Uses AWS default credential provider chain.
 1. `region` / `r`
     1. Required - The AWS region used when creating GameLift fleets.
     1. May also be provided using environment variable `GAMELIFT_REGION` instead of specifying as a command line option.

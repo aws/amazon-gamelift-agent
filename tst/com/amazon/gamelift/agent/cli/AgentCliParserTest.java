@@ -7,6 +7,7 @@ import com.amazon.gamelift.agent.component.DaggerCliComponent;
 import com.amazon.gamelift.agent.model.AgentArgs;
 import com.amazon.gamelift.agent.component.CliComponent;
 import com.amazon.gamelift.agent.model.constants.GameLiftCredentials;
+import com.amazon.gamelift.agent.model.constants.LogCredentials;
 import com.amazon.gamelift.agent.utils.SystemEnvironmentProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.CommandLine;
@@ -19,12 +20,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.amazon.gamelift.agent.cli.AgentCliParser.COMPUTE_TYPE_CONTAINER;
+import static com.amazon.gamelift.agent.cli.AgentCliParser.ENABLE_COMPUTE_REGISTRATION_VIA_AGENT;
+import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_AGENT_WEBSOCKET_ENDPOINT;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_COMPUTE_NAME;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_COMPUTE_TYPE;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_ENDPOINT;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_FLEET_ID;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_LOCATION;
 import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_REGION;
+import static com.amazon.gamelift.agent.cli.AgentCliParser.GAMELIFT_SDK_WEBSOCKET_URL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,15 +50,21 @@ public class AgentCliParserTest {
     private static final String COMPUTE_NAME_TEST = "i-1234567";
     private static final String GAMELIFT_ENDPOINT_OVERRIDE = "http://glendpointoverride:25565";
     private static final String GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT = "http://GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT";
+    private static final String GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT = "http://GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT";
+    private static final String GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT = "http://GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT";
+
     private static final String REGION_TEST = "us-west-2";
     private static final String LOCATION_TEST = "ap-south-1";
     private static final String CERTIFICATE_PATH_TEST = "/game/cert";
     private static final String IP_ADDRESS_TEST = "http://localhost:8080";
     private static final String DNS_NAME_TEST = "myhost.aws";
+    private static final String FLEET_ROLE_CREDENTIALS = "fleet-role";
+    private static final String DEFAULT_PROVIDER_CHAIN = "default-provider-chain";
     private static final String GAME_SESSION_LOG_BUCKET = "game-session-logs";
     private static final String GAMELIFT_AGENT_LOG_BUCKET = "gamelift-agent-logs";
     private static final String COMPUTE_NAME_OPTION = "compute-name";
     private static final String GAMELIFT_CREDENTIALS_OPTION = "gamelift-credentials";
+    private static final String LOG_CREDENTIALS_OPTION = "log-credentials";
     private static final String CLI_COMPUTE_NAME_CONTAINER_FLEET_ERROR =
             "Compute Name cannot be set manually for container fleet";
 
@@ -343,7 +353,8 @@ public class AgentCliParserTest {
                 "-r", REGION_TEST,
                 "-loc", LOCATION_TEST,
                 "-gslb", GAME_SESSION_LOG_BUCKET,
-                "-galb", GAMELIFT_AGENT_LOG_BUCKET
+                "-galb", GAMELIFT_AGENT_LOG_BUCKET,
+                "-lc", FLEET_ROLE_CREDENTIALS
         };
         final AgentCliParser parser = cliComponent.buildCliParser();
 
@@ -359,6 +370,61 @@ public class AgentCliParserTest {
         assertEquals(parsedArgs.getGameSessionLogBucket(), GAME_SESSION_LOG_BUCKET);
         assertEquals(parsedArgs.getAgentLogBucket(), GAMELIFT_AGENT_LOG_BUCKET);
         assertEquals(parsedArgs.getGameLiftCredentials(), GameLiftCredentials.INSTANCE_PROFILE);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
+    }
+
+    @Test
+    public void GIVEN_s3LogBuckets_AND_defaultCredentials_WHEN_parsing_THEN_returnValues() {
+        // GIVEN
+        final String[] args = new String[]{
+                "-rc", RUNTIME_CONFIG_TEST_JSON,
+                "-f", FLEET_ID_FROM_CLI_OPTION,
+                "-c", COMPUTE_NAME_TEST,
+                "-gleo", GAMELIFT_ENDPOINT_OVERRIDE,
+                "-r", REGION_TEST,
+                "-loc", LOCATION_TEST,
+                "-gslb", GAME_SESSION_LOG_BUCKET,
+                "-galb", GAMELIFT_AGENT_LOG_BUCKET,
+                "-lc", DEFAULT_PROVIDER_CHAIN
+        };
+        final AgentCliParser parser = cliComponent.buildCliParser();
+
+        // WHEN
+        final AgentArgs parsedArgs =  parser.parse(args);
+
+        // THEN
+        assertEquals(parsedArgs.getRuntimeConfiguration().getServerProcesses().get(0).getLaunchPath(), LAUNCH_PATH_TEST);
+        assertEquals(parsedArgs.getFleetId(), FLEET_ID_FROM_CLI_OPTION);
+        assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
+        assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_OVERRIDE);
+        assertEquals(parsedArgs.getRegion(), REGION_TEST);
+        assertEquals(parsedArgs.getGameSessionLogBucket(), GAME_SESSION_LOG_BUCKET);
+        assertEquals(parsedArgs.getAgentLogBucket(), GAMELIFT_AGENT_LOG_BUCKET);
+        assertEquals(parsedArgs.getGameLiftCredentials(), GameLiftCredentials.INSTANCE_PROFILE);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.DEFAULT_PROVIDER_CHAIN);
+    }
+
+    @Test
+    public void GIVEN_invalidLogCredentialsValue_WHEN_parsing_THEN_illegalArgumentException() {
+        // GIVEN
+        final String[] args = new String[]{
+                "-rc", RUNTIME_CONFIG_TEST_JSON,
+                "-f", FLEET_ID_FROM_CLI_OPTION,
+                "-c", COMPUTE_NAME_TEST,
+                "-gleo", GAMELIFT_ENDPOINT_OVERRIDE,
+                "-r", REGION_TEST,
+                "-loc", LOCATION_TEST,
+                "-gslb", GAME_SESSION_LOG_BUCKET,
+                "-galb", GAMELIFT_AGENT_LOG_BUCKET,
+                "-lc", "wrong_value"
+        };
+        final AgentCliParser parser = cliComponent.buildCliParser();
+
+        // WHEN, THEN
+        Exception thrown = assertThrows(IllegalArgumentException.class, () -> parser.parse(args));
+        String expectedMessage = "wrong_value is not a valid option. Please use one of the follow options: "
+                + "fleet-role | default-provider-chain";
+        assertEquals(thrown.getMessage(), expectedMessage);
     }
 
     @Test
@@ -456,6 +522,7 @@ public class AgentCliParserTest {
         assertNull(parsedArgs.getGameSessionLogBucket());
         assertNull(parsedArgs.getAgentLogPath());
         assertEquals(parsedArgs.getIsContainerFleet(), Boolean.FALSE);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
     }
 
     @Test
@@ -489,6 +556,7 @@ public class AgentCliParserTest {
         assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
         assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
         assertEquals(parsedArgs.getRegion(), REGION_TEST);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
     }
 
     @Test
@@ -506,6 +574,10 @@ public class AgentCliParserTest {
                 .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
                 .thenReturn(COMPUTE_TYPE_CONTAINER);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT))
+                .thenReturn(GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_SDK_WEBSOCKET_URL))
+                .thenReturn(GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
                 .thenReturn(null);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
@@ -518,6 +590,8 @@ public class AgentCliParserTest {
 
         // THEN
         assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getGameLiftAgentWebsocketEndpoint(), GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getGameLiftSdkWebsocketEndpoint(), GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
         assertEquals(parsedArgs.getFleetId(), FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
         assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
         assertEquals(parsedArgs.getRegion(), REGION_TEST);
@@ -539,6 +613,10 @@ public class AgentCliParserTest {
                 .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
                 .thenReturn(COMPUTE_TYPE_CONTAINER);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT))
+                .thenReturn(GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_SDK_WEBSOCKET_URL))
+                .thenReturn(GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
                 .thenReturn(COMPUTE_NAME_TEST);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
@@ -551,6 +629,8 @@ public class AgentCliParserTest {
 
         // THEN
         assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getGameLiftAgentWebsocketEndpoint(), GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getGameLiftSdkWebsocketEndpoint(), GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
         assertEquals(parsedArgs.getFleetId(), FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
         assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
         assertEquals(parsedArgs.getLocation(), REGION_TEST);
@@ -569,6 +649,8 @@ public class AgentCliParserTest {
                 .thenReturn(false);
         when(mockCommandLine.hasOption(COMPUTE_NAME_OPTION))
                 .thenReturn(true);
+        when(mockCommandLine.hasOption(LOG_CREDENTIALS_OPTION))
+                .thenReturn(false);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
                 .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
         when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
@@ -619,5 +701,180 @@ public class AgentCliParserTest {
         assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
         assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
         assertEquals(parsedArgs.getRegion(), REGION_TEST);
+    }
+
+    @Test
+    public void GIVEN_containerFleet_WHEN_parsing_THEN_computeRegistrationViaAgentDisabled_AND_returnsEnvironmentEndpoints() throws ParseException {
+        // GIVEN
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
+                mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
+        when(mockCommandLineParser.parse(any(), any()))
+                .thenReturn(mockCommandLine);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
+                .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
+                .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
+                .thenReturn(COMPUTE_NAME_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
+                .thenReturn(LOCATION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_REGION)))
+                .thenReturn(REGION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
+                .thenReturn(COMPUTE_TYPE_CONTAINER);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT))
+                .thenReturn(GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_SDK_WEBSOCKET_URL))
+                .thenReturn(GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
+
+        // WHEN
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
+
+        // THEN
+        assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getGameLiftAgentWebsocketEndpoint(), GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getGameLiftSdkWebsocketEndpoint(), GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getFleetId(), FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
+        assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
+        assertEquals(parsedArgs.getRegion(), REGION_TEST);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
+        assertEquals(parsedArgs.getEnableComputeRegistrationViaAgent(), false);
+    }
+
+    @Test
+    public void GIVEN_containerFleetSdkEndpointNotPresent_WHEN_parsing_THEN_illegalArgumentException() throws ParseException {
+        // GIVEN
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
+                mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
+        when(mockCommandLineParser.parse(any(), any()))
+                .thenReturn(mockCommandLine);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
+                .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
+                .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
+                .thenReturn(COMPUTE_NAME_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
+                .thenReturn(LOCATION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_REGION)))
+                .thenReturn(REGION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
+                .thenReturn(COMPUTE_TYPE_CONTAINER);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT))
+                .thenReturn(GAMELIFT_AGENT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_SDK_WEBSOCKET_URL))
+                .thenReturn(null);
+
+        // WHEN
+        assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}));
+    }
+
+    @Test
+    public void GIVEN_containerFleetAgentEndpointNotPresent_WHEN_parsing_THEN_illegalArgumentException() throws ParseException {
+        // GIVEN
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
+                mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
+        when(mockCommandLineParser.parse(any(), any()))
+                .thenReturn(mockCommandLine);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
+                .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
+                .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
+                .thenReturn(COMPUTE_NAME_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
+                .thenReturn(LOCATION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_REGION)))
+                .thenReturn(REGION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
+                .thenReturn(COMPUTE_TYPE_CONTAINER);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT))
+                .thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(GAMELIFT_SDK_WEBSOCKET_URL))
+                .thenReturn(GAMELIFT_SDK_ENDPOINT_SYSTEM_ENVIRONMENT);
+
+        // WHEN
+        assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{}));
+    }
+
+    @Test
+    public void GIVEN_nonContainerFleet_WHEN_parsing_THEN_computeRegistrationViaAgentEnabled() throws ParseException {
+        // GIVEN
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
+                mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
+        when(mockCommandLineParser.parse(any(), any()))
+                .thenReturn(mockCommandLine);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
+                .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
+                .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
+                .thenReturn(COMPUTE_NAME_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
+                .thenReturn(LOCATION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_REGION)))
+                .thenReturn(REGION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
+                .thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)))
+                .thenReturn("true");
+
+        // WHEN
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
+
+        // THEN
+        assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getFleetId(), FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
+        assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
+        assertEquals(parsedArgs.getRegion(), REGION_TEST);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
+        assertEquals(parsedArgs.getEnableComputeRegistrationViaAgent(), true);
+    }
+
+    @Test
+    public void GIVEN_nonContainerFleet_WHEN_parsing_THEN_computeRegistrationViaAgentIsNotEnabledByDefault() throws ParseException {
+        // GIVEN
+        final CommandLine mockCommandLine = mock(CommandLine.class);
+        final AgentCliParser parser = new AgentCliParser(
+                mockCommandLineParser, mockHelpFormatter, mockObjectMapper, mockSystemEnvironmentProvider);
+        when(mockCommandLineParser.parse(any(), any()))
+                .thenReturn(mockCommandLine);
+        when(mockCommandLine.getOptionValue(anyString())).thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_ENDPOINT)))
+                .thenReturn(GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_FLEET_ID)))
+                .thenReturn(FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_NAME)))
+                .thenReturn(COMPUTE_NAME_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_LOCATION)))
+                .thenReturn(LOCATION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_REGION)))
+                .thenReturn(REGION_TEST);
+        when(mockSystemEnvironmentProvider.getenv(eq(GAMELIFT_COMPUTE_TYPE)))
+                .thenReturn(null);
+        when(mockSystemEnvironmentProvider.getenv(eq(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)))
+                .thenReturn(null);
+
+        // WHEN
+        final AgentArgs parsedArgs = parser.parse(new String[]{});
+
+        // THEN
+        assertEquals(parsedArgs.getGameLiftEndpointOverride(), GAMELIFT_ENDPOINT_SYSTEM_ENVIRONMENT);
+        assertEquals(parsedArgs.getFleetId(), FLEET_ID_FROM_ENVIRONMENT_VARIABLE);
+        assertEquals(parsedArgs.getComputeName(), COMPUTE_NAME_TEST);
+        assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
+        assertEquals(parsedArgs.getRegion(), REGION_TEST);
+        assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
+        assertEquals(parsedArgs.getEnableComputeRegistrationViaAgent(), false);
     }
 }

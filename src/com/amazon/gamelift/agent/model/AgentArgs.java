@@ -5,6 +5,7 @@ package com.amazon.gamelift.agent.model;
 
 import com.amazon.gamelift.agent.model.constants.GameLiftCredentials;
 
+import com.amazon.gamelift.agent.model.constants.LogCredentials;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -20,6 +21,8 @@ public class AgentArgs {
     private String computeName;
     @NonNull private String region;
     private String gameLiftEndpointOverride;
+    private String gameLiftAgentWebsocketEndpoint;
+    private String gameLiftSdkWebsocketEndpoint;
     private String ipAddress;
     private String certificatePath;
     private String dnsName;
@@ -29,5 +32,7 @@ public class AgentArgs {
     private String gameSessionLogBucket;
     private String agentLogBucket;
     private String agentLogPath;
+    private LogCredentials logCredentials;
     private Boolean isContainerFleet;
+    private Boolean enableComputeRegistrationViaAgent;
 }

@@ -6,6 +6,7 @@ package com.amazon.gamelift.agent.cli;
 import com.amazon.gamelift.agent.model.AgentArgs;
 import com.amazon.gamelift.agent.model.RuntimeConfiguration;
 import com.amazon.gamelift.agent.model.constants.GameLiftCredentials;
+import com.amazon.gamelift.agent.model.constants.LogCredentials;
 import com.amazon.gamelift.agent.utils.RealSystemEnvironmentProvider;
 import com.amazon.gamelift.agent.utils.SystemEnvironmentProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +56,8 @@ public class AgentCliParser {
     private static final String GAMELIFT_AGENT_LOG_BUCKET_SHORT = "galb";
     private static final String GAMELIFT_AGENT_LOG_PATH = "gamelift-agent-log-path";
     private static final String GAMELIFT_AGENT_LOG_PATH_SHORT = "galp";
+    private static final String LOG_CREDENTIALS = "log-credentials";
+    private static final String LOG_CREDENTIALS_SHORT = "lc";
     private static final String REGION = "region";
     private static final String REGION_SHORT = "r";
     private static final String RUNTIME_CONFIGURATION_SHORT = "rc";
@@ -77,6 +80,11 @@ public class AgentCliParser {
     public static final String GAMELIFT_REGION = "GAMELIFT_REGION";
     public static final String INSTANCE_PROFILE_INPUT = "instance-profile";
     public static final String RUNTIME_CONFIGURATION_OPTION = "runtime-configuration";
+    public static final String ENABLE_COMPUTE_REGISTRATION_VIA_AGENT = "GAMELIFT_ENABLE_COMPUTE_REGISTRATION_VIA_AGENT";
+    public static final String GAMELIFT_SDK_WEBSOCKET_URL = "GAMELIFT_SDK_WEBSOCKET_URL";
+    public static final String GAMELIFT_AGENT_WEBSOCKET_ENDPOINT = "GAMELIFT_AGENT_WEBSOCKET_ENDPOINT";
+    public static final String FLEET_ROLE_INPUT = "fleet-role";
+    public static final String DEFAULT_PROVIDER_CHAIN_INPUT = "default-provider-chain";
 
     /**
      * Constructor for AgentCliParser
@@ -155,9 +163,30 @@ public class AgentCliParser {
                                     commandLine.getOptionValue(GAMELIFT_CREDENTIALS)));
             };
         }
+
         if (COMPUTE_TYPE_CONTAINER.equals(systemEnvironmentProvider.getenv(GAMELIFT_COMPUTE_TYPE))) {
             gameLiftCredentials = GameLiftCredentials.CONTAINER;
             isContainerFleet = true;
+        }
+
+        // LogCredentials represents which credentials are used to upload logs if gamelift-agent-log-bucket or game-session-log-bucket
+        // is defined. The default option is fleet-role but it can also use the default credential provider chain to upload
+        // logs.
+        LogCredentials logCredentials = LogCredentials.FLEET_ROLE;
+        if (commandLine.hasOption(LOG_CREDENTIALS)) {
+            logCredentials = switch (commandLine.getOptionValue(LOG_CREDENTIALS)) {
+                case FLEET_ROLE_INPUT ->
+                        // Use fleet role credentials when uploading logs
+                        LogCredentials.FLEET_ROLE;
+                case DEFAULT_PROVIDER_CHAIN_INPUT ->
+                        // Use default provider chain when uploading logs
+                        LogCredentials.DEFAULT_PROVIDER_CHAIN;
+                default ->
+                        throw new IllegalArgumentException(
+                                String.format("%s is not a valid option. Please use one of the follow options: "
+                                                + "fleet-role | default-provider-chain",
+                                        commandLine.getOptionValue(LOG_CREDENTIALS)));
+            };
         }
 
         // Environment variables are prioritized over CLI parameters to ensure correct functionality with
@@ -232,6 +261,28 @@ public class AgentCliParser {
 
         final String gameliftAgentLogPath = getOptionValueOrNull(commandLine, GAMELIFT_AGENT_LOG_PATH);
 
+        final Boolean enabledComputeRegistrationViaAgent;
+        final String gameLiftAgentWebsocketEndpoint;
+        final String gameLiftSdkWebsocketEndpoint;
+        if (COMPUTE_TYPE_CONTAINER.equals(systemEnvironmentProvider.getenv(GAMELIFT_COMPUTE_TYPE))) {
+            // Note: Container fleets cannot invoke RegisterCompute. GameLift will handle compute registration and set
+            // necessary endpoints in environment variables for Agent.
+            enabledComputeRegistrationViaAgent = false;
+            gameLiftAgentWebsocketEndpoint = systemEnvironmentProvider.getenv(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT);
+            gameLiftSdkWebsocketEndpoint = systemEnvironmentProvider.getenv(GAMELIFT_SDK_WEBSOCKET_URL);
+            if (StringUtils.isEmpty(gameLiftAgentWebsocketEndpoint) || StringUtils.isEmpty(gameLiftSdkWebsocketEndpoint)) {
+                throw new IllegalArgumentException("GAMELIFT_SDK_WEBSOCKET_URL and GAMELIFT_AGENT_WEBSOCKET_ENDPOINT "
+                        + "must be present in container fleet environment variables.");
+            }
+        } else {
+            enabledComputeRegistrationViaAgent = StringUtils.isNotBlank(systemEnvironmentProvider
+                    .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) ? Boolean.valueOf(systemEnvironmentProvider
+                    .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) : false;
+            gameLiftAgentWebsocketEndpoint = null;
+            gameLiftSdkWebsocketEndpoint = null;
+        }
+
+
         return AgentArgs.builder()
                 .runtimeConfiguration(runtimeConfiguration)
                 .fleetId(fleetId)
@@ -239,14 +290,18 @@ public class AgentCliParser {
                 .region(region)
                 .location(location)
                 .gameLiftEndpointOverride(gameLiftEndpointOverride)
+                .gameLiftAgentWebsocketEndpoint(gameLiftAgentWebsocketEndpoint)
+                .gameLiftSdkWebsocketEndpoint(gameLiftSdkWebsocketEndpoint)
                 .certificatePath(certificatePath)
                 .ipAddress(ipAddress)
                 .dnsName(dnsName)
                 .gameLiftCredentials(gameLiftCredentials)
+                .logCredentials(logCredentials)
                 .gameSessionLogBucket(gameSessionLogBucket)
                 .agentLogBucket(gameliftAgentLogBucket)
                 .agentLogPath(gameliftAgentLogPath)
                 .isContainerFleet(isContainerFleet)
+                .enableComputeRegistrationViaAgent(enabledComputeRegistrationViaAgent)
                 .build();
     }
 
@@ -339,6 +394,12 @@ public class AgentCliParser {
                 .desc("Directory path for storage of GameLiftAgent logs locally.")
                 .hasArg()
                 .longOpt(GAMELIFT_AGENT_LOG_PATH)
+                .build());
+
+        options.addOption(Option.builder(LOG_CREDENTIALS_SHORT)
+                .desc("Option for credentials used for uploading logs.")
+                .hasArg()
+                .longOpt(LOG_CREDENTIALS)
                 .build());
 
         return options;

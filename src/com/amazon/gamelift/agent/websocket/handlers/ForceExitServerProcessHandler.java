@@ -9,6 +9,7 @@ import com.amazon.gamelift.agent.model.websocket.ForceExitServerProcessMessage;
 import com.amazon.gamelift.agent.process.GameProcessManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Inject;
 
@@ -16,6 +17,8 @@ import javax.inject.Inject;
 public class ForceExitServerProcessHandler extends MessageHandler<ForceExitServerProcessMessage> {
 
     private final GameProcessManager gameProcessManager;
+    private static final ProcessTerminationReason DEFAULT_TERMINATION_REASON =
+            ProcessTerminationReason.NORMAL_TERMINATION;
 
     /**
      * Constructor for ForceExitServerProcessHandler
@@ -39,9 +42,21 @@ public class ForceExitServerProcessHandler extends MessageHandler<ForceExitServe
                     message.getAction());
             return;
         }
+        ProcessTerminationReason reason;
+        try {
+            reason = StringUtils.isBlank(message.getTerminationReason())
+                    ? DEFAULT_TERMINATION_REASON
+                    : ProcessTerminationReason.valueOf(message.getTerminationReason());
+        } catch (final IllegalArgumentException e) {
+            log.error(String.format("Received ForceExitServerProcess message with unknown termination reason %s. "
+                    + "Using default termination reason %s.",
+                    message.getTerminationReason(), DEFAULT_TERMINATION_REASON));
+            reason = DEFAULT_TERMINATION_REASON;
+        }
 
-        log.info("Force exiting process with UUID: {}", message.getProcessId());
+        log.info("Force exiting server process with UUID: {}", message.getProcessId());
+
         gameProcessManager.terminateProcessByUUID(message.getProcessId(),
-                ProcessTerminationReason.NORMAL_TERMINATION);
+                reason);
     }
 }

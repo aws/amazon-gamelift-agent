@@ -3,6 +3,7 @@
  */
 package com.amazon.gamelift.agent.manager;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.util.EC2MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -19,10 +20,14 @@ import java.util.Optional;
 
 @Slf4j
 public class TerminationNoticeReader {
+    private static final String INSTANCE_LIFE_CYCLE_PATH = "/latest/meta-data/instance-life-cycle";
     private static final String TERMINATION_NOTICE_PATH = "/latest/meta-data/spot/termination-time";
+    private static final String SPOT_LIFE_CYCLE = "spot";
     private static final String MANUAL_TERMINATION_FILE_LOCATION = SystemUtils.IS_OS_WINDOWS
             ? "C:\\GameLift\\Agent\\termination.txt"
             : "/local/GameLift/Agent/termination.txt";
+
+    private Optional<Boolean> isSpotInstance = Optional.empty();
 
     /**
      * Constructor for TerminationNoticeReader
@@ -38,7 +43,25 @@ public class TerminationNoticeReader {
      * @return The parsed termination Instant, or an empty optional if the termination notice has not been set
      */
     public Optional<Instant> getTerminationNoticeFromEC2Metadata() {
-        return parseInstant(EC2MetadataUtils.getData(TERMINATION_NOTICE_PATH));
+        if (isSpotInstance.isEmpty()) {
+            try {
+                String lifecycle = EC2MetadataUtils.getData(INSTANCE_LIFE_CYCLE_PATH);
+                isSpotInstance = Optional.of(SPOT_LIFE_CYCLE.equals(lifecycle));
+            } catch (SdkClientException e) {
+                // EC2MetadataUtils already tried multiple times. If we cannot query IMDS for basic metadata,
+                // then we are probably not running on an EC2 instance at all and should avoid future queries
+                log.warn("Unable to query EC2 IMDS metadata. Assuming that this is not an EC2 spot instance.");
+                isSpotInstance = Optional.of(false);
+            }
+        }
+        if (isSpotInstance.get()) {
+            try {
+                return parseInstant(EC2MetadataUtils.getData(TERMINATION_NOTICE_PATH));
+            } catch (SdkClientException e) {
+                // Metadata path may not exist yet, it is only created when the termination notice is posted
+            }
+        }
+        return Optional.empty();
     }
 
     /**

@@ -55,7 +55,7 @@ public class LinuxProcessDestroyerTest {
         linuxProcessDestroyer.destroyProcess(mockInternalProcess);
 
         // THEN
-        verify(mockProcessBuilder).command(List.of("setsid", "kill", "-9", "-" + processUUID));
+        verify(mockProcessBuilder).command(List.of("kill", "-9", "-" + processUUID));
     }
 
     @Test

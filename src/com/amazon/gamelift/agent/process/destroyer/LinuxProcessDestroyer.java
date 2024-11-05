@@ -63,7 +63,7 @@ public class LinuxProcessDestroyer implements ProcessDestroyer {
         // "-$PGID" indicates to destroy the entire PGID
         // Example command: setsid kill -9 -11111
         processBuilder.command(
-                ImmutableList.of("setsid", "kill", "-9", String.format("-%s", processGroupId)));
+                ImmutableList.of("kill", "-9", String.format("-%s", processGroupId)));
         try {
             processBuilder.start().waitFor();
         } catch (final IOException | InterruptedException e) {

@@ -8,6 +8,7 @@ import com.amazon.gamelift.agent.model.constants.WebSocketActions;
 import com.amazon.gamelift.agent.model.websocket.ForceExitServerProcessMessage;
 import com.amazon.gamelift.agent.process.GameProcessManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,23 @@ public class ForceExitServerProcessHandlerTest {
         message = new ForceExitServerProcessMessage();
         message.setProcessId(PROCESS_ID);
         message.setAction(WebSocketActions.ForceExitServerProcess.name());
+        message.setTerminationReason(ProcessTerminationReason.CUSTOMER_INITIATED.toString());
+        messageAsString = OBJECT_MAPPER.writeValueAsString(message);
+
+        //When
+        forceExitServerProcessHandler.handle(messageAsString);
+
+        //Then
+        verify(gameProcessManager).terminateProcessByUUID(PROCESS_ID,
+                ProcessTerminationReason.CUSTOMER_INITIATED);
+    }
+
+    @Test
+    public void GIVEN_terminateProcessMessageWithNoTerminationReason_WHEN_handle_THEN_processTerminatedWithDefaultReason() throws Exception {
+        //Givens
+        message = new ForceExitServerProcessMessage();
+        message.setProcessId(PROCESS_ID);
+        message.setAction(WebSocketActions.ForceExitServerProcess.name());
         messageAsString = OBJECT_MAPPER.writeValueAsString(message);
 
         //When
@@ -68,4 +86,20 @@ public class ForceExitServerProcessHandlerTest {
         verify(gameProcessManager, never()).terminateProcessByUUID(any(), any());
     }
 
+    @Test
+    public void GIVEN_unknownTerminationReason_WHEN_handle_THEN_processTerminatedWithNormalReason() throws Exception {
+        message = new ForceExitServerProcessMessage();
+        message.setProcessId(PROCESS_ID);
+        message.setAction(WebSocketActions.ForceExitServerProcess.name());
+        message.setTerminationReason(RandomStringUtils.randomAlphanumeric(7));
+        messageAsString = OBJECT_MAPPER.writeValueAsString(message);
+
+        //When
+        forceExitServerProcessHandler.handle(messageAsString);
+
+        //Then
+        verify(gameProcessManager).terminateProcessByUUID(PROCESS_ID,
+                ProcessTerminationReason.NORMAL_TERMINATION);
+    }
 }
+

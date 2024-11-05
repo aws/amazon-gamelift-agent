@@ -3,6 +3,7 @@
  */
 package com.amazon.gamelift.agent.manager;
 
+import com.amazonaws.SdkClientException;
 import com.amazonaws.util.EC2MetadataUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 
 public class TerminationNoticeReaderTest {
@@ -24,7 +26,8 @@ public class TerminationNoticeReaderTest {
     public void GIVEN_ec2MetadataNotice_WHEN_getTerminationNoticeFromEC2Metadata_THEN_returnsInstant() {
         try (MockedStatic<EC2MetadataUtils> ec2MetadataUtils = mockStatic(EC2MetadataUtils.class)) {
             final Instant instant = Instant.now();
-            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(any())).thenReturn(instant.toString());
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/instance-life-cycle"))).thenReturn("spot");
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/spot/termination-time"))).thenReturn(instant.toString());
 
             final Optional<Instant> metadata = terminationNoticeReader.getTerminationNoticeFromEC2Metadata();
             assertEquals(instant, metadata.get());
@@ -32,9 +35,32 @@ public class TerminationNoticeReaderTest {
     }
 
     @Test
+    public void GIVEN_onDemandInstanceType_WHEN_getTerminationNoticeFromEC2Metadata_THEN_returnsEmpty() {
+        try (MockedStatic<EC2MetadataUtils> ec2MetadataUtils = mockStatic(EC2MetadataUtils.class)) {
+            final Instant instant = Instant.now();
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/instance-life-cycle"))).thenReturn("on-demand");
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/spot/termination-time"))).thenReturn(instant.toString());
+
+            final Optional<Instant> metadata = terminationNoticeReader.getTerminationNoticeFromEC2Metadata();
+            assertTrue(metadata.isEmpty());
+        }
+    }
+
+    @Test
+    public void GIVEN_noMetadataServiceAvailable_WHEN_getTerminationNoticeFromEC2Metadata_THEN_returnsEmpty() {
+        try (MockedStatic<EC2MetadataUtils> ec2MetadataUtils = mockStatic(EC2MetadataUtils.class)) {
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(any())).thenThrow(SdkClientException.class);
+
+            final Optional<Instant> metadata = terminationNoticeReader.getTerminationNoticeFromEC2Metadata();
+            assertTrue(metadata.isEmpty());
+        }
+    }
+
+    @Test
     public void GIVEN_emptyMetadataNotice_WHEN_getTerminationNoticeFromEC2Metadata_THEN_returnsEmpty() {
         try (MockedStatic<EC2MetadataUtils> ec2MetadataUtils = mockStatic(EC2MetadataUtils.class)) {
-            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(any())).thenReturn("");
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/instance-life-cycle"))).thenReturn("spot");
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/spot/termination-time"))).thenReturn("");
 
             final Optional<Instant> metadata = terminationNoticeReader.getTerminationNoticeFromEC2Metadata();
             assertTrue(metadata.isEmpty());
@@ -44,7 +70,8 @@ public class TerminationNoticeReaderTest {
     @Test
     public void GIVEN_badMetadataNotice_WHEN_getTerminationNoticeFromEC2Metadata_THEN_returnsEmpty() {
         try (MockedStatic<EC2MetadataUtils> ec2MetadataUtils = mockStatic(EC2MetadataUtils.class)) {
-            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(any())).thenReturn("(☞ﾟヮﾟ)☞ ┻━┻");
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/instance-life-cycle"))).thenReturn("spot");
+            ec2MetadataUtils.when(() -> EC2MetadataUtils.getData(eq("/latest/meta-data/spot/termination-time"))).thenReturn("(☞ﾟヮﾟ)☞ ┻━┻");
 
             final Optional<Instant> metadata = terminationNoticeReader.getTerminationNoticeFromEC2Metadata();
             assertTrue(metadata.isEmpty());

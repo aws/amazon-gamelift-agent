@@ -15,12 +15,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.amazon.gamelift.agent.model.constants.LogCredentials;
 import com.amazon.gamelift.agent.utils.RetryHelper;
 import com.amazon.gamelift.agent.manager.FleetRoleCredentialsConfigurationManager;
 import com.amazon.gamelift.agent.model.exception.InternalServiceException;
 import com.amazon.gamelift.agent.model.exception.AgentException;
 import com.amazon.gamelift.agent.module.ConfigModule;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -42,15 +44,18 @@ public class S3FileUploader {
 
     private final String region;
     private final FleetRoleCredentialsConfigurationManager fleetRoleCredentialsManager;
+    private final LogCredentials logCredentials;
 
     /**
      * Constructor for S3FileUploader
      */
     @Inject
     public S3FileUploader(@Named(ConfigModule.REGION) final String region,
-                          final FleetRoleCredentialsConfigurationManager fleetRoleCredentialsManager) {
+                          final FleetRoleCredentialsConfigurationManager fleetRoleCredentialsManager,
+                          final LogCredentials logCredentials) {
         this.region = region;
         this.fleetRoleCredentialsManager = fleetRoleCredentialsManager;
+        this.logCredentials = logCredentials;
     }
 
     /**
@@ -61,8 +66,14 @@ public class S3FileUploader {
                            final File logFile,
                            final boolean shouldZipFile) throws AgentException {
         log.info("Preparing to upload file {} to bucket {} under key {}", logFile.getName(), bucketName, fileKey);
-        final AWSCredentialsProvider fleetRoleCredentials = fleetRoleCredentialsManager.getFleetRoleCredentials();
-        final AmazonS3 amazonS3 = getS3Client(fleetRoleCredentials);
+        final AWSCredentialsProvider credentials;
+        if (LogCredentials.DEFAULT_PROVIDER_CHAIN == logCredentials) {
+            credentials = new DefaultAWSCredentialsProviderChain();
+        } else {
+            // Default to fleet role credentials.
+            credentials = fleetRoleCredentialsManager.getFleetRoleCredentials();
+        }
+        final AmazonS3 amazonS3 = getS3Client(credentials);
         if (shouldZipFile) {
             RetryHelper.runRetryable(() -> attemptZipAndPutObject(amazonS3, bucketName, fileKey, logFile));
         } else {

@@ -36,6 +36,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static com.amazon.gamelift.agent.module.ConfigModule.ENABLED_COMPUTE_REGISTRATION_VIA_AGENT;
+import static com.amazon.gamelift.agent.module.ConfigModule.GAMELIFT_AGENT_WEBSOCKET_ENDPOINT;
+import static com.amazon.gamelift.agent.module.ConfigModule.GAMELIFT_SDK_WEBSOCKET_ENDPOINT;
+
 @Slf4j
 @Singleton
 public class WebSocketConnectionManager {
@@ -63,6 +67,9 @@ public class WebSocketConnectionManager {
     private final WebSocket.Builder webSocketBuilder;
     private final ComputeAuthTokenManager computeAuthTokenManager;
     private final StateManager stateManager;
+    private final boolean enableComputeRegistrationViaAgent;
+    private final String gameLiftAgentWebsocketEndpoint;
+    private final String gameLiftSdkWebsocketEndpoint;
 
     /**
      * Constructor for WebSocketConnectionManager
@@ -84,7 +91,10 @@ public class WebSocketConnectionManager {
             final ObjectMapper objectMapper,
             final WebSocket.Builder webSocketBuilder,
             final ComputeAuthTokenManager computeAuthTokenManager,
-            final StateManager stateManager) {
+            final StateManager stateManager,
+            @Named(ENABLED_COMPUTE_REGISTRATION_VIA_AGENT) final boolean enableComputeRegistrationViaAgent,
+            @Named(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT) @Nullable final String gameLiftAgentWebsocketEndpoint,
+            @Named(GAMELIFT_SDK_WEBSOCKET_ENDPOINT) @Nullable final String gameLiftSdkWebsocketEndpoint) {
         this.amazonGameLift = amazonGameLift;
         this.fleetId = fleetId;
         this.computeName = computeName;
@@ -101,6 +111,9 @@ public class WebSocketConnectionManager {
         this.webSocketBuilder = webSocketBuilder;
         this.computeAuthTokenManager = computeAuthTokenManager;
         this.stateManager = stateManager;
+        this.enableComputeRegistrationViaAgent = enableComputeRegistrationViaAgent;
+        this.gameLiftAgentWebsocketEndpoint = gameLiftAgentWebsocketEndpoint;
+        this.gameLiftSdkWebsocketEndpoint = gameLiftSdkWebsocketEndpoint;
     }
 
     /**
@@ -109,20 +122,33 @@ public class WebSocketConnectionManager {
      * called once when GameLift Agent starts.
      */
     public void connect() {
-        RegisterComputeResponse response;
-        try {
-            response = RetryHelper.runRetryable(MAX_REGISTER_COMPUTE_RETRIES, true, this::registerCompute);
-        } catch (final AgentException e) {
-            throw new RuntimeException(e);
+        final String sdkWebsocketEndpoint;
+        final String agentWebsocketEndpoint;
+
+        if (this.enableComputeRegistrationViaAgent) {
+            RegisterComputeResponse response;
+            try {
+                response = RetryHelper.runRetryable(MAX_REGISTER_COMPUTE_RETRIES, true, this::registerCompute);
+            } catch (final AgentException e) {
+                throw new RuntimeException(e);
+            }
+            sdkWebsocketEndpoint = response.getSdkWebsocketEndpoint();
+            agentWebsocketEndpoint = response.getAgentWebsocketEndpoint();
+        } else {
+            log.info("Skipping call to RegisterCompute. Initializing using endpoints from environment variables: "
+                    + "agentWebsocketEndpoint={}, sdkWebsocketEndpoint={}", this.gameLiftAgentWebsocketEndpoint,
+                    this.gameLiftSdkWebsocketEndpoint);
+            agentWebsocketEndpoint = this.gameLiftAgentWebsocketEndpoint;
+            sdkWebsocketEndpoint = this.gameLiftSdkWebsocketEndpoint;
         }
+
 
         // Save the SDK Websocket Endpoint from the response for use when spinning up processes,
         // and pass it via environment variables.
-        sdkWebSocketEndpointProvider.setSdkWebsocketEndpoint(response.getSdkWebsocketEndpoint());
+        sdkWebSocketEndpointProvider.setSdkWebsocketEndpoint(sdkWebsocketEndpoint);
 
-        final String agentWebSocketEndpoint = response.getAgentWebsocketEndpoint();
         final String computeAuthToken = computeAuthTokenManager.getComputeAuthToken();
-        final AgentWebSocket connection = connectToWebSocket(agentWebSocketEndpoint, computeAuthToken);
+        final AgentWebSocket connection = connectToWebSocket(agentWebsocketEndpoint, computeAuthToken);
 
         webSocketConnectionProvider.setCurrentAuthToken(computeAuthToken);
         webSocketConnectionProvider.updateConnection(connection);

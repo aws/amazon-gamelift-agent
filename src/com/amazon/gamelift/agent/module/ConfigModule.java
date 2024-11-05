@@ -7,6 +7,7 @@ import com.amazon.gamelift.agent.model.OperatingSystem;
 import com.amazon.gamelift.agent.model.AgentArgs;
 import com.amazon.gamelift.agent.model.RuntimeConfiguration;
 import com.amazon.gamelift.agent.model.constants.GameLiftCredentials;
+import com.amazon.gamelift.agent.model.constants.LogCredentials;
 import com.amazon.gamelift.agent.utils.EcsMetadataReader;
 import com.amazon.gamelift.agent.utils.RealSystemEnvironmentProvider;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -35,6 +36,8 @@ public class ConfigModule {
     public static final String REGION = "region";
     public static final String LOCATION = "location";
     public static final String GAMELIFT_ENDPOINT_OVERRIDE = "gameLiftEndpointOverride";
+    public static final String GAMELIFT_AGENT_WEBSOCKET_ENDPOINT = "gameLiftAgentWebsocketEndpoint";
+    public static final String GAMELIFT_SDK_WEBSOCKET_ENDPOINT = "gameLiftSdkWebsocketEndpoint";
     public static final String IP_ADDRESS = "ipAddress";
     public static final String CERTIFICATE_PATH = "certificatePath";
     public static final String DNS_NAME = "dnsName";
@@ -45,12 +48,15 @@ public class ConfigModule {
     public static final String GAMELIFT_AGENT_LOG_BUCKET = "gameliftAgentLogBucket";
     public static final String GAMELIFT_AGENT_LOG_PATH = "gameliftAgentLogPath";
     public static final String GAMELIFT_AGENT_LOGS_DIRECTORY = "gameliftAgentLogDirectory";
+    public static final String ENABLED_COMPUTE_REGISTRATION_VIA_AGENT = "enableComputeRegistrationViaAgent";
 
     private final String fleetId;
     private final String computeName;
     private final String region;
     private final String location;
     private final String gameLiftEndpointOverride;
+    private final String gameLiftAgentWebsocketEndpoint;
+    private final String gameLiftSdkWebsocketEndpoint;
     private final String ipAddress;
     private final String certificatePath;
     private final String dnsName;
@@ -59,9 +65,11 @@ public class ConfigModule {
     private final String gameSessionLogBucket;
     private final String gameliftAgentLogBucket;
     private final String gameliftAgentLogPath;
+    private final LogCredentials logCredentials;
     private final String containerId;
     private final String taskId;
     private final boolean isContainerFleet;
+    private final boolean enableComputeRegistrationViaAgent;
 
     private final EcsMetadataReader ecsMetadataReader;
 
@@ -76,6 +84,8 @@ public class ConfigModule {
                 new RealSystemEnvironmentProvider());
         this.fleetId = args.getFleetId();
         this.gameLiftEndpointOverride = args.getGameLiftEndpointOverride();
+        this.gameLiftAgentWebsocketEndpoint = args.getGameLiftAgentWebsocketEndpoint();
+        this.gameLiftSdkWebsocketEndpoint = args.getGameLiftSdkWebsocketEndpoint();
         this.region = args.getRegion();
         this.location = args.getLocation();
         this.ipAddress = args.getIpAddress();
@@ -86,11 +96,12 @@ public class ConfigModule {
         this.gameSessionLogBucket = args.getGameSessionLogBucket();
         this.gameliftAgentLogBucket = args.getAgentLogBucket();
         this.gameliftAgentLogPath = args.getAgentLogPath();
+        this.logCredentials = args.getLogCredentials();
         this.containerId = args.getIsContainerFleet() ? ecsMetadataReader.getContainerId() : null;
         this.taskId = args.getIsContainerFleet() ? ecsMetadataReader.getTaskId() : null;
-        this.computeName =
-                args.getIsContainerFleet() ? String.format("%s/%s", taskId, containerId) : args.getComputeName();
+        this.computeName = args.getIsContainerFleet() ? taskId : args.getComputeName();
         this.isContainerFleet = args.getIsContainerFleet();
+        this.enableComputeRegistrationViaAgent = args.getEnableComputeRegistrationViaAgent();
     }
 
     /**
@@ -143,6 +154,28 @@ public class ConfigModule {
     @Named(GAMELIFT_ENDPOINT_OVERRIDE)
     public String provideGameLiftEndpointOverride() {
         return gameLiftEndpointOverride;
+    }
+
+    /**
+     * Provides the Amazon GameLift Agent endpoint. Only non-null for container fleets.
+     * @return String | Null
+     */
+    @Provides
+    @Nullable
+    @Named(GAMELIFT_AGENT_WEBSOCKET_ENDPOINT)
+    public String provideGameLiftAgentEndpoint() {
+        return gameLiftAgentWebsocketEndpoint;
+    }
+
+    /**
+     * Provides the Amazon GameLift SDK endpoint. Only non-null for container fleets.
+     * @return String | Null
+     */
+    @Provides
+    @Nullable
+    @Named(GAMELIFT_SDK_WEBSOCKET_ENDPOINT)
+    public String provideGameLiftSdkWebsocketEndpoint() {
+        return gameLiftSdkWebsocketEndpoint;
     }
 
     /**
@@ -210,6 +243,17 @@ public class ConfigModule {
     }
 
     /**
+     * Provides enableComputeRegistrationViaAgent
+     * @return true | false
+     */
+    @Provides
+    @Singleton
+    @Named(ENABLED_COMPUTE_REGISTRATION_VIA_AGENT)
+    public boolean provideEnableComputeRegistrationViaAgent() {
+        return this.enableComputeRegistrationViaAgent;
+    }
+
+    /**
      * Provides AWSCredentialsProvider for creating an Amazon GameLift Client
      * @return AWSCredentialsProvider
      */
@@ -241,6 +285,15 @@ public class ConfigModule {
                     + "Falling back to default credential provider chain (env/JVM properties)");
             return DefaultAWSCredentialsProviderChain.getInstance();
         }
+    }
+
+    /**
+     * Provides an object that represents the option used for uploading logs.
+     * @return LogCredentials
+     */
+    @Provides
+    public LogCredentials providerLogCredentialOption() {
+        return logCredentials;
     }
 
     /**
