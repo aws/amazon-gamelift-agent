@@ -15,6 +15,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.ContainerCredentialsProvider;
 import com.google.gson.Gson;
 import dagger.Module;
 import dagger.Provides;
@@ -262,7 +263,11 @@ public class ConfigModule {
     @Named(GAMELIFT_CREDENTIALS)
     public AWSCredentialsProvider provideGameLiftCredentials() {
         final AWSCredentialsProvider specifiedProvider;
-        if (GameLiftCredentials.INSTANCE_PROFILE.equals(gameLiftCredentials)) {
+        
+        if (System.getenv("ECS_CONTAINER_METADATA_URI_V4") != null) {
+            log.info("Retrieving credentials from the ecs metadata");
+            specifiedProvider = new ContainerCredentialsProvider();
+	} else if (GameLiftCredentials.INSTANCE_PROFILE.equals(gameLiftCredentials)) {
             log.info("Retrieving credentials from the instance metadata");
             specifiedProvider = InstanceProfileCredentialsProvider.getInstance();
         } else if (GameLiftCredentials.ENVIRONMENT_VARIABLE.equals(gameLiftCredentials)) {
@@ -275,7 +280,7 @@ public class ConfigModule {
             throw new IllegalArgumentException(
                     "Credentials must be instance-profile | environment-variable | container");
         }
-
+	
         try {
             // Attempt to get credentials from the specified source; if it fails, fall back to the default chain
             specifiedProvider.getCredentials();
