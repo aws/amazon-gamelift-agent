@@ -4,6 +4,7 @@
 package com.amazon.gamelift.agent.manager;
 
 import com.amazon.gamelift.agent.model.websocket.SendHeartbeatRequest;
+import com.amazon.gamelift.agent.module.ThreadingModule;
 import com.amazon.gamelift.agent.process.GameProcessManager;
 import com.amazon.gamelift.agent.utils.ExecutorServiceSafeRunnable;
 import com.amazon.gamelift.agent.websocket.AgentWebSocket;
@@ -11,6 +12,7 @@ import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -21,6 +23,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static com.amazon.gamelift.agent.module.ConfigModule.HEARTBEAT_TIMEOUT_TIME;
 import static com.amazon.gamelift.agent.module.ThreadingModule.HEARTBEAT_SENDER_EXECUTOR;
 
 @Slf4j
@@ -31,7 +34,9 @@ public class HeartbeatSender {
     private final StateManager stateManager;
     private final WebSocketConnectionProvider webSocketConnectionProvider;
     private final GameProcessManager gameProcessManager;
+    private final Instant heartbeatTimeoutTime;
     private final ScheduledExecutorService executorService;
+    private final ExecutorServiceManager executorServiceManager;
 
     /**
      * Constructor for HeartbeatSender
@@ -45,11 +50,15 @@ public class HeartbeatSender {
             final StateManager stateManager,
             final WebSocketConnectionProvider webSocketConnectionProvider,
             final GameProcessManager gameProcessManager,
-            @Named(HEARTBEAT_SENDER_EXECUTOR) final ScheduledExecutorService executorService) {
+            @Named(HEARTBEAT_TIMEOUT_TIME) @Nullable final Instant heartbeatTimeoutTime,
+            @Named(HEARTBEAT_SENDER_EXECUTOR) final ScheduledExecutorService executorService,
+            @Named(ThreadingModule.EXECUTOR_SERVICE_MANAGER) final ExecutorServiceManager executorServiceManager) {
         this.stateManager = stateManager;
         this.webSocketConnectionProvider = webSocketConnectionProvider;
         this.gameProcessManager = gameProcessManager;
+        this.heartbeatTimeoutTime = heartbeatTimeoutTime;
         this.executorService = executorService;
+        this.executorServiceManager = executorServiceManager;
     }
 
     /**
@@ -80,6 +89,18 @@ public class HeartbeatSender {
             client.sendRequestAsync(request);
         } catch (final Exception e) {
             log.error("Failed to send heartbeat", e);
+        }
+        cancelSendingNewHeartbeatIfTimeout();
+    }
+
+    /**
+     * Terminates the scheduled heartbeat thread if heartbeatTimeout is set
+     */
+    private void cancelSendingNewHeartbeatIfTimeout() {
+        if (heartbeatTimeoutTime != null && Instant.now().isAfter(heartbeatTimeoutTime)) {
+            log.info("Shutting down the heartbeat daemon due to timeout. Heartbeat timeout time: {}",
+                    heartbeatTimeoutTime.toEpochMilli());
+            executorServiceManager.shutdownScheduledThreadPoolExecutorServiceByName(this.getClass().getSimpleName());
         }
     }
 }

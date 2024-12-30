@@ -20,15 +20,21 @@ public class NotifyServerProcessTerminationRequest extends WebsocketRequest {
     private final String processId;
     @JsonProperty(value = "EventCode")
     private final String eventCode;
+    @JsonProperty(value = "TerminationReason")
+    private final String terminationReason;
 
     /**
      * Constructor for NotifyServerProcessTerminationRequest
      * @param processId
      * @param eventCode
+     * @param terminationReason
      */
-    public NotifyServerProcessTerminationRequest(final String processId, final String eventCode) {
+    public NotifyServerProcessTerminationRequest(final String processId,
+                                                 final String eventCode,
+                                                 final String terminationReason) {
         this.processId = processId;
         this.eventCode = eventCode;
+        this.terminationReason = terminationReason;
         setAction(WebSocketActions.NotifyServerProcessTermination.name());
     }
 }

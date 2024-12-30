@@ -47,6 +47,7 @@ public class ProcessTerminationEventManager {
         final NotifyServerProcessTerminationRequest notifyRequest = NotifyServerProcessTerminationRequest.builder()
                 .processId(processUuid)
                 .eventCode(validatedReason.getEventCode())
+                .terminationReason(validatedReason.name())
                 .build();
 
         final AgentWebSocket client = webSocketConnectionProvider.getCurrentConnection();

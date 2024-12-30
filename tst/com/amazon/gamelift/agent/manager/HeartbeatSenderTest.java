@@ -12,13 +12,14 @@ import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import java.time.Instant;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -41,10 +42,12 @@ public class HeartbeatSenderTest {
     private GameProcessManager gameProcessManager;
     @Mock
     private AgentWebSocket client;
+    private Instant heartbeatTimeTime;
     @Mock
     private ScheduledExecutorService executorService;
+    @Mock
+    private ExecutorServiceManager executorServiceManager;
 
-    @InjectMocks
     private HeartbeatSender heartbeatSender;
 
     @BeforeEach
@@ -52,6 +55,9 @@ public class HeartbeatSenderTest {
         lenient().when(stateManager.getComputeStatus()).thenReturn(COMPUTE_STATUS);
         lenient().when(webSocketConnectionProvider.getCurrentConnection()).thenReturn(client);
         lenient().when(gameProcessManager.getAllProcessUUIDs()).thenReturn(ImmutableSet.of(PROCESS_ID));
+
+        heartbeatSender = new HeartbeatSender(stateManager, webSocketConnectionProvider, gameProcessManager,
+                heartbeatTimeTime, executorService, executorServiceManager);
     }
 
     @Test
@@ -94,6 +100,19 @@ public class HeartbeatSenderTest {
 
         // THEN
         verify(client).sendRequestAsync(expectedHeartbeatRequest(true));
+    }
+
+    @Test
+    public void GIVEN_heartbeatTimeout_WHEN_heartbeat_THEN_cancelFutureExecution() {
+        heartbeatTimeTime = Instant.now();
+        heartbeatSender = new HeartbeatSender(stateManager, webSocketConnectionProvider, gameProcessManager,
+                heartbeatTimeTime, executorService, executorServiceManager);
+        // WHEN
+        heartbeatSender.sendHeartbeat();
+
+        // THEN
+        verify(client).sendRequestAsync(expectedHeartbeatRequest(false));
+        verify(executorServiceManager).shutdownScheduledThreadPoolExecutorServiceByName(HeartbeatSender.class.getSimpleName());
     }
 
     private WebsocketRequest expectedHeartbeatRequest(final boolean spotInterrupted) {

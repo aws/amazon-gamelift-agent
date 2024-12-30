@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.inject.Inject;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Instant;
 
 /**
  * Class to provide command line parsing specific to the GameLift agent.
@@ -85,6 +86,7 @@ public class AgentCliParser {
     public static final String GAMELIFT_AGENT_WEBSOCKET_ENDPOINT = "GAMELIFT_AGENT_WEBSOCKET_ENDPOINT";
     public static final String FLEET_ROLE_INPUT = "fleet-role";
     public static final String DEFAULT_PROVIDER_CHAIN_INPUT = "default-provider-chain";
+    public static final String GAMELIFT_HEARTBEAT_TIMEOUT_MILLIS = "GAMELIFT_HEARTBEAT_TIMEOUT_MILLIS";
 
     /**
      * Constructor for AgentCliParser
@@ -277,11 +279,14 @@ public class AgentCliParser {
         } else {
             enabledComputeRegistrationViaAgent = StringUtils.isNotBlank(systemEnvironmentProvider
                     .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) ? Boolean.valueOf(systemEnvironmentProvider
-                    .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) : false;
+                    .getenv(ENABLE_COMPUTE_REGISTRATION_VIA_AGENT)) : true;
             gameLiftAgentWebsocketEndpoint = null;
             gameLiftSdkWebsocketEndpoint = null;
         }
 
+        final Instant heartbeatTimeoutTime = StringUtils.isNotBlank(systemEnvironmentProvider
+                .getenv(GAMELIFT_HEARTBEAT_TIMEOUT_MILLIS)) ? Instant.now().plusMillis(Long.parseLong(systemEnvironmentProvider
+                .getenv(GAMELIFT_HEARTBEAT_TIMEOUT_MILLIS))) : null;
 
         return AgentArgs.builder()
                 .runtimeConfiguration(runtimeConfiguration)
@@ -302,6 +307,7 @@ public class AgentCliParser {
                 .agentLogPath(gameliftAgentLogPath)
                 .isContainerFleet(isContainerFleet)
                 .enableComputeRegistrationViaAgent(enabledComputeRegistrationViaAgent)
+                .heartbeatTimeoutTime(heartbeatTimeoutTime)
                 .build();
     }
 

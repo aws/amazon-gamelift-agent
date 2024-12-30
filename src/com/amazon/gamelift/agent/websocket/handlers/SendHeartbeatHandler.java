@@ -64,6 +64,9 @@ public class SendHeartbeatHandler extends MessageHandler<SendHeartbeatResponse> 
     }
 
     private void processUnhealthyProcesses(final List<String> unhealthyProcesses) {
+        if (unhealthyProcesses == null) {
+            return;
+        }
         for (final String processId : unhealthyProcesses) {
             gameProcessManager.terminateProcessByUUID(processId,
                     ProcessTerminationReason.SERVER_PROCESS_TERMINATED_UNHEALTHY);

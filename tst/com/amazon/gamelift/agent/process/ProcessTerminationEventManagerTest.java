@@ -21,7 +21,6 @@ import com.amazon.gamelift.agent.websocket.WebSocketConnectionProvider;
 
 import java.time.Duration;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,7 +58,8 @@ public class ProcessTerminationEventManagerTest {
         assertNotNull(capturedRequest.getAction());
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
-        Assertions.assertEquals(ProcessTerminationReason.NORMAL_TERMINATION.getEventCode(), capturedRequest.getEventCode());
+        assertEquals(ProcessTerminationReason.NORMAL_TERMINATION.getEventCode(), capturedRequest.getEventCode());
+        assertEquals(ProcessTerminationReason.NORMAL_TERMINATION.name(), capturedRequest.getTerminationReason());
     }
 
     @Test
@@ -74,6 +74,7 @@ public class ProcessTerminationEventManagerTest {
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
         assertEquals(ProcessTerminationReason.SERVER_PROCESS_INVALID_PATH.getEventCode(), capturedRequest.getEventCode());
+        assertEquals(ProcessTerminationReason.SERVER_PROCESS_INVALID_PATH.name(), capturedRequest.getTerminationReason());
     }
 
     @Test
@@ -88,6 +89,7 @@ public class ProcessTerminationEventManagerTest {
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
         assertEquals(ProcessTerminationReason.SERVER_PROCESS_CRASHED.getEventCode(), capturedRequest.getEventCode());
+        assertEquals(ProcessTerminationReason.SERVER_PROCESS_CRASHED.name(), capturedRequest.getTerminationReason());
     }
 
     @Test
@@ -102,6 +104,7 @@ public class ProcessTerminationEventManagerTest {
         assertNotNull(capturedRequest.getRequestId());
         assertEquals(TEST_PROCESS_UUID, capturedRequest.getProcessId());
         assertEquals(ProcessTerminationReason.COMPUTE_SHUTTING_DOWN.getEventCode(), capturedRequest.getEventCode());
+        assertEquals(ProcessTerminationReason.COMPUTE_SHUTTING_DOWN.name(), capturedRequest.getTerminationReason());
     }
 
     @Test

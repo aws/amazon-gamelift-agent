@@ -64,6 +64,19 @@ public class SendHeartbeatHandlerTest {
     }
 
     @Test
+    public void GIVEN_nullUnhealthyProcess_WHEN_handle_THEN_doNothing() {
+        // GIVEN
+        when(stateManager.getComputeStatus()).thenReturn(ComputeStatus.Active);
+        response.setUnhealthyProcesses(null);
+
+        // WHEN
+        sendHeartbeatHandler.handle(response);
+
+        // THEN
+        verify(gameProcessManager, never()).terminateProcessByUUID(any(), any());
+    }
+
+    @Test
     public void GIVEN_unregisteredProcessForOneIteration_WHEN_handle_THEN_doesNotTerminateProcess() {
         // GIVEN
         when(stateManager.getComputeStatus()).thenReturn(ComputeStatus.Active);

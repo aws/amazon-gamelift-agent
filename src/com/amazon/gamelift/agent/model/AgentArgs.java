@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.time.Instant;
+
 /**
  * Class to encapsulate the commandline arguments for the GameLift agent.
  */
@@ -35,4 +37,5 @@ public class AgentArgs {
     private LogCredentials logCredentials;
     private Boolean isContainerFleet;
     private Boolean enableComputeRegistrationViaAgent;
+    private Instant heartbeatTimeoutTime;
 }

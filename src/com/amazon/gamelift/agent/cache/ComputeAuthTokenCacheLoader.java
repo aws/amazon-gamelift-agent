@@ -3,12 +3,10 @@
  */
 package com.amazon.gamelift.agent.cache;
 
+import com.amazon.gamelift.agent.model.exception.AgentException;
 import com.amazon.gamelift.agent.model.gamelift.GetComputeAuthTokenResponse;
 import com.amazon.gamelift.agent.client.AmazonGameLiftClientWrapper;
-import com.amazon.gamelift.agent.model.exception.InternalServiceException;
-import com.amazon.gamelift.agent.model.exception.InvalidRequestException;
-import com.amazon.gamelift.agent.model.exception.NotFoundException;
-import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
+import com.amazon.gamelift.agent.utils.RetryHelper;
 import com.amazonaws.services.gamelift.model.GetComputeAuthTokenRequest;
 import com.google.common.cache.CacheLoader;
 
@@ -17,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ComputeAuthTokenCacheLoader extends CacheLoader<String, GetComputeAuthTokenResponse> {
+    private static final int MAX_GET_COMPUTE_AUTH_TOKEN_RETRIES = 16;
+
     private final AmazonGameLiftClientWrapper amazonGameLift;
     private final String fleetId;
     private final String computeName;
@@ -43,9 +43,8 @@ public class ComputeAuthTokenCacheLoader extends CacheLoader<String, GetComputeA
                     .withFleetId(fleetId)
                     .withComputeName(computeName);
 
-            return amazonGameLift.getComputeAuthToken(getComputeAuthTokenRequest);
-        } catch (final UnauthorizedException | InvalidRequestException
-                | NotFoundException | InternalServiceException e) {
+            return RetryHelper.runRetryable(MAX_GET_COMPUTE_AUTH_TOKEN_RETRIES, true, () -> amazonGameLift.getComputeAuthToken(getComputeAuthTokenRequest));
+        } catch (final AgentException e) {
             log.error("Call to Amazon GameLift GetComputeAuthToken failed.", e);
             throw new RuntimeException(e);
         }

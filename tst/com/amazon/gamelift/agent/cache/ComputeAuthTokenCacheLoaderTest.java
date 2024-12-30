@@ -3,9 +3,12 @@
  */
 package com.amazon.gamelift.agent.cache;
 
+import com.amazon.gamelift.agent.model.exception.InternalServiceException;
+import com.amazon.gamelift.agent.model.exception.NotFoundException;
 import com.amazon.gamelift.agent.model.gamelift.GetComputeAuthTokenResponse;
 import com.amazon.gamelift.agent.client.AmazonGameLiftClientWrapper;
 import com.amazon.gamelift.agent.model.exception.UnauthorizedException;
+import com.amazonaws.services.gamelift.model.GetComputeAuthTokenRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ComputeAuthTokenCacheLoaderTest {
@@ -55,6 +59,27 @@ public class ComputeAuthTokenCacheLoaderTest {
     public void GIVEN_validInput_WHEN_load_THEN_validOutput() {
         final String authToken = cacheLoader.load(COMPUTE_AUTH_TOKEN_CACHE_KEY).getAuthToken();
 
+        assertEquals(COMPUTE_AUTH_TOKEN, authToken);
+    }
+
+    @Test
+    public void GIVEN_retryEventuallySucceeds_WHEN_load_THEN_validOutput() throws Exception {
+        // GIVEN
+        final GetComputeAuthTokenResponse response = GetComputeAuthTokenResponse.builder()
+                .authToken(COMPUTE_AUTH_TOKEN)
+                .fleetId(FLEET_ID)
+                .computeName(COMPUTE_NAME)
+                .expirationTimeEpochMillis(Instant.now().plus(Duration.ofMinutes(15)))
+                .build();
+        when(mockGameLift.getComputeAuthToken(any(GetComputeAuthTokenRequest.class)))
+                .thenThrow(new NotFoundException("Compute not found"))
+                .thenThrow(new InternalServiceException())
+                .thenReturn(response);
+
+        // WHEN
+        final String authToken = cacheLoader.load(COMPUTE_AUTH_TOKEN_CACHE_KEY).getAuthToken();
+
+        // THEN
         assertEquals(COMPUTE_AUTH_TOKEN, authToken);
     }
 }

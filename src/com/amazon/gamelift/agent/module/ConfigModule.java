@@ -26,6 +26,7 @@ import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.net.http.HttpClient;
+import java.time.Instant;
 
 @Slf4j
 @Module
@@ -49,6 +50,7 @@ public class ConfigModule {
     public static final String GAMELIFT_AGENT_LOG_PATH = "gameliftAgentLogPath";
     public static final String GAMELIFT_AGENT_LOGS_DIRECTORY = "gameliftAgentLogDirectory";
     public static final String ENABLED_COMPUTE_REGISTRATION_VIA_AGENT = "enableComputeRegistrationViaAgent";
+    public static final String HEARTBEAT_TIMEOUT_TIME = "heartbeatTimeoutTime";
 
     private final String fleetId;
     private final String computeName;
@@ -70,6 +72,7 @@ public class ConfigModule {
     private final String taskId;
     private final boolean isContainerFleet;
     private final boolean enableComputeRegistrationViaAgent;
+    private final Instant heartbeatTimeoutTime;
 
     private final EcsMetadataReader ecsMetadataReader;
 
@@ -102,6 +105,7 @@ public class ConfigModule {
         this.computeName = args.getIsContainerFleet() ? taskId : args.getComputeName();
         this.isContainerFleet = args.getIsContainerFleet();
         this.enableComputeRegistrationViaAgent = args.getEnableComputeRegistrationViaAgent();
+        this.heartbeatTimeoutTime = args.getHeartbeatTimeoutTime();
     }
 
     /**
@@ -347,4 +351,16 @@ public class ConfigModule {
             @Named(GAMELIFT_AGENT_LOG_PATH) final String logPath) {
         return new File(logPath);
     }
+
+    /**
+     * Provides heartbeat timeout time
+     * @return timestamp of timeout
+     */
+    @Provides
+    @Nullable
+    @Named(HEARTBEAT_TIMEOUT_TIME)
+    public Instant provideHeartbeatTimeoutTime() {
+        return heartbeatTimeoutTime;
+    }
+
 }

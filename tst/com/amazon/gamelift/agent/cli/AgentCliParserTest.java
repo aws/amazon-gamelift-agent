@@ -842,7 +842,7 @@ public class AgentCliParserTest {
     }
 
     @Test
-    public void GIVEN_nonContainerFleet_WHEN_parsing_THEN_computeRegistrationViaAgentIsNotEnabledByDefault() throws ParseException {
+    public void GIVEN_nonContainerFleet_WHEN_parsing_THEN_computeRegistrationViaAgentIsEnabledByDefault() throws ParseException {
         // GIVEN
         final CommandLine mockCommandLine = mock(CommandLine.class);
         final AgentCliParser parser = new AgentCliParser(
@@ -875,6 +875,6 @@ public class AgentCliParserTest {
         assertEquals(parsedArgs.getLocation(), LOCATION_TEST);
         assertEquals(parsedArgs.getRegion(), REGION_TEST);
         assertEquals(parsedArgs.getLogCredentials(), LogCredentials.FLEET_ROLE);
-        assertEquals(parsedArgs.getEnableComputeRegistrationViaAgent(), false);
+        assertEquals(parsedArgs.getEnableComputeRegistrationViaAgent(), true);
     }
 }
